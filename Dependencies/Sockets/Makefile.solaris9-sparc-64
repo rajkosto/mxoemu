@@ -1,0 +1,70 @@
+include		Makefile.version
+
+INCLUDE =	
+
+# .h files installed to $(PREFIX)/include/Sockets
+# static lib .a files installed to $(PREFIX)/lib
+PREFIX =	/usr/local
+
+CXX =		/opt/SUNWspro/bin/CC
+
+CFLAGS =	-g $(INCLUDE) -MD -D_VERSION='"$(VERSION)"'
+CFLAGS +=	-features=rtti -mt
+
+# turn off optimization if compiling with gcc 2.9.x:
+#CFLAGS +=	-O0
+CFLAGS +=	-O2
+
+
+# uncomment depending on your operating system
+#CFLAGS +=	-DLINUX
+#CFLAGS +=	-DMACOSX 
+# solaris > 8
+CFLAGS +=	-DSOLARIS
+# solaris 8
+#CFLAGS +=	-DSOLARIS8
+# windows and/or cygwin
+#CFLAGS +=	-D_WIN32
+# cygwin
+#CFLAGS +=	-D__CYGWIN__
+
+
+# uncomment these three lines if the library should be in its own namespace
+#CFLAGS +=	-DSOCKETS_NAMESPACE=sockets
+#CFLAGS +=	-DSOCKETS_NAMESPACE_STR='"sockets"'
+
+
+# Enable insane amounts of debug output to stdout/stderr:
+#CFLAGS +=	-D_DEBUG
+
+
+CPPFLAGS =	$(CFLAGS) 
+
+LIBS =		-lSockets -lpthread -lssl -lcrypto
+
+PROGS =		Sockets-config
+
+all:		libSockets.a $(PROGS)
+
+Sockets-config:	Sockets-config.o
+		$(CXX) -o $@ $^
+
+libSockets.a:	$(OBJS)
+		ar cru $@ $(OBJS)
+		ranlib $@
+
+stressclient:	stressclient.o libSockets.a
+		g++ -o $@ $^ $(LIBS)
+
+echoserver:	echoserver.o libSockets.a
+		g++ -o $@ $^ $(LIBS)
+
+clean:
+		rm -f *.o *~ slask *.d $(PROGS) *.a */*~
+
+.cpp.o:		
+		@echo Compiling $<
+		@$(CXX) $(CFLAGS) -c -o $@ $<
+
+-include	*.d
+

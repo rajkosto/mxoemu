@@ -1,0 +1,28 @@
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sockets", "Sockets.vcproj", "{1EC00E34-E016-4EB4-BF7D-B5B7E101AE57}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "..\Test\Test.vcproj", "{D73A0C4B-7554-4A86-A452-5A12675925A0}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1EC00E34-E016-4EB4-BF7D-B5B7E101AE57} = {1EC00E34-E016-4EB4-BF7D-B5B7E101AE57}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1EC00E34-E016-4EB4-BF7D-B5B7E101AE57}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1EC00E34-E016-4EB4-BF7D-B5B7E101AE57}.Debug|Win32.Build.0 = Debug|Win32
+		{1EC00E34-E016-4EB4-BF7D-B5B7E101AE57}.Release|Win32.ActiveCfg = Release|Win32
+		{1EC00E34-E016-4EB4-BF7D-B5B7E101AE57}.Release|Win32.Build.0 = Release|Win32
+		{D73A0C4B-7554-4A86-A452-5A12675925A0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D73A0C4B-7554-4A86-A452-5A12675925A0}.Debug|Win32.Build.0 = Debug|Win32
+		{D73A0C4B-7554-4A86-A452-5A12675925A0}.Release|Win32.ActiveCfg = Release|Win32
+		{D73A0C4B-7554-4A86-A452-5A12675925A0}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

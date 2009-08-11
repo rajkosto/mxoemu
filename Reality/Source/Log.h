@@ -1,0 +1,68 @@
+// *************************************************************************************************
+// --------------------------------------
+// Copyright (C) 2006-2010 Rajko Stojadinovic
+//
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+//
+// *************************************************************************************************
+
+#ifndef MXOSIM_LOG_H
+#define MXOSIM_LOG_H
+
+#include "Singleton.h"
+#include "Threading/NativeMutex.h"
+
+class Log : public Singleton< Log >
+{
+	typedef enum
+	{
+		LOGLEVEL_CRITICAL = 1,
+		LOGLEVEL_ERROR = 2,
+		LOGLEVEL_WARNING = 3,
+		LOGLEVEL_INFO = 4,
+		LOGLEVEL_DEBUG = 5
+	}LogLevel;
+public:
+	Log();
+	~Log();
+	void OpenLogFile( const char *logFileName );
+
+	//logging funcs
+	void Critical( const char *str, ... );
+	void Error( const char *str, ... );
+	void Warning( const char *str, ... );
+	void Info( const char *str, ...	);
+	void Debug( const char *str, ... );
+private:
+	string ProcessString(LogLevel level,const string &str,bool forFile = false);
+	void OutputConsole(LogLevel level,const string &str);
+	void OutputFile(LogLevel level,const string &str);
+	void Output(LogLevel level,const string &str);
+
+	NativeMutex printMutex;
+	NativeMutex fileMutex;
+	ofstream LogFile;
+};
+
+#define sLog Log::getSingleton()
+
+#define CRITICAL_LOG sLog.Critical
+#define ERROR_LOG sLog.Error
+#define WARNING_LOG sLog.Warning
+#define INFO_LOG sLog.Info
+#define DEBUG_LOG sLog.Debug
+
+#endif

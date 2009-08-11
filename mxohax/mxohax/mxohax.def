@@ -1,0 +1,3 @@
+LIBRARY mxohax
+EXPORTS
+    ExportedOrdinal1    @1

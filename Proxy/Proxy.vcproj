@@ -210,6 +210,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SequencedPacket.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SequencedPacket.h"
+				>
+			</File>
+			<File
 				RelativePath=".\stprog.cpp"
 				>
 			</File>
@@ -219,14 +227,6 @@
 			</File>
 			<File
 				RelativePath=".\Util.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\WorldPacket.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\WorldPacket.h"
 				>
 			</File>
 		</Filter>

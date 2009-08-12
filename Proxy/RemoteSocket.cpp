@@ -23,7 +23,7 @@
 #include "LocalSocket.h"
 #include "Util.h"
 #include <iostream>
-#include "WorldPacket.h"
+#include "SequencedPacket.h"
 #include "Logging.h"
 #include "EncryptedPacket.h"
 
@@ -34,15 +34,15 @@ extern std::string GlobalIP;
 RemoteSocket *globalRemoteSocket = NULL;
 extern LocalSocket *globalLocalSocket;
 
-extern uint16 WTC_server_sequence;
-extern uint16 WTC_client_sequence;
+extern uint16 WTC_localSeq;
+extern uint16 WTC_remoteSeq;
 extern uint8 WTC_flags;
 
 RemoteSocket::RemoteSocket(ISocketHandler& h)
 :UdpSocket(h)
 {
-	WTC_server_sequence = 0;
-	WTC_client_sequence = 0;
+	WTC_localSeq = 0;
+	WTC_remoteSeq = 0;
 	WTC_flags = 0;
 
 	InitializeCriticalSection(&CriticalSection); 
@@ -50,8 +50,8 @@ RemoteSocket::RemoteSocket(ISocketHandler& h)
 
 RemoteSocket::~RemoteSocket()
 {
-	WTC_server_sequence = 0;
-	WTC_client_sequence = 0;
+	WTC_localSeq = 0;
+	WTC_remoteSeq = 0;
 	WTC_flags = 0;
 
 	DeleteCriticalSection(&CriticalSection);
@@ -88,12 +88,12 @@ void RemoteSocket::Replay( const char *p,size_t l)
 	
 	EnterCriticalSection(&CriticalSection);
 
-	WTC_server_sequence++;
+	WTC_localSeq++;
 
-	if (WTC_server_sequence >= 4096)
-		WTC_server_sequence=0;
+	if (WTC_localSeq >= 4096)
+		WTC_localSeq=0;
 
-	WorldPacket replayMePacket(WTC_server_sequence,WTC_client_sequence,WTC_flags,string(p,l));
+	SequencedPacket replayMePacket(WTC_localSeq,WTC_remoteSeq,WTC_flags,string(p,l));
 	ByteBuffer replayMePlain = replayMePacket.getDataWithHeader();
 	EncryptedPacket replayMeCryptor;
 	replayMeCryptor.append((const byte*)replayMePlain.contents(),replayMePlain.size());

@@ -1,7 +1,7 @@
 #ifndef _REMOTESOCKET_H
 #define _REMOTESOCKET_H
 
-#include <UdpSocket.h>
+#include <Sockets/UdpSocket.h>
 
 
 class RemoteSocket : public UdpSocket

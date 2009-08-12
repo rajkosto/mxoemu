@@ -22,63 +22,68 @@
 #include "Util.h"
 #include "ByteBuffer.h"
 
-class WorldPacket : public ByteBuffer
+class SequencedPacket : public ByteBuffer
 {
 public:
-	WorldPacket()
+	SequencedPacket()
 	{
 		setSequences(0,0);
 		setPlayerSetupState(0);
 		this->clear();
 	}
-	WorldPacket(uint16 sSeq,uint16 cSeq,uint8 pss)
+	SequencedPacket(uint16 _localSeq,uint16 _remoteSeq,uint8 pss)
 	{
-		setSequences(sSeq,cSeq);
+		setSequences(_localSeq,_remoteSeq);
 		setPlayerSetupState(pss);
 		this->clear();
 	}
-	WorldPacket(uint16 sSeq,uint16 cSeq,uint8 pss,string &headerless)
+	SequencedPacket(uint16 _localSeq,uint16 _remoteSeq,uint8 pss,const string &headerless)
 	{
-		setSequences(sSeq,cSeq);
+		setSequences(_localSeq,_remoteSeq);
 		setPlayerSetupState(pss);
 		this->clear();
 		this->append((const byte*)headerless.data(),headerless.size());
 	}
-	WorldPacket(uint16 sSeq,uint16 cSeq,uint8 pss,ByteBuffer &headerless)
+	SequencedPacket(uint16 _localSeq,uint16 _remoteSeq,uint8 pss,const ByteBuffer &headerless)
 	{
-		setSequences(sSeq,cSeq);
+		setSequences(_localSeq,_remoteSeq);
 		setPlayerSetupState(pss);
 		this->clear();
 		this->append((const byte*)headerless.contents(),headerless.size());
 	}
-	WorldPacket(ByteBuffer &withHeader);
-	WorldPacket(string &withHeader);
-	~WorldPacket()
+	SequencedPacket(ByteBuffer withHeader);
+	SequencedPacket(const string &withHeader);
+	~SequencedPacket()
 	{
 
 	}
-	void setSequences(unsigned short sSeq,unsigned short cSeq)
+	void setSequences(uint16 _localSeq,uint16 _remoteSeq)
 	{
-		serverSequence = sSeq;
-		clientSequence = cSeq;
+		this->localSeq = _localSeq;
+		this->remoteSeq = _remoteSeq;
 	}
 	void setPlayerSetupState(byte pss)
 	{
 		playerSetupState = pss;
 	}
-	void setData(string &headerless)
+	void setData(const string &headerless)
 	{
 		this->clear();
 		this->append((const byte*)headerless.data(),headerless.size());
 	}
-
-	unsigned short getClientSeq()
+	void setData(const ByteBuffer &headerless)
 	{
-		return clientSequence;
+		this->clear();
+		this->append((const byte*)headerless.contents(),headerless.size());
 	}
-	unsigned short getServerSeq()
+
+	unsigned short getRemoteSeq()
 	{
-		return serverSequence;
+		return remoteSeq;
+	}
+	unsigned short getLocalSeq()
+	{
+		return localSeq;
 	}
 	byte getPSS()
 	{
@@ -93,7 +98,7 @@ public:
 	}
 	ByteBuffer getDataWithHeader();
 private:
-	uint16 serverSequence;
-	uint16 clientSequence;
+	uint16 localSeq;
+	uint16 remoteSeq;
 	uint8 playerSetupState;
 };

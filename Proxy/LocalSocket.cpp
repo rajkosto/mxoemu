@@ -21,11 +21,11 @@
 
 #include "LocalSocket.h"
 #include "RemoteSocket.h"
-#include <Utility.h>
+#include <Sockets/Utility.h>
 #include "Util.h"
 #include <iostream>
 #include "EncryptedPacket.h"
-#include "WorldPacket.h"
+#include "SequencedPacket.h"
 #include "Logging.h"
 
 extern RemoteSocket *worldRemote;
@@ -37,15 +37,15 @@ LocalSocket *globalLocalSocket = NULL;
 extern CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption *TFDecryptCTW;
 extern CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption *TFEncryptCTW;
 
-extern uint16 CTW_client_sequence;
-extern uint16 CTW_server_sequence;
+extern uint16 CTW_remoteSeq;
+extern uint16 CTW_localSeq;
 extern uint8 CTW_flags;
 
 LocalSocket::LocalSocket(ISocketHandler& h)
 :UdpSocket(h)
 {
-	CTW_client_sequence = 0;
-	CTW_server_sequence = 0;
+	CTW_remoteSeq = 0;
+	CTW_localSeq = 0;
 	CTW_flags = 0;
 
 	InitializeCriticalSection(&CriticalSection); 
@@ -53,8 +53,8 @@ LocalSocket::LocalSocket(ISocketHandler& h)
 
 LocalSocket::~LocalSocket()
 {
-	CTW_client_sequence = 0;
-	CTW_server_sequence = 0;
+	CTW_remoteSeq = 0;
+	CTW_localSeq = 0;
 	CTW_flags = 0;
 
 	DeleteCriticalSection(&CriticalSection);
@@ -70,12 +70,12 @@ void LocalSocket::Replay( const char *p,size_t l)
 
 	EnterCriticalSection(&CriticalSection);
 
-	CTW_client_sequence++;
+	CTW_remoteSeq++;
 
-	if (CTW_client_sequence >= 4096)
-		CTW_client_sequence=0;
+	if (CTW_remoteSeq >= 4096)
+		CTW_remoteSeq=0;
 
-	WorldPacket replayMePacket(CTW_server_sequence,CTW_client_sequence,CTW_flags,string(p,l));
+	SequencedPacket replayMePacket(CTW_localSeq,CTW_remoteSeq,CTW_flags,string(p,l));
 	ByteBuffer replayMePlain = replayMePacket.getDataWithHeader();
 	EncryptedPacket replayMeCryptor;
 	replayMeCryptor.append((const byte*)replayMePlain.contents(),replayMePlain.size());

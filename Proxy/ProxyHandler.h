@@ -22,7 +22,7 @@
 #ifndef PROXYHANDLER_H
 #define PROXYHANDLER_H
 
-#include <SocketHandler.h>
+#include <Sockets/SocketHandler.h>
 
 #ifdef USE_SOLID_MAX
 #define MAX_MINIONS 10

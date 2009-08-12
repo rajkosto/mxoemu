@@ -22,7 +22,7 @@
 #ifndef LOCALSOCKET_H
 #define LOCALSOCKET_H
 
-#include <UdpSocket.h>
+#include <Sockets/UdpSocket.h>
 
 
 class LocalSocket : public UdpSocket

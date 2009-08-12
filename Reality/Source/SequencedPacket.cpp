@@ -19,43 +19,43 @@
 //
 // *************************************************************************************************
 
-#include "Packet.h"
+#include "SequencedPacket.h"
 
-Packet::Packet()
+SequencedPacket::SequencedPacket( ByteBuffer withHeader )
 {
+	uint32 packedSeqs; //FL CC CS SS
+
+	withHeader.rpos(0);
+	withHeader >> packedSeqs;
+
+	uint32 packed = swap32(packedSeqs);
+	localSeq = packed&0xFFF;
+	remoteSeq = (packed>>12)&0xFFF;
+	playerSetupState = (packed>>24)&0xFF;
+
+	vector<byte> restOfPacket;
+	restOfPacket.resize(withHeader.size() - withHeader.rpos());
+	withHeader.read(&restOfPacket[0],restOfPacket.size());
+
+	this->clear();
+	this->append(&restOfPacket[0],restOfPacket.size());
 }
 
-Packet::~Packet()
+SequencedPacket::SequencedPacket( const string &withHeader )
 {
+	ByteBuffer simulation;
+	simulation.append((const byte*)withHeader.data(),withHeader.size());
+
+	SequencedPacket::SequencedPacket(simulation);
 }
 
-void Packet::Clear()
+ByteBuffer SequencedPacket::getDataWithHeader()
 {
-	contents.clear();
-}
+	uint32 packedSeqs = swap32((playerSetupState << 24) | ((remoteSeq & 0xFFF) << 12) | (localSeq & 0xFFF)); // FL CC CS SS
 
-uint16 Packet::Size()
-{
-	return contents.size();
-}
+	ByteBuffer returnMe;
+	returnMe << packedSeqs;
+	returnMe.append(this->contents(),this->size());
 
-void Packet::FromString(std::string &string)
-{
-	contents.clear();
-	contents.append(string);
-}
-
-std::string Packet::ToString()
-{
-	uint8 *data=new uint8[contents.size()];
-	contents.rpos(0);
-	contents.read(data,contents.size());
-	std::string hax = std::string((const char *)data,contents.size());
-	delete[] data;
-	return hax;
-}
-
-void Packet::Append(std::string &string)
-{
-	contents.append(string);
+	return returnMe;
 }

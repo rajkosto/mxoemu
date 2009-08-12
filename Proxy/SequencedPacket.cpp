@@ -19,26 +19,43 @@
 //
 // *************************************************************************************************
 
-#ifndef MXOSIM_PACKET_H
-#define MXOSIM_PACKET_H
+#include "SequencedPacket.h"
 
-#include "Common.h"
-#include "ByteBuffer.h"
-#include "Sockets.h"
-
-class Packet
+SequencedPacket::SequencedPacket( ByteBuffer withHeader )
 {
-public:
-	Packet();
-	~Packet();
+	uint32 packedSeqs; //FL CC CS SS
 
-	uint16 Size();
-	void Clear();
-	void FromString(std::string &string);
-	void Append(std::string &string);
-	std::string ToString();
-protected:
-	ByteBuffer contents;
-};
+	withHeader.rpos(0);
+	withHeader >> packedSeqs;
 
-#endif
+	uint32 packed = swap32(packedSeqs);
+	localSeq = packed&0xFFF;
+	remoteSeq = (packed>>12)&0xFFF;
+	playerSetupState = (packed>>24)&0xFF;
+
+	vector<byte> restOfPacket;
+	restOfPacket.resize(withHeader.size() - withHeader.rpos());
+	withHeader.read(&restOfPacket[0],restOfPacket.size());
+
+	this->clear();
+	this->append(&restOfPacket[0],restOfPacket.size());
+}
+
+SequencedPacket::SequencedPacket( const string &withHeader )
+{
+	ByteBuffer simulation;
+	simulation.append((const byte*)withHeader.data(),withHeader.size());
+
+	SequencedPacket::SequencedPacket(simulation);
+}
+
+ByteBuffer SequencedPacket::getDataWithHeader()
+{
+	uint32 packedSeqs = swap32((playerSetupState << 24) | ((remoteSeq & 0xFFF) << 12) | (localSeq & 0xFFF)); // FL CC CS SS
+
+	ByteBuffer returnMe;
+	returnMe << packedSeqs;
+	returnMe.append(this->contents(),this->size());
+
+	return returnMe;
+}

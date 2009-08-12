@@ -332,27 +332,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\InPacket.cpp"
+				RelativePath=".\SequencedPacket.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\InPacket.h"
-				>
-			</File>
-			<File
-				RelativePath=".\OutPacket.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\OutPacket.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Packet.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Packet.h"
+				RelativePath=".\SequencedPacket.h"
 				>
 			</File>
 		</Filter>

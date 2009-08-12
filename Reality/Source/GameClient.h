@@ -22,8 +22,8 @@
 #ifndef MXOSIM_GAMECLIENT_H
 #define MXOSIM_GAMECLIENT_H
 
-#include "OutPacket.h"
 #include "Crypto.h"
+#include "SequencedPacket.h"
 
 class GameClient
 {
@@ -32,7 +32,7 @@ class GameClient
 		bool Valid_Client;
 		bool Handled_Session;
 
-		// Master Sock handle, client's address structure, last recieved packet
+		// Master Sock handle, client's address structure, last received packet
 		SOCKET *_sock;
 		struct sockaddr_in _address;
 		uint32 _last_activity;
@@ -46,10 +46,9 @@ class GameClient
 		uint16 client_sequence;
 
 		// Client tick count
-		uint16 tick;
+		uint32 tick;
 
 		//Player name lol
-
 		std::string name;
 
 		CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption *TFDecrypt;
@@ -57,7 +56,7 @@ class GameClient
 
 	public:
 		
-		GameClient(sockaddr_in, SOCKET*);
+		GameClient(sockaddr_in address, SOCKET *sock);
 		~GameClient();
 
 		inline uint32 LastActive() { return _last_activity; }
@@ -65,8 +64,8 @@ class GameClient
 		char *Address() { return inet_ntoa(_address.sin_addr); }
 
 		void HandlePacket(char *pData, uint16 Length);
-		bool Decrypt(char *pData, uint16 nLength,std::string &output);
-		void Send(const std::string &contents);
+		SequencedPacket Decrypt(char *pData, uint16 nLength);
+		void Send(const ByteBuffer &contents);
 };
 
 #endif

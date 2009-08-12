@@ -24,6 +24,7 @@
 #include "Log.h"
 #include "Timer.h"
 #include "Config.h"
+#include "Sockets.h"
 
 initialiseSingleton( GameServer );
 

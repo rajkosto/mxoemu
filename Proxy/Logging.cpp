@@ -2,7 +2,7 @@
 #include "Util.h"
 #include "TCPVariableLengthPacket.h"
 #include "EncryptedPacket.h"
-#include "WorldPacket.h"
+#include "SequencedPacket.h"
 
 #pragma pack(1)
 
@@ -67,10 +67,10 @@ void LogPacket(const char *pData,size_t pSize,PacketDirection direction,string c
 	File.close();
 }
 
-void LogWorldPacket(const char *pData,size_t pSize,PacketDirection direction,uint16 sSeq,uint16 cSeq,uint8 flags)
+void LogWorldPacket(const char *pData,size_t pSize,PacketDirection direction,uint16 localSeq,uint16 remoteSeq,uint8 flags)
 {
 	stringstream comment;
-	comment << "PSS: " << hex << (int)flags << " LocalSeq: " << dec << sSeq << " RemoteSeq: " << dec << cSeq;
+	comment << "PSS: " << hex << (int)flags << " LocalSeq: " << dec << localSeq << " RemoteSeq: " << dec << remoteSeq;
 	LogPacket(pData,pSize,direction,comment.str());
 }
 
@@ -1326,12 +1326,12 @@ string MarginToClient( const char* pData,size_t pSize )
 	}
 }
 
-uint16 CTW_client_sequence = 0;
-uint16 CTW_server_sequence = 0;
+uint16 CTW_remoteSeq = 0;
+uint16 CTW_localSeq = 0;
 uint8 CTW_flags = 0;
 
-uint16 WTC_client_sequence = 0;
-uint16 WTC_server_sequence = 0;
+uint16 WTC_remoteSeq = 0;
+uint16 WTC_localSeq = 0;
 uint8 WTC_flags = 0;
 
 string ClientToWorld( const char* pData,size_t pSize )
@@ -1350,13 +1350,13 @@ string ClientToWorld( const char* pData,size_t pSize )
 		ByteBuffer encryptedContents;
 		encryptedContents.append((const byte*)&pData[1],pSize-1); //skip the first byte
 		EncryptedPacket encryptionless(encryptedContents,TFDecryptCTW);
-		WorldPacket headerless(encryptionless);
+		SequencedPacket headerless(encryptionless);
 
-		CTW_client_sequence = headerless.getClientSeq();
-		CTW_server_sequence = headerless.getServerSeq();
+		CTW_remoteSeq = headerless.getRemoteSeq();
+		CTW_localSeq = headerless.getLocalSeq();
 		CTW_flags = headerless.getPSS();
 
-		LogWorldPacket(headerless.contents(),headerless.size(),CLIENT_TO_WORLD,CTW_server_sequence,CTW_client_sequence,CTW_flags);
+		LogWorldPacket(headerless.contents(),headerless.size(),CLIENT_TO_WORLD,CTW_localSeq,CTW_remoteSeq,CTW_flags);
 
 		//reencrypt
 		ByteBuffer reencrypted = encryptionless.toCipherText(TFEncryptCTW);
@@ -1384,13 +1384,13 @@ string WorldToClient( const char* pData,size_t pSize )
 		ByteBuffer encryptedContents;
 		encryptedContents.append((const byte*)&pData[1],pSize-1); //skip the first byte
 		EncryptedPacket encryptionless(encryptedContents,TFDecryptWTC);
-		WorldPacket headerless(encryptionless);
+		SequencedPacket headerless(encryptionless);
 
-		WTC_client_sequence = headerless.getClientSeq();
-		WTC_server_sequence = headerless.getServerSeq();
+		WTC_remoteSeq = headerless.getRemoteSeq();
+		WTC_localSeq = headerless.getLocalSeq();
 		WTC_flags = headerless.getPSS();
 
-		LogWorldPacket(headerless.contents(),headerless.size(),WORLD_TO_CLIENT,WTC_server_sequence,WTC_client_sequence,WTC_flags);
+		LogWorldPacket(headerless.contents(),headerless.size(),WORLD_TO_CLIENT,WTC_localSeq,WTC_remoteSeq,WTC_flags);
 
 		//reencrypt
 		ByteBuffer reencrypted = encryptionless.toCipherText(TFEncryptWTC);

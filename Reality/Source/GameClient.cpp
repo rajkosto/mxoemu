@@ -188,6 +188,9 @@ SequencedPacket GameClient::Decrypt(char *pData, uint16 nLength)
 
 void GameClient::Send(const ByteBuffer &contents)
 {
+	if (!TFEncrypt)
+		return;
+
 	server_sequence++;
 
 	if (server_sequence == 4096)

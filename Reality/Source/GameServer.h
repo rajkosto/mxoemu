@@ -29,6 +29,7 @@ class GameServer : public Singleton <GameServer>
 		void Loop();
 		int Clients_Connected(void) { return (int)Clients.size(); }
 		void Handle_Incoming();
+		void Broadcast(const ByteBuffer &message);
 };
 
 

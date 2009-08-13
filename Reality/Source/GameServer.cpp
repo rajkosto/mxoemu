@@ -160,7 +160,6 @@ void GameServer::Handle_Incoming()
 	if ((len > 0 && len <= RECV_BUFFER_SIZE && errno != EWOULDBLOCK) ||
 			(len > 0 && len <= RECV_BUFFER_SIZE))
 	{
-
 		IP << inet_ntoa(inc_addr.sin_addr) << ":" << inc_addr.sin_port;
 		GClientList::iterator i = Clients.find(IP.str());
 		if (i != Clients.end())
@@ -184,5 +183,13 @@ void GameServer::Handle_Incoming()
 			Clients[IP.str()]->HandlePacket(Buffer, len);
 		}
 
+	}
+}
+
+void GameServer::Broadcast( const ByteBuffer &message )
+{
+	for (GClientList::iterator i = Clients.begin();i != Clients.end();++i)
+	{
+		i->second->Send(message);
 	}
 }

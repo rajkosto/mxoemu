@@ -24,6 +24,8 @@
 #include "ConsoleThread.h"
 #include "Util.h"
 #include "Master.h"
+#include "Crypto.h"
+#include "GameServer.h"
 
 bool ConsoleThread::run()
 {
@@ -31,14 +33,53 @@ bool ConsoleThread::run()
 
 	for (;;) 
 	{
-		std::string command;
-		std::cin >> command;
+		string command;
+		cin >> command;
 
 		if (strcmp(command.c_str(), "exit") == 0)
 		{
 			Master::m_stopEvent = true;
 			INFO_LOG("Got exit command. Shutting down...");
 			break;
+		}
+		else if (strcmp(command.c_str(), "send") == 0)
+		{
+			stringstream hexStream;
+			for (;;)
+			{
+				string word;
+				cin >> word;
+
+				string::size_type semicolonPos = word.find_first_of(";");
+				if (semicolonPos != string::npos)
+				{
+					word = word.substr(0,semicolonPos);
+					if (word.length() > 0)
+					{
+						hexStream << word;
+					}
+					break;
+				}
+				else
+				{
+					hexStream << word;
+				}
+			}
+
+			string binaryOutput;
+			try
+			{
+				CryptoPP::HexDecoder hexDecoder(new CryptoPP::StringSink(binaryOutput));
+				hexDecoder.Put((const byte*)hexStream.str().data(),hexStream.str().size(),true);
+				hexDecoder.MessageEnd();
+			}
+			catch (...)
+			{
+				cout << "Invalid hex string" << endl;		
+				continue;
+			}
+			sGame.Broadcast(ByteBuffer(binaryOutput));
+			cout << "OK" << endl;
 		}
 	}
 

@@ -33,6 +33,7 @@
 #include <cryptopp/twofish.h>
 #include <cryptopp/filters.h>
 #include <cryptopp/asn.h>
+#include <cryptopp/hex.h>
 #define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
 #include <cryptopp/md5.h>
 

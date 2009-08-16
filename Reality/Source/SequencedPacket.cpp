@@ -21,7 +21,7 @@
 
 #include "SequencedPacket.h"
 
-SequencedPacket::SequencedPacket( ByteBuffer withHeader )
+void SequencedPacket::Construct(ByteBuffer withHeader)
 {
 	uint32 packedSeqs; //FL CC CS SS
 
@@ -41,12 +41,17 @@ SequencedPacket::SequencedPacket( ByteBuffer withHeader )
 	this->append(&restOfPacket[0],restOfPacket.size());
 }
 
+SequencedPacket::SequencedPacket( ByteBuffer withHeader )
+{
+	Construct(withHeader);
+}
+
 SequencedPacket::SequencedPacket( const string &withHeader )
 {
 	ByteBuffer simulation;
 	simulation.append((const byte*)withHeader.data(),withHeader.size());
 
-	SequencedPacket::SequencedPacket(simulation);
+	Construct(simulation);
 }
 
 ByteBuffer SequencedPacket::getDataWithHeader()

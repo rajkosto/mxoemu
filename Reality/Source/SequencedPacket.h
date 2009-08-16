@@ -101,6 +101,7 @@ public:
 	}
 	ByteBuffer getDataWithHeader();
 private:
+	void Construct(ByteBuffer withHeader);
 	uint16 localSeq;
 	uint16 remoteSeq;
 	uint8 playerSetupState;

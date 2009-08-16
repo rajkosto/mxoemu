@@ -50,41 +50,59 @@ int random(int low,int high)
 	return rand() % (high - low + 1) + low;
 }
 
-string Bin2Hex(const byte *data,size_t count,bool prependzeroes)
+string Bin2Hex(const byte *data,size_t count,uint32 flags)
 {
 	if (data != NULL && count > 0)
 	{
 		ostringstream myStream;
-	
+
+		//if no spaces, then only one 0x at the start
+		if ( (flags & BIN2HEX_ZEROES) && !(flags & BIN2HEX_SPACES) )
+			myStream << "0x";	
+			
 		for (unsigned int j = 0;j < count;j++)
 		{
 			byte n = data[j];
-			if (prependzeroes)
+
+			//if spaces, then 0x before every byte
+			if ( (flags & BIN2HEX_ZEROES) && (flags & BIN2HEX_SPACES) )
 				myStream << "0x";
+
 			if (n <= 15)
 				myStream << "0";
 			myStream << hex << (int)n;
-			myStream << " ";
+
+			//if no zeroes, just use space to separate
+			if (flags & BIN2HEX_SPACES && !(flags & BIN2HEX_ZEROES) )
+				myStream << " ";
+			// if zeroes, use , to separate
+			if (flags & BIN2HEX_SPACES && (flags & BIN2HEX_ZEROES) )
+				myStream << ",";
 		}
 		myStream.flush();
-		return myStream.str();
+
+		//remove the trailing space/,
+		if (flags & BIN2HEX_SPACES)
+			return myStream.str().substr(0,myStream.str().length()-1);
+		else
+			return myStream.str();
 	}
 
 	return string();
 }
 
-string Bin2Hex(const char *data,size_t count,bool prependzeroes)
+string Bin2Hex(const char *data,size_t count,uint32 flags)
 {
-	return Bin2Hex((const byte*)data,count,prependzeroes);
+	return Bin2Hex((const byte*)data,count,flags);
 }
 
-string Bin2Hex(ByteBuffer &sourceBuf,bool prependzeroes)
+string Bin2Hex(const ByteBuffer &sourceBuf,uint32 flags)
 {
-	return Bin2Hex((const byte*)sourceBuf.contents(),sourceBuf.size(),prependzeroes);
+	return Bin2Hex((const byte*)sourceBuf.contents(),sourceBuf.size(),flags);
 }
-string Bin2Hex(string &sourceStr,bool prependzeroes)
+string Bin2Hex(const string &sourceStr,uint32 flags)
 {
-	return Bin2Hex(sourceStr.data(),sourceStr.size(),prependzeroes);
+	return Bin2Hex(sourceStr.data(),sourceStr.size(),flags);
 }
 
 string XOR(string value,string key)

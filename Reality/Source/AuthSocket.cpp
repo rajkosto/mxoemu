@@ -6,6 +6,7 @@
 #include "Log.h"
 #include "Timer.h"
 #include "TCPVariableLengthPacket.h"
+#include "Database/DatabaseEnv.h"
 
 #pragma pack(1)
 
@@ -157,7 +158,7 @@ void AuthSocket::ProcessData( const byte *buf,size_t len )
 			}
 			catch (CryptoPP::InvalidCiphertext &ciphExcept)
 			{
-				ERROR_LOG("Invalid RSA ciphertext, client used bad pubkey.dat, disconnected.");
+				ERROR_LOG("Invalid RSA ciphertext, client used bad pubkey.dat, disconnecting.");
 				SetCloseAndDelete(true);
 				return;
 			}
@@ -200,7 +201,40 @@ void AuthSocket::ProcessData( const byte *buf,size_t len )
 			DEBUG_LOG("Username: |%s|",theUsername.c_str());
 
 			//copy to variable
-			zeUsername = theUsername;
+			m_username = theUsername;
+
+			//scope for auto_ptr
+			{
+				auto_ptr<QueryResult> result(sDatabase.Query("SELECT `userId`, `username`, `passwordSalt`, `passwordHash`, `publicExponent`, `publicModulus`, `privateExponent`, `timeCreated` FROM `users` WHERE `username` = '%s' LIMIT 1",m_username.c_str()) );
+				if (result.get() == NULL || result->GetRowCount() == 0)
+				{
+					INFO_LOG("Username %s doesn't exist, disconnecting.",m_username.c_str());
+					SetCloseAndDelete(true);
+					break;
+				}
+
+				Field *field = result->Fetch();
+				m_userId = field[0].GetUInt32();
+				m_username = field[1].GetString();
+				m_passwordSalt = field[2].GetString();
+				m_passwordHash = field[3].GetString();
+				m_publicExponent = field[4].GetUInt16();
+
+				const char *pubModulusStr = field[5].GetString();
+				if (pubModulusStr != NULL)
+					m_publicModulus = string(pubModulusStr,96);
+				else
+					m_publicModulus.clear();
+
+				const char *privExponentStr = field[6].GetString();
+				if (privExponentStr != NULL)
+					m_privateExponent = string(field[6].GetString(),96);
+				else
+					m_privateExponent.clear();
+
+				m_timeCreated = field[7].GetUInt32();
+			}
+
 
 			//now, for the reply
 			//reply consists entirely of challenge, which is used to make twofish IV and encrypt challenge response
@@ -287,9 +321,12 @@ void AuthSocket::ProcessData( const byte *buf,size_t len )
 
 			if (memcmp(processedChallenge,finalChallenge,sizeof(processedChallenge)))
 			{
-				WARNING_LOG("Processed challenge mismatch: got |%s|, expected |%s|",
+				WARNING_LOG("Processed challenge mismatch: got |%s|, expected |%s|, disconnecting.",
 					Bin2Hex(processedChallenge,sizeof(processedChallenge)).c_str(),
 					Bin2Hex(finalChallenge,sizeof(finalChallenge)).c_str());
+
+				SetCloseAndDelete(true);
+				break;
 			}
 
 			uint16 unknown1;
@@ -333,39 +370,59 @@ void AuthSocket::ProcessData( const byte *buf,size_t len )
 
 			if (packetSize != chRspPlain.size())
 			{
-				WARNING_LOG("Challenge response blob size mismatch !, expected %d, received %d",packetSize,chRspPlain.size());
+				WARNING_LOG("Challenge response blob size mismatch !, expected %d, received %d, disconnecting.",packetSize,chRspPlain.size());
+				SetCloseAndDelete(true);
+				break;
 			}
 
 			DEBUG_LOG("Parsed contents: 1(const 23): |%d|, 2(size): |%d|, 3(size): |%d|, User Password: |%s|, SOE Password: |%s|",unknown1,unknown2,unknown3,&password[0],&soePass[0]);
 
-			//morpheus says he knows the format of this, lets trust him
-			const byte worldListHeader[] =
+			if (VerifyPassword(string(&password[0]),m_passwordSalt,m_passwordHash) == false)
 			{
-				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA2, 0x00, 0xDA, 0x01, 0x1F, 
-				0x00, 0x00, 0x00, 0x21, 0x00, 0x6E, 0xD1, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x3C, 0x02, 0x00, 
-				0x00, 0x01, 0x00, 0x00, 0x0E, 0x00, 0x44, 0x86, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 
-				0x00, 0x0D, 0x00, 0x45, 0x6D, 0x75, 0x43, 0x68, 0x61, 0x72, 0x61, 0x63, 0x74, 0x65, 0x72, 0x00, 
-				0x03, 0x00, 0x00, 0x15, 0x00, 0x52, 0x65, 0x63, 0x75, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x00, 0x00, 
-				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0xD9, 0x21, 0x07, 0x00, 0x01, 
-				0x00, 0x21, 0x00, 0x16, 0x00, 0x53, 0x79, 0x6E, 0x74, 0x61, 0x78, 0x00, 0x00, 0x00, 0x00, 0x00, 
-				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0xD9, 0x21, 0x07, 0x00, 0x01, 
-				0x00, 0x31, 0x00, 0x17, 0x00, 0x56, 0x65, 0x63, 0x74, 0x6F, 0x72, 0x2D, 0x48, 0x6F, 0x73, 0x74, 
-				0x69, 0x6C, 0x65, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0xD9, 0x21, 0x07, 0x00, 0x01, 
-				0x00, 0x31,
-			} ;
+				WARNING_LOG("User %s supplied an invalid password, disconnecting.",m_username.c_str());
+				SetCloseAndDelete(true);
+				break;
+			}
 
-			//generate RSA keypair for client
-			CryptoPP::AutoSeededRandomPool randPool;
-			CryptoPP::InvertibleRSAFunction params;
-			params.GenerateRandomWithKeySize( randPool, 768 );
-			CryptoPP::RSA::PublicKey userPubKey(params);
-			CryptoPP::RSA::PrivateKey userPrivKey(params);
+			if (m_publicExponent != 17 || m_publicModulus.size() != 96 || m_privateExponent.size() != 96)
+			{
+				INFO_LOG("Invalid RSA keys for user %s, regenerating.",m_username.c_str());
+
+				for (;;)
+				{
+					//generate RSA keypair for client
+					CryptoPP::AutoSeededRandomPool randPool;
+					CryptoPP::InvertibleRSAFunction params;
+					params.GenerateRandomWithKeySize( randPool, 768 );
+					CryptoPP::RSA::PublicKey userPubKey(params);
+					CryptoPP::RSA::PrivateKey userPrivKey(params);
+					m_publicExponent = uint16(userPubKey.GetPublicExponent().ConvertToLong()); 
+					byte tempBuf[96];
+					userPubKey.GetModulus().Encode(tempBuf,sizeof(tempBuf));
+					m_publicModulus = string((const char*)tempBuf,sizeof(tempBuf));
+					m_privateExponent.clear();
+					CryptoPP::StringSink privateExponentSink(m_privateExponent);
+					userPrivKey.GetPrivateExponent().Encode(privateExponentSink,userPrivKey.GetPrivateExponent().MinEncodedSize());
+
+					if (m_publicExponent == 17 && m_publicModulus.size() == 96 && m_privateExponent.size() == 96)
+					{
+						break;
+					}
+				}
+
+				//update db info
+				sDatabase.Execute("UPDATE `users` SET `publicExponent` = %u, `publicModulus` = %s, `privateExponent` = %s WHERE `userId` = %u",
+					m_publicExponent,
+					Bin2Hex(m_publicModulus,BIN2HEX_ZEROES).c_str(),
+					Bin2Hex(m_privateExponent,BIN2HEX_ZEROES).c_str(),
+					m_userId );
+			}
 
 			typedef struct  
 			{
 				uint8 unknownByte; //always 01
 				uint32 userId1; //4 bytes, last byte is 00 on real server, unique per user
-				char userName[33]; //32 for actual text, 0 for null terminator (if max len)
+				char userName[33]; //32 for actual text, 1 for null terminator (if max len)
 				uint16 unknownShort; //always 256
 				uint32 padding1; //4 bytes of 0 padding
 				uint32 timeStamp; //10 minutes ahead of current time
@@ -379,13 +436,13 @@ void AuthSocket::ProcessData( const byte *buf,size_t len )
 			memset(&signedData,0,sizeof(signedData));
 
 			signedData.unknownByte = 1;
-			signedData.userId1 = 4866386; //spells out RAJ and then a NULL byte (for easier tracking if used elsewhere)
-			strncpy(signedData.userName,zeUsername.c_str(),sizeof(signedData.userName)-1);
+			signedData.userId1 = m_userId;
+			strncpy(signedData.userName,m_username.c_str(),sizeof(signedData.userName)-1);
 			signedData.unknownShort = 256;
 			signedData.timeStamp = getTime() + 60 * 10; //10 minutes ahead, just like on real server
-			signedData.publicExponent = swap16(uint16(userPubKey.GetPublicExponent().ConvertToLong())); //almost forgot the swap16 here :D
-			userPubKey.GetModulus().Encode(signedData.modulus,sizeof(signedData.modulus));
-			signedData.userId2 = 1414745931; //spells out KOST, same drill as userId1
+			signedData.publicExponent = swap16(m_publicExponent); //almost forgot the swap16 here :D
+			memcpy(signedData.modulus,m_publicModulus.data(),sizeof(signedData.modulus));
+			signedData.userId2 = m_timeCreated;
 
 			//sign the data that needs to be signed
 			//its not that actual part which is signed, but the md5 of it, and sign makes a md5 of that, i think wb is just fucking with us
@@ -396,52 +453,183 @@ void AuthSocket::ProcessData( const byte *buf,size_t len )
 			ByteBuffer signature = sAuth.SignWith1024Bit(signMePlease,sizeof(signMePlease));
 
 			//the encrypted data is the private exponent of user's RSA key
-			//get the private exponent
-			string privateExponentStr;
-			CryptoPP::StringSink privateExponentSink(privateExponentStr);
-			userPrivKey.GetPrivateExponent().Encode(privateExponentSink,userPrivKey.GetPrivateExponent().MinEncodedSize());
-
-			if (privateExponentStr.size() != 96)
-			{
-				ERROR_LOG("Private exponent ended up being something other than 96 bytes (%d bytes)",privateExponentStr.size());
-			}
-
 			//to encrypt 96 byte exponent, use auth_key as key and challenge as IV		
 			TFEncrypt->Resynchronize(challenge);
 			string encryptedPrivateExponent;
 
-			CryptoPP::StringSource( privateExponentStr , true, 
+			CryptoPP::StringSource( m_privateExponent , true, 
 				new CryptoPP::StreamTransformationFilter(
 				*TFEncrypt, new CryptoPP::StringSink(encryptedPrivateExponent),
 				CryptoPP::BlockPaddingSchemeDef::NO_PADDING));
 
 			if (encryptedPrivateExponent.size() != 96)
 			{
-				ERROR_LOG("Encrypted private exponent ended up being something other than 96 bytes (%d bytes)",
+				ERROR_LOG("Encrypted private exponent ended up being something other than 96 bytes (%d bytes), disconnecting.",
 					encryptedPrivateExponent.size());
+				SetCloseAndDelete(true);
+				break;
 			}
 
 			//send reply
 			TCPVariableLengthPacket worldPacket;
-			
-			//this is an auth reply
-			worldPacket << uint8(AS_AuthReply);
-			//first thing is the list of worlds and chars in them
-			worldPacket.append(worldListHeader,sizeof(worldListHeader));
+
+			typedef struct 
+			{
+				uint8 opcode; //AS_AuthReply
+				byte unknown1[10]; //10 zero bytes
+				uint16 offsetAuthData; //offset into packet where worldList data ends, and authData starts
+				uint16 offsetEncryptedData; //offset into packet where authData ends, and encrypted pkey starts
+				uint32 unknown2; //always 1F 00 00 00, aka 0x1F 31d
+				uint16 offsetCharData; //offset into packet where this header ends, and charData starts (should be always 0x21, sizeof(AuthReplyHeader))
+				uint32 unknown3; //always 6E D1 00 00, aka 53614d
+				uint32 offsetServerData; //offset into packet where charData ends, and serverData begins
+				uint32 offsetUsername; //offset into packet where authData ends, and userName at the end begins
+			} AuthReplyHeader;
+
+			AuthReplyHeader packetHeader;
+			memset(&packetHeader,0,sizeof(packetHeader));
+			packetHeader.opcode = AS_AuthReply;
+			packetHeader.unknown2 = 0x1F;
+			packetHeader.unknown3 = 0x0000D16E;
+			packetHeader.offsetCharData = sizeof(packetHeader);
+
+			worldPacket.append((const byte*)&packetHeader,sizeof(packetHeader)); //we will have to get back and overwrite this later with the proper values
+
+			auto_ptr<QueryResult> result(sDatabase.Query("SELECT `charId`, `worldId`, `status`, `handle` FROM `characters` WHERE `userId` = %u",m_userId));
+			if(result.get() == NULL)
+			{
+				ERROR_LOG("Error getting characters for username %s from db, disconnecting.",m_username.c_str());
+				SetCloseAndDelete(true);
+				break;
+			}
+
+			//number of characters user has
+			uint16 numCharacters = result->GetRowCount();
+			worldPacket << uint16(numCharacters);
+
+			if (numCharacters > 0)
+			{
+				typedef struct  
+				{
+					uint8 unknown1; //always 0
+					uint16 handleStrOffset; //offset from start of this charDataItem to string
+					uint64 charId; //64bit globally unique character id
+					uint8 status; //ok,in transit,banned
+					uint16 worldId; //world the char is in
+				} CharacterData;
+
+				ByteBuffer characterDatas;
+				ByteBuffer characterStrings;
+				
+				for (uint i=0;i<numCharacters;i++)
+				{
+					Field *field = result->Fetch();
+
+					CharacterData currCharacter;
+					currCharacter.unknown1 = 0;
+					currCharacter.charId = field[0].GetUInt64();
+					currCharacter.worldId = field[1].GetUInt16();
+					currCharacter.status = field[2].GetUInt8();
+					//how many bytes untill we get to character strings start + offset into character strings
+					currCharacter.handleStrOffset = (numCharacters - i)*sizeof(CharacterData) + characterStrings.wpos();
+
+					//add the character to character datas
+					characterDatas.append((const byte*)&currCharacter,sizeof(currCharacter));
+
+					string characterString = field[3].GetString();
+					uint16 characterStringLen = strlen(characterString.c_str())+1;
+
+					//add the string to character strings
+					characterStrings << uint16(characterStringLen);
+					characterStrings.append(characterString.c_str(),characterStringLen);
+
+					//fetch next row
+					if (result->NextRow() == false)
+						break;
+				}
+
+				//add both chars and strings to worldpacket
+				worldPacket.append(characterDatas);
+				worldPacket.append(characterStrings);
+			}
+
+			//character data has ended, server data starts at this pos
+			packetHeader.offsetServerData = worldPacket.wpos();	
+
+			//fetch server list data
+			result = auto_ptr<QueryResult>(sDatabase.Query("SELECT `worldId`, `name`, `type`, `status`, `load` FROM `worlds`"));
+			if(result.get() == NULL || result->GetRowCount() == 0)
+			{
+				ERROR_LOG("Error getting worlds from db, disconnecting.");
+				SetCloseAndDelete(true);
+				break;
+			}
+
+			uint16 numWorlds = result->GetRowCount();
+			worldPacket << uint16(numWorlds);
+
+			do 
+			{
+				Field *field = result->Fetch();
+				typedef struct  
+				{
+					uint8 unknown1; //always 0
+					uint16 worldId; 
+					char worldName[20];
+					uint8 status; //down,open,etc
+					uint8 type; //pvp or non pvp
+					uint16 unknown2; //always D9 21 aka 0x21D9 number aka 467417d
+					uint16 unknown3; //always 7
+					uint16 unknown4; //always 1
+					uint8 load; //31,32,33
+				} WorldData;
+
+				WorldData currWorld;
+				memset(&currWorld,0,sizeof(currWorld));
+
+				currWorld.unknown1 = 0;
+				currWorld.worldId = field[0].GetUInt16();
+				string worldNameStr = field[1].GetString();
+				strncpy(currWorld.worldName,worldNameStr.c_str(),worldNameStr.length());
+				currWorld.type = field[2].GetUInt8();
+				currWorld.status = field[3].GetUInt8();
+				currWorld.unknown2 = 0x21D9;
+				currWorld.unknown3 = 7;
+				currWorld.unknown4 = 1;
+				currWorld.load = field[4].GetUInt8();
+
+				worldPacket.append((const byte*)&currWorld,sizeof(currWorld));
+			}
+			while(result->NextRow());
+
+			//worldlist data ended, now starts auth data
+			packetHeader.offsetAuthData = worldPacket.wpos();
+
 			worldPacket << uint16(swap16(0x3601)); //indicates start of auth data
 			//then the signature of the signed data
 			worldPacket.append(signature);
 			//then the signed data itself
 			worldPacket.append((const byte*)&signedData,sizeof(signedData));
+
+			//auth data ended, now starts key data
+			packetHeader.offsetEncryptedData = worldPacket.wpos();
+
 			//then the size of the encrypted blob
 			worldPacket << uint16(encryptedPrivateExponent.size());
 			//then the encrypted blob itself
 			worldPacket.append(encryptedPrivateExponent);
+
+			//key data ended, now starts username data
+			packetHeader.offsetUsername = worldPacket.wpos();
+
 			//then the size of username including null end character
-			uint16 userNameLength = uint16(strlen(zeUsername.c_str())+1);
+			uint16 userNameLength = uint16(strlen(m_username.c_str())+1);
 			worldPacket << userNameLength;
 			//then the username including null end character
-			worldPacket.append((const byte*)zeUsername.c_str(),userNameLength);
+			worldPacket.append((const byte*)m_username.c_str(),userNameLength);
+
+			//we need to rewrite the header back to the front now
+			worldPacket.put(0,(const byte*)&packetHeader,sizeof(packetHeader));
 
 			//for debugging, lets dump the packet we just created
 			DEBUG_LOG("Sending AS_AuthReply: %s",Bin2Hex(worldPacket).c_str());
@@ -451,4 +639,33 @@ void AuthSocket::ProcessData( const byte *buf,size_t len )
 			break;
 		}
 	}
+}
+
+bool AuthSocket::VerifyPassword( const string& plaintextPass, const string& passwordSalt, const string& passwordHash )
+{
+	CryptoPP::SHA1 hash;
+	string hashedSalt;
+	CryptoPP::StringSource(
+		passwordSalt,
+		true,
+		new CryptoPP::HashFilter(hash, new CryptoPP::HexEncoder(new CryptoPP::StringSink(hashedSalt),false) )
+		); 
+	string hashedPass;
+	CryptoPP::StringSource(
+		plaintextPass,
+		true,
+		new CryptoPP::HashFilter(hash, new CryptoPP::HexEncoder(new CryptoPP::StringSink(hashedPass),false) )
+		); 
+	string thingToHash = hashedSalt + hashedPass;
+	string finalHash;
+	CryptoPP::StringSource(
+		thingToHash,
+		true,
+		new CryptoPP::HashFilter(hash, new CryptoPP::HexEncoder(new CryptoPP::StringSink(finalHash),false) )
+		); 
+
+	if (finalHash == passwordHash)
+		return true;
+	else
+		return false;
 }

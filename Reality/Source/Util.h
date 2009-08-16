@@ -31,10 +31,17 @@ std::vector<std::string> StrSplit(const std::string &src, const std::string &sep
 
 int random(int low,int high);
 
-std::string Bin2Hex(const byte *data,size_t count,bool prependzeroes = false);
-std::string Bin2Hex(const char *data,size_t count,bool prependzeroes = false);
-std::string Bin2Hex(class ByteBuffer &sourceBuf,bool prependzeroes = false);
-std::string Bin2Hex(std::string &sourceStr,bool prependzeroes = false);
+enum
+{
+	BIN2HEX_ZEROES = 1,
+	BIN2HEX_SPACES = 2,
+	BIN2HEX_NEWLINES = 4
+};
+
+std::string Bin2Hex(const byte *data,size_t count,uint32 flags = BIN2HEX_SPACES | BIN2HEX_NEWLINES);
+std::string Bin2Hex(const char *data,size_t count,uint32 flags = BIN2HEX_SPACES | BIN2HEX_NEWLINES);
+std::string Bin2Hex(const class ByteBuffer &sourceBuf,uint32 flags = BIN2HEX_SPACES | BIN2HEX_NEWLINES);
+std::string Bin2Hex(const std::string &sourceStr,uint32 flags = BIN2HEX_SPACES | BIN2HEX_NEWLINES);
 
 std::string ConvertToLower(std::string input,size_t position);
 std::string XOR(std::string value,std::string key);

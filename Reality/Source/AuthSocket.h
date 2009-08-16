@@ -12,6 +12,7 @@ public:
 	~AuthSocket();
 private:
 	void ProcessData(const byte *buf,size_t len);
+	bool VerifyPassword( const string& plaintextPass, const string& passwordSalt, const string& passwordHash );
 	uint32 packetNum;
 	string username;
 
@@ -25,7 +26,14 @@ private:
 	byte challenge[16];
 	byte finalChallenge[16];
 
-	string zeUsername;
+	uint32 m_userId;
+	string m_username;
+	string m_passwordSalt;
+	string m_passwordHash;
+	uint16 m_publicExponent;
+	string m_publicModulus;
+	string m_privateExponent;
+	uint32 m_timeCreated;
 };
 
 

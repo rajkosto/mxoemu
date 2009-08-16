@@ -26,6 +26,7 @@
 #include "Master.h"
 #include "Crypto.h"
 #include "GameServer.h"
+#include "AuthServer.h"
 
 bool ConsoleThread::run()
 {
@@ -41,6 +42,20 @@ bool ConsoleThread::run()
 			Master::m_stopEvent = true;
 			INFO_LOG("Got exit command. Shutting down...");
 			break;
+		}
+		else if (strcmp(command.c_str(),"register") == 0)
+		{
+			string theLine;
+			getline(cin,theLine);
+			stringstream lineParser;
+			lineParser.str(theLine);
+			string username,password;
+			lineParser >> username;
+			lineParser >> password;
+
+			bool accountCreated = sAuth.CreateAccount(username,password);
+			if (accountCreated)
+				INFO_LOG("Created account with username %s password %s",username.c_str(),password.c_str());
 		}
 		else if (strcmp(command.c_str(), "send") == 0)
 		{

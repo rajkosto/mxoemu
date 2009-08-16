@@ -22,6 +22,8 @@ public:
 	ByteBuffer SignWith1024Bit(byte *message,size_t messageLen);
 	bool VerifyWith1024Bit(byte *message,size_t messageLen,byte *signature,size_t signatureLen);
 	ByteBuffer GetPubKeyData();
+	string HashPassword(const string& salt, const string& password);
+	bool CreateAccount(const string& username,const string& password);
 private:
 	void GenerateRSAKeys(unsigned int keyLen,CryptoPP::RSA::PublicKey &publicOutput, CryptoPP::RSA::PrivateKey &privateOutput);
 	void GenerateSignKeys(string &privKeyOut, string &pubKeyOut);
@@ -29,6 +31,9 @@ private:
 	ByteBuffer MessageFromPublicKey(CryptoPP::RSA::PublicKey &inputKey);
 	void GenerateCryptoKeys(string &privKeyOut, string &pubKeyOut);
 	void LoadCryptoKeys();
+
+	string MakeSHA1HashHex(const string& input);
+	string GenerateSalt(uint32 length);
 
 	AuthHandler authSocketHandler;
 	typedef ListenSocket<AuthSocket> AuthListenSocket;

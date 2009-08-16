@@ -206,7 +206,7 @@ void AuthSocket::ProcessData( const byte *buf,size_t len )
 			//scope for auto_ptr
 			{
 				auto_ptr<QueryResult> result(sDatabase.Query("SELECT `userId`, `username`, `passwordSalt`, `passwordHash`, `publicExponent`, `publicModulus`, `privateExponent`, `timeCreated` FROM `users` WHERE `username` = '%s' LIMIT 1",m_username.c_str()) );
-				if (result.get() == NULL || result->GetRowCount() == 0)
+				if (result.get() == NULL)
 				{
 					INFO_LOG("Username %s doesn't exist, disconnecting.",m_username.c_str());
 					SetCloseAndDelete(true);
@@ -495,16 +495,15 @@ void AuthSocket::ProcessData( const byte *buf,size_t len )
 
 			worldPacket.append((const byte*)&packetHeader,sizeof(packetHeader)); //we will have to get back and overwrite this later with the proper values
 
+			uint16 numCharacters;
+
 			auto_ptr<QueryResult> result(sDatabase.Query("SELECT `charId`, `worldId`, `status`, `handle` FROM `characters` WHERE `userId` = %u",m_userId));
 			if(result.get() == NULL)
-			{
-				ERROR_LOG("Error getting characters for username %s from db, disconnecting.",m_username.c_str());
-				SetCloseAndDelete(true);
-				break;
-			}
+				numCharacters = 0;
+			else
+				numCharacters = result->GetRowCount();
 
 			//number of characters user has
-			uint16 numCharacters = result->GetRowCount();
 			worldPacket << uint16(numCharacters);
 
 			if (numCharacters > 0)
@@ -558,9 +557,9 @@ void AuthSocket::ProcessData( const byte *buf,size_t len )
 
 			//fetch server list data
 			result = auto_ptr<QueryResult>(sDatabase.Query("SELECT `worldId`, `name`, `type`, `status`, `load` FROM `worlds`"));
-			if(result.get() == NULL || result->GetRowCount() == 0)
+			if(result.get() == NULL)
 			{
-				ERROR_LOG("Error getting worlds from db, disconnecting.");
+				ERROR_LOG("No worlds in db, disconnecting.");
 				SetCloseAndDelete(true);
 				break;
 			}
@@ -643,29 +642,8 @@ void AuthSocket::ProcessData( const byte *buf,size_t len )
 
 bool AuthSocket::VerifyPassword( const string& plaintextPass, const string& passwordSalt, const string& passwordHash )
 {
-	CryptoPP::SHA1 hash;
-	string hashedSalt;
-	CryptoPP::StringSource(
-		passwordSalt,
-		true,
-		new CryptoPP::HashFilter(hash, new CryptoPP::HexEncoder(new CryptoPP::StringSink(hashedSalt),false) )
-		); 
-	string hashedPass;
-	CryptoPP::StringSource(
-		plaintextPass,
-		true,
-		new CryptoPP::HashFilter(hash, new CryptoPP::HexEncoder(new CryptoPP::StringSink(hashedPass),false) )
-		); 
-	string thingToHash = hashedSalt + hashedPass;
-	string finalHash;
-	CryptoPP::StringSource(
-		thingToHash,
-		true,
-		new CryptoPP::HashFilter(hash, new CryptoPP::HexEncoder(new CryptoPP::StringSink(finalHash),false) )
-		); 
-
-	if (finalHash == passwordHash)
+	if (sAuth.HashPassword(passwordSalt,plaintextPass) == passwordHash)
 		return true;
-	else
-		return false;
+
+	return false;
 }

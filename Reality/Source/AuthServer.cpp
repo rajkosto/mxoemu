@@ -3,6 +3,8 @@
 #include "AuthSocket.h"
 #include "Log.h"
 #include "Config.h"
+#include "Database/DatabaseEnv.h"
+#include "Util.h"
 
 initialiseSingleton( AuthServer );
 
@@ -412,4 +414,45 @@ void AuthServer::Stop()
 void AuthServer::Loop(void)
 {
 	authSocketHandler.Select(0, 100000);                      // 100 ms
+}
+
+string AuthServer::MakeSHA1HashHex( const string& input )
+{
+	CryptoPP::SHA1 hash;
+	string output;
+	CryptoPP::StringSource(input,true,new CryptoPP::HashFilter(hash, new CryptoPP::HexEncoder(new CryptoPP::StringSink(output),false) )); 
+	return output;
+}
+
+string AuthServer::HashPassword( const string& salt, const string& password )
+{
+	string thingToHash = MakeSHA1HashHex(salt) + MakeSHA1HashHex(password);
+	return MakeSHA1HashHex(thingToHash);
+}
+
+string AuthServer::GenerateSalt(uint32 length)
+{
+	string theSalt;
+	for (int i=0;i<8;i++)
+	{
+		char charToAdd = random(33,126);
+		theSalt += string(&charToAdd,1);
+	}
+	return theSalt;
+}
+
+bool AuthServer::CreateAccount( const string& username,const string& password )
+{
+	shared_ptr<QueryResult> query(sDatabase.Query("SELECT `userId` FROM `users` WHERE `username` = '%s'",sDatabase.EscapeString(username).c_str()));
+	if (query.get() == NULL)
+	{
+		string salt = GenerateSalt(8);
+		string passwordHash = HashPassword(salt,password);
+
+		return sDatabase.Execute("INSERT INTO `users` SET `username`='%s', `passwordSalt`='%s', `passwordHash`='%s', `timeCreated`=UNIX_TIMESTAMP()",
+			sDatabase.EscapeString(username).c_str(),
+			sDatabase.EscapeString(salt).c_str(),
+			sDatabase.EscapeString(passwordHash).c_str() );
+	}
+	return false;
 }

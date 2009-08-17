@@ -28,6 +28,9 @@
 #include "MersenneTwister.h"
 #include "EncryptedPacket.h"
 #include "SequencedPacket.h"
+#include "RsiData.h"
+
+#pragma pack(1)
 
 uint8 twofishkeyz[16] = {0x6C, 0xAB, 0x8E, 0xCC, 0xE7, 0x3C, 0x22, 0x47, 0xDB, 0xEB, 0xDE, 0x1A, 0xA8, 0xE7, 0x5F, 0xB8};
 
@@ -86,7 +89,7 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 			if( loc != std::string::npos ) 
 			{
 				if (PlayerSetupState==0x7F)
-					Send(std::string((const char *)rawData,sizeof(rawData)));
+					Send(ByteBuffer(rawData,sizeof(rawData)));
 				else {} //WTF
 			}
 
@@ -94,9 +97,60 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 			if( loc != std::string::npos ) 
 			{
 				if (PlayerSetupState==0x7F)
-					Send(std::string((const char *)rawData2,sizeof(rawData2)));
+					Send(ByteBuffer(rawData2,sizeof(rawData2)));
 				else {} //WTF
 			}
+
+			loc = contents.find( "SpawnHats", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					for (int derp=0;derp < 2;derp++)
+					{
+						for (int i=0;i<8;i++)
+						{
+							for (int j=0;j<8;j++)
+							{
+								byte HatPersonData[243];
+								memcpy(HatPersonData,rawData,sizeof(HatPersonData));
+								int hatPersonNumber = (i*8)+j+1;
+								stringstream hatPersonName;
+								if (derp == 0)
+								{
+									hatPersonName << "HatGuy" << dec << hatPersonNumber;
+								}
+								else
+								{
+									hatPersonName << "HatGal" << dec << hatPersonNumber;
+								}
+								memcpy(&HatPersonData[0x6A],hatPersonName.str().c_str(),hatPersonName.str().size()+1);
+								double hatPersonX,hatPersonY,hatPersonZ;
+								hatPersonX = 27800 - (200*j);
+								hatPersonY = -5;
+								hatPersonZ = (-11700) - (200*(i+8*derp));
+								memcpy(&HatPersonData[0xC1],&hatPersonX,sizeof(hatPersonX));
+								memcpy(&HatPersonData[0xC9],&hatPersonY,sizeof(hatPersonY));
+								memcpy(&HatPersonData[0xD1],&hatPersonZ,sizeof(hatPersonZ));
+								uint16 hatPersonHalfObjId = 6400 + random(0,59135);
+								memcpy(&HatPersonData[0xF1],&hatPersonHalfObjId,sizeof(hatPersonHalfObjId));
+
+								byte *rawPointer = &HatPersonData[0xAF];
+
+								RsiData theRsiData(rawPointer);
+								theRsiData.setSex(derp);
+								theRsiData.setHat(hatPersonNumber);
+								theRsiData.ToBytes(rawPointer);
+
+								Sleep(100);
+								Send(ByteBuffer(HatPersonData,sizeof(HatPersonData)));
+							}
+						}
+					}
+				}
+				else {} //WTF
+			}
+
 			/*
 			loc = contents.find( "Move", 0 );
 			if( loc != std::string::npos ) 
@@ -152,7 +206,17 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 				ByteBuffer response;
 				response.append(GAMEResponseTo6_1_header,sizeof(GAMEResponseTo6_1_header));
 				response.append(name);
-				response.append(GAMEResponseTo6_1_footer,sizeof(GAMEResponseTo6_1_footer));
+
+				byte GameResponseFooterModified[101];
+				memcpy(GameResponseFooterModified,GAMEResponseTo6_1_footer,sizeof(GameResponseFooterModified));
+				double playerX,playerY,playerZ;
+				playerX = 27800;
+				playerY = -5;
+				playerZ = -11700;
+				memcpy(&GameResponseFooterModified[0x2F],&playerX,sizeof(playerX));
+				memcpy(&GameResponseFooterModified[0x37],&playerY,sizeof(playerY));
+				memcpy(&GameResponseFooterModified[0x3F],&playerZ,sizeof(playerZ));
+				response.append(GameResponseFooterModified,sizeof(GameResponseFooterModified));
 
 				Send(response);
 				Send(ByteBuffer(GAMEResponseTo6_2,sizeof(GAMEResponseTo6_2)));

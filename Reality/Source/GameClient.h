@@ -66,6 +66,16 @@ class GameClient
 		void HandlePacket(char *pData, uint16 Length);
 		SequencedPacket Decrypt(char *pData, uint16 nLength);
 		void Send(const ByteBuffer &contents);
+
+private:
+		typedef enum 
+		{
+			SET_HATS,
+			SET_FACES,
+			SET_GLASSES
+		}WhatToSet;
+
+		void SpawnTroop(int rows, int columns,WhatToSet typeToSet);
 };
 
 #endif

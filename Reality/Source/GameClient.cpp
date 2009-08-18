@@ -106,47 +106,27 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 			{
 				if (PlayerSetupState==0x7F)
 				{
-					for (int derp=0;derp < 2;derp++)
-					{
-						for (int i=0;i<8;i++)
-						{
-							for (int j=0;j<8;j++)
-							{
-								byte HatPersonData[243];
-								memcpy(HatPersonData,rawData,sizeof(HatPersonData));
-								int hatPersonNumber = (i*8)+j+1;
-								stringstream hatPersonName;
-								if (derp == 0)
-								{
-									hatPersonName << "HatGuy" << dec << hatPersonNumber;
-								}
-								else
-								{
-									hatPersonName << "HatGal" << dec << hatPersonNumber;
-								}
-								memcpy(&HatPersonData[0x6A],hatPersonName.str().c_str(),hatPersonName.str().size()+1);
-								double hatPersonX,hatPersonY,hatPersonZ;
-								hatPersonX = 27800 - (200*j);
-								hatPersonY = -5;
-								hatPersonZ = (-11700) - (200*(i+8*derp));
-								memcpy(&HatPersonData[0xC1],&hatPersonX,sizeof(hatPersonX));
-								memcpy(&HatPersonData[0xC9],&hatPersonY,sizeof(hatPersonY));
-								memcpy(&HatPersonData[0xD1],&hatPersonZ,sizeof(hatPersonZ));
-								uint16 hatPersonHalfObjId = 6400 + random(0,59135);
-								memcpy(&HatPersonData[0xF1],&hatPersonHalfObjId,sizeof(hatPersonHalfObjId));
+					SpawnTroop(8,8,SET_HATS);
+				}
+				else {} //WTF
+			}
 
-								byte *rawPointer = &HatPersonData[0xAF];
+			loc = contents.find( "SpawnFaces", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(4,8,SET_FACES);
+				}
+				else {} //WTF
+			}
 
-								RsiData theRsiData(rawPointer);
-								theRsiData.setSex(derp);
-								theRsiData.setHat(hatPersonNumber);
-								theRsiData.ToBytes(rawPointer);
-
-								Sleep(100);
-								Send(ByteBuffer(HatPersonData,sizeof(HatPersonData)));
-							}
-						}
-					}
+			loc = contents.find( "SpawnGlasses", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(4,8,SET_GLASSES);
 				}
 				else {} //WTF
 			}
@@ -268,4 +248,83 @@ void GameClient::Send(const ByteBuffer &contents)
 
 	int clientlen=sizeof(_address);
     sendto(*_sock, sendMe.contents(), (int)sendMe.size(), 0, (struct sockaddr*)&_address,clientlen);
+}
+
+void GameClient::SpawnTroop( int rows, int columns,WhatToSet typeToSet )
+{
+	for (int derp=0;derp < 2;derp++)
+	{
+		for (int i=0;i<rows;i++)
+		{
+			for (int j=0;j<columns;j++)
+			{
+				byte personData[243];
+				memcpy(personData,rawData,sizeof(personData));
+				int personNumber = (i*columns)+j;
+				stringstream personName;
+				switch (typeToSet)
+				{
+				case SET_HATS:
+					personName << "Hat";
+					break;
+				case SET_FACES:
+					personName << "Face";
+					break;
+				case SET_GLASSES:
+					personName << "Glasses";
+					break;
+				}
+				if (derp == 0)
+				{
+					personName << "Guy";
+				}
+				else
+				{
+					personName << "Gal";
+				}
+				personName << dec << personNumber;
+
+				memcpy(&personData[0x6A],personName.str().c_str(),personName.str().size()+1);
+				double personX,personY,personZ;
+				personX = 27800 - (200*j);
+				personY = -5;
+				personZ = (-11700) - (200*(i+rows*derp));
+				memcpy(&personData[0xC1],&personX,sizeof(personX));
+				memcpy(&personData[0xC9],&personY,sizeof(personY));
+				memcpy(&personData[0xD1],&personZ,sizeof(personZ));
+				uint16 personHalfObjId = 6400 + random(0,59135);
+				memcpy(&personData[0xF1],&personHalfObjId,sizeof(personHalfObjId));
+
+				byte *rawPointer = &personData[0xAF];
+
+				RsiData theRsiData(rawPointer);
+				theRsiData.setSex(derp);
+				theRsiData.ToBytes(rawPointer);
+
+				cout << "Before setting values " << Bin2Hex(rawPointer,sizeof(uint16)+sizeof(uint64)+sizeof(uint32)) << endl;
+				theRsiData.setShirt(0);
+				theRsiData.setHair(0);
+				theRsiData.setHairColor(0);
+				theRsiData.setSkinTone(0);
+				theRsiData.ToBytes(rawPointer);
+				cout << "After setting values " << Bin2Hex(rawPointer,sizeof(uint16)+sizeof(uint64)+sizeof(uint32)) << endl;*/
+				switch (typeToSet)
+				{
+				case SET_HATS:
+					theRsiData.setHat(personNumber);
+					break;
+				case SET_FACES:
+					theRsiData.setFace(personNumber);
+					break;
+				case SET_GLASSES:
+					theRsiData.setGlasses(personNumber);
+					break;
+				}
+				theRsiData.ToBytes(rawPointer);
+
+				Sleep(100);
+				Send(ByteBuffer(personData,sizeof(personData)));
+			}
+		}
+	}
 }

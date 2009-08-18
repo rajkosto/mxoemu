@@ -72,7 +72,8 @@ private:
 		{
 			SET_HATS,
 			SET_FACES,
-			SET_GLASSES
+			SET_GLASSES,
+			SET_HAIRS
 		}WhatToSet;
 
 		void SpawnTroop(int rows, int columns,WhatToSet typeToSet);

@@ -175,6 +175,10 @@ static inline void xchg32 (void *a, void *b)
 }
 #endif
 
+/// Given a number of bits, return how many bytes are needed to represent that.
+#define BITS_TO_BYTES(x) (((x)+7)>>3)
+#define BYTES_TO_BITS(x) ((x)<<3)
+
 #include <string>
 #include <list>
 #include <map>

@@ -131,6 +131,16 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 				else {} //WTF
 			}
 
+			loc = contents.find( "SpawnHairs", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(4,8,SET_HAIRS);
+				}
+				else {} //WTF
+			}
+
 			/*
 			loc = contents.find( "Move", 0 );
 			if( loc != std::string::npos ) 
@@ -292,6 +302,9 @@ void GameClient::SpawnTroop( int rows, int columns,WhatToSet typeToSet )
 				case SET_GLASSES:
 					personName << "Glasses";
 					break;
+				case SET_HAIRS:
+					personName << "Hair";
+					break;
 				}
 				if (derp == 0)
 				{
@@ -349,6 +362,10 @@ void GameClient::SpawnTroop( int rows, int columns,WhatToSet typeToSet )
 				case SET_GLASSES:
 					theRsiData.setHair(5);
 					theRsiData.setGlasses(personNumber);
+					break;
+				case SET_HAIRS:
+					theRsiData.setGlasses(0);
+					theRsiData.setHair(personNumber);
 					break;
 				}
 				theRsiData.ToBytes(rawPointer);

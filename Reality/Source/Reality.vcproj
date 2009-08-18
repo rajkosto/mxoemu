@@ -348,6 +348,14 @@
 			Name="Common"
 			>
 			<File
+				RelativePath=".\BitStream.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\BitStream.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Common.h"
 				>
 			</File>

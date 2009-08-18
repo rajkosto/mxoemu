@@ -91,6 +91,7 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 				if (PlayerSetupState==0x7F)
 					Send(ByteBuffer(rawData,sizeof(rawData)));
 				else {} //WTF
+				return;
 			}
 
 			loc = contents.find( "Spawnanother", 0 );
@@ -99,6 +100,7 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 				if (PlayerSetupState==0x7F)
 					Send(ByteBuffer(rawData2,sizeof(rawData2)));
 				else {} //WTF
+				return;
 			}
 
 			loc = contents.find( "SpawnHats", 0 );
@@ -109,6 +111,7 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 					SpawnTroop(8,8,SET_HATS);
 				}
 				else {} //WTF
+				return;
 			}
 
 			loc = contents.find( "SpawnFaces", 0 );
@@ -119,6 +122,7 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 					SpawnTroop(4,8,SET_FACES);
 				}
 				else {} //WTF
+				return;
 			}
 
 			loc = contents.find( "SpawnGlasses", 0 );
@@ -129,6 +133,18 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 					SpawnTroop(4,8,SET_GLASSES);
 				}
 				else {} //WTF
+				return;
+			}
+
+			loc = contents.find( "SpawnHairColors", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(4,8,SET_HAIRCOLORS);
+				}
+				else {} //WTF
+				return;
 			}
 
 			loc = contents.find( "SpawnHairs", 0 );
@@ -139,6 +155,150 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 					SpawnTroop(4,8,SET_HAIRS);
 				}
 				else {} //WTF
+				return;
+			}
+
+			loc = contents.find( "SpawnFacialDetailColors", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(1,8,SET_FACIALDETAILCOLORS);
+				}
+				else {} //WTF
+				return;
+			}
+
+			loc = contents.find( "SpawnFacialDetails", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(2,8,SET_FACIALDETAILS);
+				}
+				else {} //WTF
+				return;
+			}
+
+			loc = contents.find( "SpawnLeggings", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(2,8,SET_LEGGINGS);
+				}
+				else {} //WTF
+				return;
+			}
+
+			loc = contents.find( "SpawnShirtColors", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(8,8,SET_SHIRTCOLORS);
+				}
+				else {} //WTF
+				return;
+			}
+
+			loc = contents.find( "SpawnShirts", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(4,8,SET_SHIRTS);
+				}
+				else {} //WTF
+				return;
+			}
+
+			loc = contents.find( "SpawnPantsColors", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(4,8,SET_PANTSCOLORS);
+				}
+				else {} //WTF
+				return;
+			}
+
+			loc = contents.find( "SpawnCoatColors", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(4,8,SET_COATCOLORS);
+				}
+				else {} //WTF
+				return;
+			}
+
+			loc = contents.find( "SpawnCoats", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(8,8,SET_COATS);
+				}
+				else {} //WTF
+				return;
+			}
+
+			loc = contents.find( "SpawnPants", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(4,8,SET_PANTS);
+				}
+				else {} //WTF
+				return;
+			}
+
+			loc = contents.find( "SpawnShoes", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(8,8,SET_SHOES);
+				}
+				else {} //WTF
+				return;
+			}
+
+			loc = contents.find( "SpawnGloves", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(8,8,SET_GLOVES);
+				}
+				else {} //WTF
+				return;
+			}
+
+			loc = contents.find( "SpawnSkinTones", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(4,8,SET_SKINTONES);
+				}
+				else {} //WTF
+				return;
+			}
+
+			loc = contents.find( "SpawnTattoos", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(1,8,SET_TATTOOS);
+				}
+				else {} //WTF
+				return;
 			}
 
 			/*
@@ -212,20 +372,23 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 				byte *rawPointer = &GAMEResponseTo6_1Modified[0x80];
 
 				//load
-				memset(rawPointer,0,13);
-				RsiData playerRsi(rawPointer);
+				RsiDataMale playerRsi; //change this to RsiDataFemale if you want a girl
+				playerRsi.FromBytes(rawPointer,13);
 				//read/modify
-				playerRsi.setSex(0);
-				//no idea what these do
-				playerRsi.setShirt(0);
-				playerRsi.setUnknown1(1); //seems to be full body suits
-				playerRsi.setUnknown2(0);
-				playerRsi.setUnknown3(0);				
-				playerRsi.setBody(1);
-				playerRsi.setHat(10);
-				playerRsi.setPants(10);
+				//read RsiData.h for a list of all the parameters
+				playerRsi["Sex"] = 0; //also change this to 1 if you want a girl
+				playerRsi["Shirt"] = 2;	
+				playerRsi["ShirtColor"] = 14;
+				playerRsi["Body"] = 2;
+				playerRsi["Hat"] = 10;
+				playerRsi["Pants"] = 2;
+				playerRsi["PantsColor"] = 13;
+				playerRsi["Hair"] = 5;
+				playerRsi["Glasses"] = 7;
+				playerRsi["Coat"] = 3;
+				playerRsi["CoatColor"] = 10;
 				//save
-				playerRsi.ToBytes(rawPointer);
+				playerRsi.ToBytes(rawPointer,13);
 
 				Send(ByteBuffer(GAMEResponseTo6_1Modified,sizeof(GAMEResponseTo6_1Modified)));
 				Send(ByteBuffer(GAMEResponseTo6_2,sizeof(GAMEResponseTo6_2)));
@@ -305,6 +468,48 @@ void GameClient::SpawnTroop( int rows, int columns,WhatToSet typeToSet )
 				case SET_HAIRS:
 					personName << "Hair";
 					break;
+				case SET_SHIRTS:
+					personName << "Shirt";
+					break;
+				case SET_FACIALDETAILS:
+					personName << "FacialDetail";
+					break;
+				case SET_LEGGINGS:
+					personName << "Leggings";
+					break;
+				case SET_SHIRTCOLORS:
+					personName << "ShirtColor";
+					break;
+				case SET_PANTSCOLORS:
+					personName << "PantsColor";
+					break;
+				case SET_COATS:
+					personName << "Coat";
+					break;
+				case SET_PANTS:
+					personName << "Pants";
+					break;
+				case SET_SHOES:
+					personName << "Shoes";
+					break;
+				case SET_GLOVES:
+					personName << "Gloves";
+					break;
+				case SET_COATCOLORS:
+					personName << "CoatColor";
+					break;
+				case SET_HAIRCOLORS:
+					personName << "HairColor";
+					break;
+				case SET_SKINTONES:
+					personName << "SkinTone";
+					break;
+				case SET_TATTOOS:
+					personName << "Tattoo";
+					break;
+				case SET_FACIALDETAILCOLORS:
+					personName << "FacialDetailColor";
+					break;
 				}
 				if (derp == 0)
 				{
@@ -329,46 +534,128 @@ void GameClient::SpawnTroop( int rows, int columns,WhatToSet typeToSet )
 
 				byte *rawPointer = &personData[0xAF];
 
-				RsiData theRsiData(rawPointer);
-				theRsiData.setSex(derp);
-				theRsiData.setBody(1);
-				theRsiData.setHat(0);
-				theRsiData.setFace(0);
-				theRsiData.setUnknown1(0);
-				theRsiData.setShirt(0);
-				theRsiData.setCoat(0);
-				theRsiData.setPants(0);
-				theRsiData.setShoes(0);
-				theRsiData.setGloves(0);
-				theRsiData.setGlasses(0);
-				theRsiData.setHair(0);
-				theRsiData.setFacialDetail(0);
-				theRsiData.setShirtColor(0);
-				theRsiData.setPantsColor(0);
-				theRsiData.setCoatColor(0);
-				theRsiData.setHairColor(0);
-				theRsiData.setSkinTone(0);
-				theRsiData.setTattoo(0);
-				theRsiData.setFacialDetailColor(0);
+				shared_ptr<RsiData> genderSpecificRsiData;
+				if (derp == 0)
+				{
+					genderSpecificRsiData.reset(new RsiDataMale());
+				}
+				else if (derp == 1)
+				{
+					genderSpecificRsiData.reset(new RsiDataFemale());
+				}
+
+				RsiData &theRsiData = *genderSpecificRsiData;
+
+				theRsiData.FromBytes(rawPointer,13);
+				theRsiData["Sex"] = derp;
+				theRsiData["Body"] = 1;
+				theRsiData["Hat"] = 0;
+				theRsiData["Face"] = 0;
+				theRsiData["Shirt"] = 0;
+				theRsiData["Coat"] = 0;
+				theRsiData["Pants"] = 0;
+				theRsiData["Shoes"] = 0;
+				theRsiData["Gloves"] = 0;
+				theRsiData["Glasses"] = 0;
+				theRsiData["Hair"] = 0;
+				theRsiData["FacialDetail"] = 0;
+				theRsiData["ShirtColor"] = 0;
+				theRsiData["PantsColor"] = 0;
+				theRsiData["CoatColor"] = 0;
+				theRsiData["HairColor"] = 0;
+				theRsiData["SkinTone"] = 0;
+				theRsiData["Tattoo"] = 0;
+				theRsiData["FacialDetailColor"] = 0;
 
 				switch (typeToSet)
 				{
 				case SET_HATS:
-					theRsiData.setHat(personNumber);
+					theRsiData["Hat"] = personNumber;
 					break;
 				case SET_FACES:
-					theRsiData.setFace(personNumber);
+					theRsiData["Face"] = personNumber;
 					break;
 				case SET_GLASSES:
-					theRsiData.setHair(5);
-					theRsiData.setGlasses(personNumber);
+					theRsiData["Hair"] = 5;
+					theRsiData["Glasses"] = personNumber;
 					break;
 				case SET_HAIRS:
-					theRsiData.setGlasses(0);
-					theRsiData.setHair(personNumber);
+					theRsiData["Glasses"] = 0;
+					theRsiData["Hair"] = personNumber;
+					break;
+				case SET_SHIRTS:
+					theRsiData["Coat"] = 0;
+					theRsiData["Shirt"] = personNumber;
+					break;
+				case SET_FACIALDETAILS:
+					theRsiData["Glasses"] = 0;
+					theRsiData["Hat"] = 0;
+					theRsiData["FacialDetail"] = personNumber;
+					break;
+				case SET_LEGGINGS:
+					theRsiData["Pants"] = 0;
+					theRsiData["Shoes"] = 0;
+					if (derp == 1) // cant do this for guys, invalid var
+						theRsiData["Leggings"] = personNumber;
+					break;
+				case SET_SHIRTCOLORS:
+					theRsiData["Coat"] = 0;
+					theRsiData["Shirt"] = 2;
+					theRsiData["ShirtColor"] = personNumber;
+					break;
+				case SET_PANTSCOLORS:
+					theRsiData["Coat"] = 0;
+					theRsiData["Shirt"] = 0;
+					theRsiData["Pants"] = 1;
+					theRsiData["PantsColor"] = personNumber;
+					break;
+				case SET_COATS:
+					theRsiData["Coat"] = personNumber;
+					break;
+				case SET_PANTS:
+					theRsiData["Coat"] = 0;
+					theRsiData["Pants"] = personNumber;
+					break;
+				case SET_SHOES:
+					theRsiData["Shirt"] = 0;
+					theRsiData["Coat"] = 0;
+					theRsiData["Shoes"] = personNumber;
+					break;
+				case SET_GLOVES:
+					theRsiData["Shirt"] = 0;
+					theRsiData["Coat"] = 0;
+					theRsiData["Gloves"] = personNumber;
+					break;
+				case SET_COATCOLORS:
+					theRsiData["Coat"] = 1;
+					theRsiData["CoatColor"] = personNumber;
+					break;
+				case SET_HAIRCOLORS:
+					theRsiData["Glasses"] = 0;
+					theRsiData["Hair"] = 1;
+					theRsiData["HairColor"] = personNumber;
+					break;
+				case SET_SKINTONES:
+					theRsiData["Pants"] = 0;
+					theRsiData["Coat"] = 0;
+					theRsiData["Shirt"] = 0;
+					theRsiData["SkinTone"] = personNumber;
+					break;
+				case SET_TATTOOS:
+					theRsiData["Coat"] = 0;
+					theRsiData["Shirt"] = 0;
+					theRsiData["Pants"] = 0;
+					theRsiData["SkinTone"] = 1;
+					theRsiData["Tattoo"] = personNumber;
+					break;
+				case SET_FACIALDETAILCOLORS:
+					theRsiData["Glasses"] = 0;
+					theRsiData["Hat"] = 0;
+					theRsiData["FacialDetail"] = 10;
+					theRsiData["FacialDetailColor"] = personNumber;
 					break;
 				}
-				theRsiData.ToBytes(rawPointer);
+				theRsiData.ToBytes(rawPointer,13);
 
 				Sleep(100);
 				Send(ByteBuffer(personData,sizeof(personData)));

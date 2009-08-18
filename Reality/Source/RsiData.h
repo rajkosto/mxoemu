@@ -19,92 +19,79 @@
 //
 // *************************************************************************************************
 
-#ifndef RSIDATA_H
-#define RSIDATA_H
+#ifndef MXOSIM_RSIDATA_H
+#define MXOSIM_RSIDATA_H
 
-#include "Common.h"
+#include "BitVarStream.h"
 
-//females are slightly different, hair is shifted left by 1 and so
-class RsiData
+//values that are the same for both genders
+class RsiData : public BitVarStream
 {
 public:
-	RsiData() : firstPair(0), secondPair(0), thirdPair(0) {}
-	RsiData(const byte* rsiDataBytes)
+	RsiData()
 	{
-		FromBytes(rsiDataBytes);
+		AddVariableDef("Sex",1);
+		AddVariableDef("Body",2);
+		AddVariableDef("Hat",6);
+		AddVariableDef("Face",5);
+		AddSkipBitsDef(1); //unknown, doesnt seem to change anything, definately not part of FACE
+		AddVariableDef("Shirt",5);
 	}
 	~RsiData() {}
-	void FromBytes(const byte* rsiDataBytes)
+};
+
+class RsiDataMale : public RsiData
+{
+public:
+	RsiDataMale()
 	{
-		const byte* dataBytesLoc = rsiDataBytes;
+		AddVariableDef("Coat",6);
+		AddVariableDef("Pants",5);
+		AddVariableDef("Shoes",6);
+		AddVariableDef("Gloves",5);
 
-		memcpy(&firstPair,dataBytesLoc,sizeof(firstPair));
-		firstPair = swap16(firstPair);
-		dataBytesLoc += sizeof(firstPair);
-
-		memcpy(&secondPair,dataBytesLoc,sizeof(secondPair));
-		secondPair = swap64(secondPair);
-		dataBytesLoc += sizeof(secondPair);
-
-		
-		memcpy(&thirdPair,dataBytesLoc,sizeof(thirdPair));
-		thirdPair = swap32(thirdPair);
-		dataBytesLoc += sizeof(thirdPair);
+		AddVariableDef("Glasses",5);
+		AddVariableDef("Hair",5);
+		AddVariableDef("FacialDetail",4);
+		AddVariableDef("ShirtColor",6);
+		AddVariableDef("PantsColor",5);
+		AddVariableDef("CoatColor",5);
+		AddSkipBitsDef(8); //unknown2
+		AddVariableDef("HairColor",5);
+		AddVariableDef("SkinTone",5);
+		AddSkipBitsDef(2); //these are supposed to go with tattoo, but they only defined textures for the first 8
+		AddVariableDef("Tattoo",3);
+		AddVariableDef("FacialDetailColor",3);
 	}
-	uint8 ToBytes(byte *rsiDataBytes) const
+	~RsiDataMale() {}
+};
+
+class RsiDataFemale : public RsiData
+{
+public:
+	RsiDataFemale()
 	{
-		byte* dataBytesLoc = rsiDataBytes;
+		AddVariableDef("Coat",5);
+		AddVariableDef("Pants",5);
+		AddVariableDef("Shoes",5);
+		AddVariableDef("Gloves",6);
 
-		uint16 swappedFirstPair = swap16(firstPair);
-		memcpy(dataBytesLoc,&swappedFirstPair,sizeof(swappedFirstPair));
-		dataBytesLoc += sizeof(swappedFirstPair);
 
-		uint64 swappedSecondPair = swap64(secondPair);
-		memcpy(dataBytesLoc,&swappedSecondPair,sizeof(swappedSecondPair));
-		dataBytesLoc += sizeof(swappedSecondPair);
-
-		uint32 swappedThirdPair = swap32(thirdPair);
-		memcpy(dataBytesLoc,&swappedThirdPair,sizeof(swappedThirdPair));
-		dataBytesLoc += sizeof(swappedThirdPair);
-
-		return uint8(dataBytesLoc - rsiDataBytes);
+		AddVariableDef("Glasses",5);
+		AddVariableDef("Hair",5);
+		AddVariableDef("Leggings",4);
+		AddVariableDef("FacialDetail",4);
+		AddVariableDef("ShirtColor",6);
+		AddVariableDef("PantsColor",5);
+		AddVariableDef("CoatColor",5);
+		AddSkipBitsDef(8); //unknown2
+		AddVariableDef("HairColor",5);
+		AddVariableDef("SkinTone",5);
+		AddSkipBitsDef(2); //these are supposed to go with tattoo, but they only defined textures for the first 8
+		AddVariableDef("Tattoo",3);
+		AddVariableDef("FacialDetailColor",3);
 	}
-
-//----MACRO MAGIC----
-#define EXPAND_PARAMETER(paramName,pairVal,maskVal,shiftVal) \
-uint8 get ## paramName () const { return (pairVal & maskVal) >> shiftVal; } \
-void set ## paramName (const uint8 newVal) { pairVal &= ~(maskVal); pairVal |= (uint64(newVal) << shiftVal) & maskVal; }
-//----MACRO MAGIC----
-
-	EXPAND_PARAMETER(Sex,firstPair,		0x8000,15)
-	EXPAND_PARAMETER(Body,firstPair,	0x6000,13)
-	EXPAND_PARAMETER(Hat,firstPair,		0x1F80,7)
-	EXPAND_PARAMETER(Face,firstPair,	0x007C,2)
-	EXPAND_PARAMETER(Unknown1,firstPair,0x0003,0)
-
-	EXPAND_PARAMETER(Shirt,secondPair,			0xF000000000000000ULL,60)
-	EXPAND_PARAMETER(Coat,secondPair,			0x0FC0000000000000ULL,54)
-	EXPAND_PARAMETER(Pants,secondPair,			0x003E000000000000ULL,49)
-	EXPAND_PARAMETER(Shoes,secondPair,			0x0001F80000000000ULL,43)
-	EXPAND_PARAMETER(Gloves,secondPair,			0x000007C000000000ULL,38)
-	EXPAND_PARAMETER(Glasses,secondPair,		0x0000003E00000000ULL,33)
-	EXPAND_PARAMETER(Hair,secondPair,			0x00000001F0000000ULL,28)
-	EXPAND_PARAMETER(FacialDetail,secondPair,	0x000000000F000000ULL,24)
-	EXPAND_PARAMETER(ShirtColor,secondPair,		0x0000000000FC0000ULL,18)
-	EXPAND_PARAMETER(PantsColor,secondPair,		0x000000000003E000ULL,13)
-	EXPAND_PARAMETER(CoatColor,secondPair,		0x0000000000001F00ULL,8)
-	EXPAND_PARAMETER(Unknown2,secondPair,		0x00000000000000FFULL,0)
-
-	EXPAND_PARAMETER(HairColor,thirdPair,			0xF8000000,27)
-	EXPAND_PARAMETER(SkinTone,thirdPair,			0x07C00000,22)
-	EXPAND_PARAMETER(Unknown3,thirdPair,			0x00300000,20)
-	EXPAND_PARAMETER(Tattoo,thirdPair,				0x000E0000,17)
-	EXPAND_PARAMETER(FacialDetailColor,thirdPair,	0x0001C000,14)
-
-private:
-	uint16 firstPair;
-	uint64 secondPair;
-	uint32 thirdPair;
+	~RsiDataFemale() {}
 };
 
 #endif

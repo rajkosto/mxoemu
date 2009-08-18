@@ -356,6 +356,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\BitVarStream.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\BitVarStream.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Common.h"
 				>
 			</File>
@@ -531,10 +539,6 @@
 		<Filter
 			Name="Tests"
 			>
-			<File
-				RelativePath=".\RsiDataTest.h"
-				>
-			</File>
 		</Filter>
 	</Files>
 	<Globals>

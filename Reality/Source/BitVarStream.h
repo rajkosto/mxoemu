@@ -19,25 +19,38 @@
 //
 // *************************************************************************************************
 
-//include a unit test at the very top if you want to run it
+#ifndef MXOSIM_BITVARSTREAM_H
+#define MXOSIM_BITVARSTREAM_H
 
-#ifndef UNITTEST
 #include "Common.h"
-#include "Master.h"
-#include "Util.h"
-#include "Crypto.h"
-#include <iostream>
-#endif
 
-int main()
+class BitVarStream
 {
-#ifndef UNITTEST
-	Master::getSingleton().Run();
-#else
-	runTest();
-	for(;;){Sleep(10000);}
+public:
+	class NotEnoughBits : public exception {};
+	class DataOverflow : public exception {};
+	class InvalidVar : public exception {};
+
+	BitVarStream();
+	~BitVarStream() {}
+	void FromBytes(const byte* dataBuf,const uint32 dataLen);
+	uint8 ToBytes(byte *rsiDataBytes,const uint32 maxLen) const;
+	uint8& operator[] (const string& nameIndex);
+	void ClearData();
+protected:
+	void ClearVariableDefs();
+	void AddVariableDef(const string& name,uint8 numBits);
+	void AddSkipBitsDef(uint8 numBits);
+private:
+	typedef struct  
+	{
+		string name;
+		uint8 numBits;
+	} varDef;
+	typedef vector<varDef> vectVarDefs;
+	vectVarDefs varDefs;
+	typedef map<string,uint8> varData;
+	varData varValues;
+};
+
 #endif
-
-	return 0;
-}
-

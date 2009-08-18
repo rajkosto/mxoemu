@@ -1,53 +1,22 @@
+//include a unit test at the very top if you want to run it
+//#include "RsiDataTest.h"
+
+#ifndef UNITTEST
 #include "Common.h"
 #include "Master.h"
 #include "Util.h"
 #include "Crypto.h"
 #include <iostream>
-
-/*unsigned char key[16] =
-{
-	0x44, 0xC4, 0x97, 0x9C, 0x04, 0x24, 0x1C, 0x05, 0xCD, 0xCD, 0x32, 0xA4, 0x72, 0xBA, 0xC6, 0x50
-};
-
-unsigned char cryptedIV[16] =
-{
-	0x05, 0xB2, 0x93, 0x73, 0xFC, 0xF2, 0xF3, 0x16, 0x58, 0x06, 0x9F, 0x18, 0xF6, 0x92, 0xDA, 0xB1 
-} ;
-
-
-unsigned char cipherText[] =
-{
-	0x29, 0x62, 0xF4, 0x51, 0xCB, 0x59, 0xF1, 0xFB, 0xE0, 0xDB, 0xE0, 0x72, 0xEF, 0x70, 0x0D, 0x1B, 
-	0x0A, 0x5C, 0x6A, 0x81, 0x1B, 0x74, 0xED, 0xA3, 0xF5, 0xA7, 0xB5, 0xCB, 0x0C, 0x6D, 0x19, 0xC3, 
-	0x5D, 0x59, 0x3E, 0x5F, 0x7E, 0xDC, 0x07, 0x4B, 0xF4, 0x2E, 0xEE, 0x36, 0x66, 0xF8, 0x87, 0x93, 
-	0xBC, 0x55, 0x77, 0x05, 0x4C, 0x9C, 0x00, 0x09, 0xB5, 0x00, 0x45, 0x31, 0xC6, 0x89, 0x76, 0x2A, 
-	0xE1, 0x79, 0xB5, 0x16, 0x6B, 0xDE, 0xDA, 0x49, 0x89, 0xD4, 0xB3, 0x91, 0x7D, 0x4D, 0x29, 0xA6
-} ;*/
-
+#endif
 
 int main()
 {
-/*	unsigned char bullshit[16];
-	memset(bullshit,0,sizeof(bullshit));
-	string hexadec;
-	CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption twofishDec(key,sizeof(key),bullshit);
-	string ivInput((const char*)cryptedIV,sizeof(cryptedIV));
-	string ivOutput;
-	CryptoPP::StringSource(ivInput, true, new CryptoPP::StreamTransformationFilter(twofishDec, new CryptoPP::StringSink(ivOutput),CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme::NO_PADDING));
-	ConvertBytesintoHex((const byte *)ivOutput.data(),hexadec,ivOutput.size(),false);
-	cout << "IV: |" << hexadec << "|" << endl;
-
-	CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption TFDecrypt(key, sizeof(key),(const byte*)ivOutput.data());
-	string zeInput((const char*)cipherText,sizeof(cipherText));
-	string zeOutput;
-	CryptoPP::StringSource(zeInput, true, new CryptoPP::StreamTransformationFilter(TFDecrypt, new CryptoPP::StringSink(zeOutput),CryptoPP::BlockPaddingSchemeDef::BlockPaddingScheme::NO_PADDING));
-
-	ConvertBytesintoHex((const byte *)zeOutput.data(),hexadec,zeOutput.size(),false);
-	cout << "|" << hexadec << "|" << endl;*/
-
+#ifndef UNITTEST
 	Master::getSingleton().Run();
-
-//	for(;;){}
+#else
+	runTest();
+	for(;;){Sleep(10000);}
+#endif
 
 	return 0;
 }

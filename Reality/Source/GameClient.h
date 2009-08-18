@@ -49,7 +49,7 @@ class GameClient
 		uint32 tick;
 
 		//Player name lol
-		std::string name;
+		string name;
 
 		CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption *TFDecrypt;
 		CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption *TFEncrypt;

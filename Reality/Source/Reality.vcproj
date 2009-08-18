@@ -520,6 +520,14 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="Tests"
+			>
+			<File
+				RelativePath=".\RsiDataTest.h"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

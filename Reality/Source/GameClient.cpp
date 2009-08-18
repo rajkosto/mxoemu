@@ -52,9 +52,9 @@ GameClient::GameClient(struct sockaddr_in address, SOCKET *sock)
 	Handled_Session=false;
 
 	uint32 random = sRand.randInt(999999);
-	std::stringstream lol;
-	lol << "AgentNum" << std::setfill('0') << std::setw(6) << random;
-	name = std::string(lol.str().c_str(),lol.str().length());
+	stringstream lol;
+	lol << "AgentNum" << random;
+	name = lol.str();
 }
 
 GameClient::~GameClient()
@@ -183,22 +183,41 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 			{
 				PlayerSetupState = 0x1F;
 
-				ByteBuffer response;
-				response.append(GAMEResponseTo6_1_header,sizeof(GAMEResponseTo6_1_header));
-				response.append(name);
+				byte GAMEResponseTo6_1Modified[200];
+				memcpy(GAMEResponseTo6_1Modified,GAMEResponseTo6_1,sizeof(GAMEResponseTo6_1Modified));
 
-				byte GameResponseFooterModified[101];
-				memcpy(GameResponseFooterModified,GAMEResponseTo6_1_footer,sizeof(GameResponseFooterModified));
+				byte *nameInPacket = &GAMEResponseTo6_1Modified[0x55];
+				memset(nameInPacket,0,32);
+				memcpy(nameInPacket,name.c_str(),name.length()+1);
+
 				double playerX,playerY,playerZ;
 				playerX = 27800;
 				playerY = -5;
 				playerZ = -11700;
-				memcpy(&GameResponseFooterModified[0x2F],&playerX,sizeof(playerX));
-				memcpy(&GameResponseFooterModified[0x37],&playerY,sizeof(playerY));
-				memcpy(&GameResponseFooterModified[0x3F],&playerZ,sizeof(playerZ));
-				response.append(GameResponseFooterModified,sizeof(GameResponseFooterModified));
+				memcpy(&GAMEResponseTo6_1Modified[0x92],&playerX,sizeof(playerX));
+				memcpy(&GAMEResponseTo6_1Modified[0x9A],&playerY,sizeof(playerY));
+				memcpy(&GAMEResponseTo6_1Modified[0xA2],&playerZ,sizeof(playerZ));
 
-				Send(response);
+				//change rsi data
+				byte *rawPointer = &GAMEResponseTo6_1Modified[0x80];
+
+				//load
+				memset(rawPointer,0,13);
+				RsiData playerRsi(rawPointer);
+				//read/modify
+				playerRsi.setSex(0);
+				//no idea what these do
+				playerRsi.setShirt(0);
+				playerRsi.setUnknown1(1); //seems to be full body suits
+				playerRsi.setUnknown2(0);
+				playerRsi.setUnknown3(0);				
+				playerRsi.setBody(1);
+				playerRsi.setHat(10);
+				playerRsi.setPants(10);
+				//save
+				playerRsi.ToBytes(rawPointer);
+
+				Send(ByteBuffer(GAMEResponseTo6_1Modified,sizeof(GAMEResponseTo6_1Modified)));
 				Send(ByteBuffer(GAMEResponseTo6_2,sizeof(GAMEResponseTo6_2)));
 				Send(ByteBuffer(GAMEResponseTo6_4,sizeof(GAMEResponseTo6_4)));
 				Send(ByteBuffer(GAMEResponseTo6_6,sizeof(GAMEResponseTo6_6)));
@@ -299,15 +318,26 @@ void GameClient::SpawnTroop( int rows, int columns,WhatToSet typeToSet )
 
 				RsiData theRsiData(rawPointer);
 				theRsiData.setSex(derp);
-				theRsiData.ToBytes(rawPointer);
-
-				cout << "Before setting values " << Bin2Hex(rawPointer,sizeof(uint16)+sizeof(uint64)+sizeof(uint32)) << endl;
+				theRsiData.setBody(1);
+				theRsiData.setHat(0);
+				theRsiData.setFace(0);
+				theRsiData.setUnknown1(0);
 				theRsiData.setShirt(0);
+				theRsiData.setCoat(0);
+				theRsiData.setPants(0);
+				theRsiData.setShoes(0);
+				theRsiData.setGloves(0);
+				theRsiData.setGlasses(0);
 				theRsiData.setHair(0);
+				theRsiData.setFacialDetail(0);
+				theRsiData.setShirtColor(0);
+				theRsiData.setPantsColor(0);
+				theRsiData.setCoatColor(0);
 				theRsiData.setHairColor(0);
 				theRsiData.setSkinTone(0);
-				theRsiData.ToBytes(rawPointer);
-				cout << "After setting values " << Bin2Hex(rawPointer,sizeof(uint16)+sizeof(uint64)+sizeof(uint32)) << endl;*/
+				theRsiData.setTattoo(0);
+				theRsiData.setFacialDetailColor(0);
+
 				switch (typeToSet)
 				{
 				case SET_HATS:
@@ -317,6 +347,7 @@ void GameClient::SpawnTroop( int rows, int columns,WhatToSet typeToSet )
 					theRsiData.setFace(personNumber);
 					break;
 				case SET_GLASSES:
+					theRsiData.setHair(5);
 					theRsiData.setGlasses(personNumber);
 					break;
 				}

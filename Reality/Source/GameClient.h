@@ -24,6 +24,7 @@
 
 #include "Crypto.h"
 #include "SequencedPacket.h"
+#include "Sockets.h"
 
 class GameClient
 {

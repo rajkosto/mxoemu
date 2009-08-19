@@ -24,7 +24,9 @@
 
 #if PLATFORM == PLATFORM_WIN32
     #include <winsock2.h>
+	#ifndef EWOULDBLOCK
     #define EWOULDBLOCK WSAEWOULDBLOCK
+	#endif
 #else // Berkley
     #include <sys/socket.h>
     #include <sys/select.h>
@@ -36,7 +38,7 @@
     #include <string.h>
     #include <sys/time.h>
 	#include <errno.h>
-    #define SOCKET int
+    typedef int SOCKET;
     #define INVALID_SOCKET -1
     #define SOCKET_ERROR -1
 //    #define FD_SET fd_set

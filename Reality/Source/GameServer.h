@@ -24,6 +24,7 @@
 
 #include "GameClient.h"
 #include "Singleton.h"
+#include "Sockets.h"
 
 #define RECV_BUFFER_SIZE 1024
 

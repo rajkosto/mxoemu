@@ -56,7 +56,8 @@ public:
 		AddVariableDef("ShirtColor",6);
 		AddVariableDef("PantsColor",5);
 		AddVariableDef("CoatColor",5);
-		AddSkipBitsDef(8); //unknown2
+		AddVariableDef("ShoeColor",4);
+		AddVariableDef("GlassesColor",4);
 		AddVariableDef("HairColor",5);
 		AddVariableDef("SkinTone",5);
 		AddSkipBitsDef(2); //these are supposed to go with tattoo, but they only defined textures for the first 8
@@ -84,7 +85,8 @@ public:
 		AddVariableDef("ShirtColor",6);
 		AddVariableDef("PantsColor",5);
 		AddVariableDef("CoatColor",5);
-		AddSkipBitsDef(8); //unknown2
+		AddVariableDef("ShoeColor",4);
+		AddVariableDef("GlassesColor",4);
 		AddVariableDef("HairColor",5);
 		AddVariableDef("SkinTone",5);
 		AddSkipBitsDef(2); //these are supposed to go with tattoo, but they only defined textures for the first 8

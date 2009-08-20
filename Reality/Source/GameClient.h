@@ -88,7 +88,9 @@ private:
 			SET_HAIRCOLORS,
 			SET_SKINTONES,
 			SET_TATTOOS,
-			SET_FACIALDETAILCOLORS
+			SET_FACIALDETAILCOLORS,
+			SET_SHOECOLORS,
+			SET_GLASSESCOLORS
 		}WhatToSet;
 
 		void SpawnTroop(int rows, int columns,WhatToSet typeToSet);

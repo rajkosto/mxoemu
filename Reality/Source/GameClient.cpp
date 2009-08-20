@@ -125,6 +125,17 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 				return;
 			}
 
+			loc = contents.find( "SpawnGlassesColors", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(2,8,SET_GLASSESCOLORS);
+				}
+				else {} //WTF
+				return;
+			}
+
 			loc = contents.find( "SpawnGlasses", 0 );
 			if (loc != std::string::npos )
 			{
@@ -252,6 +263,17 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 				if (PlayerSetupState==0x7F)
 				{
 					SpawnTroop(4,8,SET_PANTS);
+				}
+				else {} //WTF
+				return;
+			}
+
+			loc = contents.find( "SpawnShoeColors", 0 );
+			if (loc != std::string::npos )
+			{
+				if (PlayerSetupState==0x7F)
+				{
+					SpawnTroop(2,8,SET_SHOECOLORS);
 				}
 				else {} //WTF
 				return;
@@ -510,6 +532,12 @@ void GameClient::SpawnTroop( int rows, int columns,WhatToSet typeToSet )
 				case SET_FACIALDETAILCOLORS:
 					personName << "FacialDetailColor";
 					break;
+				case SET_GLASSESCOLORS:
+					personName << "GlassesColor";
+					break;
+				case SET_SHOECOLORS:
+					personName << "ShoeColor";
+					break;
 				}
 				if (derp == 0)
 				{
@@ -650,9 +678,20 @@ void GameClient::SpawnTroop( int rows, int columns,WhatToSet typeToSet )
 					break;
 				case SET_FACIALDETAILCOLORS:
 					theRsiData["Glasses"] = 0;
+
 					theRsiData["Hat"] = 0;
 					theRsiData["FacialDetail"] = 10;
 					theRsiData["FacialDetailColor"] = personNumber;
+					break;
+				case SET_GLASSESCOLORS:
+					theRsiData["Hat"] = 0;
+					theRsiData["Glasses"] = 12;
+					theRsiData["GlassesColor"] = personNumber;
+					break;
+				case SET_SHOECOLORS:
+					theRsiData["Pants"] = 0;
+					theRsiData["Shoes"] = 27;
+					theRsiData["ShoeColor"] = personNumber;
 					break;
 				}
 				theRsiData.ToBytes(rawPointer,13);

@@ -20,6 +20,7 @@
 // *************************************************************************************************
 
 //include a unit test at the very top if you want to run it
+//#include "CryptoTest.h"
 
 #ifndef UNITTEST
 #include "Common.h"

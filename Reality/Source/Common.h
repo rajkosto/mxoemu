@@ -199,6 +199,8 @@ static inline void xchg32 (void *a, void *b)
 #endif
 #include <exception>
 #include <stdexcept>
+#include <algorithm>
+#include <numeric>
 
 #if COMPILER == COMPILER_INTEL
 #include <ext/hash_map>

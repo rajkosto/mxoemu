@@ -400,10 +400,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\MarginResponses.h"
-				>
-			</File>
-			<File
 				RelativePath=".\MarginRunnable.h"
 				>
 			</File>
@@ -453,6 +449,10 @@
 			</File>
 			<File
 				RelativePath=".\AuthSocket.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SignedDataStruct.h"
 				>
 			</File>
 			<File

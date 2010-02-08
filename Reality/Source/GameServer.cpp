@@ -133,8 +133,7 @@ void GameServer::Loop(void)
 			if (Client->IsValid() == false || (CurTime
 				- Client->LastActive()) >= 30)
 			{
-				DEBUG_LOG("Routine dead client removal [%s]",
-					Client->Address());
+				DEBUG_LOG("Routine dead client removal [%s]",Client->Address().c_str());
 				Clients.erase(i++);
 				delete Client;
 			}

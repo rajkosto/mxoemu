@@ -105,6 +105,19 @@ string Bin2Hex(const string &sourceStr,uint32 flags)
 	return Bin2Hex(sourceStr.data(),sourceStr.size(),flags);
 }
 
+std::string ClientVersionString(uint32 theVersion)
+{
+	uint16 versions[2];
+	memcpy(versions,&theVersion,sizeof(theVersion));
+	std::stringstream minorVersion;
+	minorVersion << versions[0];
+	std::string minorVersionReverse = minorVersion.str();
+	std::reverse(minorVersionReverse.begin(),minorVersionReverse.end());
+	std::stringstream versionStr;
+	versionStr << versions[1] << "." << minorVersionReverse;
+	return versionStr.str();
+}
+
 string XOR(string value,string key)
 {
 	string retval(value);

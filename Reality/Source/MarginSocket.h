@@ -32,10 +32,34 @@ class MarginSocket : public TCPVarLenSocket
 public:
 	MarginSocket(ISocketHandler& );
 	~MarginSocket();
+
+	uint32 GetSessionId() {return sessionId;}
+	uint64 GetCharUID() {return charId;};
+	uint32 GetWorldCharId() {return worldCharId;}
+	vector<byte> GetTwofishKey() 
+	{
+		vector<byte> tempVect(sizeof(twofishKey));
+		memcpy(&tempVect[0],&twofishKey[0],tempVect.size());
+		return tempVect;
+	}
+	void ForceDisconnect() {this->SetCloseAndDelete(true);}
+	bool UdpReady();
 private:
 	void ProcessData(const byte *buf,size_t len);
 	void SendCrypted(class EncryptedPacket &cryptedPacket);
-	string zeUsername;
+
+	void NewCharacterReply()
+	{
+		numCharacterReplies=0;
+	}
+	void SendCharacterReply(uint16 shortAfterId,bool lastPacket,uint8 opcode,ByteBuffer &theData);
+
+	uint32 m_userId;
+	string m_username;
+
+	string m_charName,m_firstName,m_lastName,m_background;
+
+	byte twofishKey[16];
 
 	typedef CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption Decryptor;
 	typedef CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption Encryptor;
@@ -43,8 +67,18 @@ private:
 	auto_ptr<Decryptor> TFDecrypt;
 	auto_ptr<Encryptor> TFEncrypt;
 
+	uint32 sessionId;
+	uint64 charId;
+
 	static const byte blankIV[16];
 	byte challenge[16];
+	byte weirdSequenceOfBytes[16];
+	string soeChatString;
+	uint8 numCharacterReplies;
+
+	uint32 worldCharId;
+
+	bool readyForUdp;
 };
 
 

@@ -29,6 +29,11 @@
 class GameClient
 {
 	private:
+		bool encryptionInitialized;
+		uint64 characterUID;
+		uint32 charWorldId;
+		uint32 sessionId;
+
 		// Valid Client + Anti-Flood bool
 		bool Valid_Client;
 		bool Handled_Session;
@@ -49,8 +54,15 @@ class GameClient
 		// Client tick count
 		uint32 tick;
 
-		//Player name lol
-		string name;
+		//Player info
+		string m_handle;
+		string m_firstName;
+		string m_lastName;
+		string m_background;
+
+		float m_x,m_y,m_z;
+
+		class MarginSocket *marginConn;
 
 		CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption *TFDecrypt;
 		CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption *TFEncrypt;
@@ -62,7 +74,12 @@ class GameClient
 
 		inline uint32 LastActive() { return _last_activity; }
 		inline bool IsValid() { return Valid_Client; }
-		char *Address() { return inet_ntoa(_address.sin_addr); }
+		string Address() 
+		{
+			stringstream addressStr;
+			addressStr << inet_ntoa(_address.sin_addr) << ":" << ntohs(_address.sin_port);
+			return addressStr.str();
+		}
 
 		void HandlePacket(char *pData, uint16 Length);
 		SequencedPacket Decrypt(char *pData, uint16 nLength);

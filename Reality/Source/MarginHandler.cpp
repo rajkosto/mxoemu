@@ -20,6 +20,8 @@
 // *************************************************************************************************
 
 #include "MarginHandler.h"
+#include "Common.h"
+#include "MarginSocket.h"
 
 MarginHandler::MarginHandler()
 :SocketHandler()
@@ -29,4 +31,44 @@ MarginHandler::MarginHandler()
 
 MarginHandler::~MarginHandler()
 {
+}
+
+MarginSocket *MarginHandler::FindByCharacterUID( uint64 charUID )
+{
+	for (socket_m::iterator it = m_sockets.begin(); it != m_sockets.end(); it++)
+	{
+		Socket *p = it->second;
+		if (p == NULL)
+			continue;
+		TcpSocket *tcpSock = dynamic_cast<TcpSocket *>(p);
+		if (tcpSock == NULL)
+			continue;
+		MarginSocket *margSock = dynamic_cast<MarginSocket *>(tcpSock);
+		if (margSock == NULL)
+			continue;
+
+		if (margSock->GetCharUID() == charUID)
+			return margSock;
+	}
+	return NULL;
+}
+
+class MarginSocket *MarginHandler::FindBySessionId( uint32 sessionId )
+{
+	for (socket_m::iterator it = m_sockets.begin(); it != m_sockets.end(); it++)
+	{
+		Socket *p = it->second;
+		if (p == NULL)
+			continue;
+		TcpSocket *tcpSock = dynamic_cast<TcpSocket *>(p);
+		if (tcpSock == NULL)
+			continue;
+		MarginSocket *margSock = dynamic_cast<MarginSocket *>(tcpSock);
+		if (margSock == NULL)
+			continue;
+
+		if (margSock->GetSessionId() == sessionId)
+			return margSock;
+	}
+	return NULL;
 }

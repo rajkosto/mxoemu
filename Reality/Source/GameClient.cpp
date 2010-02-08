@@ -29,11 +29,12 @@
 #include "EncryptedPacket.h"
 #include "SequencedPacket.h"
 #include "RsiData.h"
+#include "MarginSocket.h"
+#include "MarginServer.h"
+#include "Database/Database.h"
+#include "Log.h"
 
 #pragma pack(1)
-
-uint8 twofishkeyz[16] = {0x6C, 0xAB, 0x8E, 0xCC, 0xE7, 0x3C, 0x22, 0x47, 0xDB, 0xEB, 0xDE, 0x1A, 0xA8, 0xE7, 0x5F, 0xB8};
-
 
 GameClient::GameClient(struct sockaddr_in address, SOCKET *sock)
 {
@@ -43,30 +44,147 @@ GameClient::GameClient(struct sockaddr_in address, SOCKET *sock)
 	client_sequence = 0;
 	numPackets = 0;
 	PlayerSetupState = 0;
+	marginConn = NULL;
 
-	uint8 hax[CryptoPP::Twofish::BLOCKSIZE];
-	memset(hax,0,CryptoPP::Twofish::BLOCKSIZE);
-	TFDecrypt=new CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption(twofishkeyz, CryptoPP::Twofish::DEFAULT_KEYLENGTH, hax);
-	TFEncrypt=new CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption(twofishkeyz, CryptoPP::Twofish::DEFAULT_KEYLENGTH, hax);
+	TFDecrypt=NULL;
+	TFEncrypt=NULL;
+
 	Valid_Client=true;
 	Handled_Session=false;
-
-	uint32 random = sRand.randInt(999999);
-	stringstream lol;
-	lol << "AgentNum" << random;
-	name = lol.str();
+	encryptionInitialized = false;
 }
 
 GameClient::~GameClient()
 {
-	delete TFDecrypt;
-	delete TFEncrypt;
+	if (TFDecrypt != NULL)
+	{
+		delete TFDecrypt;
+		TFDecrypt = NULL;
+	}
+	if (TFEncrypt != NULL)
+	{
+		delete TFEncrypt;
+		TFEncrypt = NULL;
+	}
 }
 
 void GameClient::HandlePacket(char *pData, uint16 nLength)
 {
+	if (nLength < 1 || Valid_Client == false)
+		return;
+
 	_last_activity = getTime();
 	numPackets++;
+
+	if (encryptionInitialized == false && pData[0] == 0 && nLength == 43)
+	{
+		ByteBuffer packetData;
+		packetData.append(pData,nLength);
+		packetData.rpos(0x0B);
+		if (packetData.remaining() < sizeof(characterUID))
+		{
+			Valid_Client = false;
+			return;
+		}
+		packetData >> characterUID;
+		
+		//scope for auto_ptr
+		{
+			auto_ptr<QueryResult> result(sDatabase.Query("SELECT `handle`, `firstName`, `lastName`, `background`, `x`, `y`, `z` FROM `characters` WHERE `charId` = '%ull' LIMIT 1",characterUID) );
+			if (result.get() == NULL)
+			{
+				ERROR_LOG("InitialUDPPacket(%s): Character doesn't exist",Address().c_str());
+				Valid_Client = false;
+				return;
+			}
+
+			Field *field = result->Fetch();
+			m_handle = field[0].GetString();
+			m_firstName = field[1].GetString();
+			m_lastName = field[2].GetString();
+			m_background = field[3].GetString();
+			m_x = field[4].GetFloat();
+			m_y = field[5].GetFloat();
+			m_z = field[6].GetFloat();
+		}
+
+		marginConn = MarginServer::getSingleton().GetSocketByCharacterUID(characterUID);
+		if (marginConn == NULL)
+		{
+			ERROR_LOG("InitialUDPPacket(%s): Margin session not found",Address().c_str());
+			Valid_Client = false;
+			return;
+		}
+		sessionId = marginConn->GetSessionId();
+		charWorldId = marginConn->GetWorldCharId();
+
+		//initialize encryptors with key from margin
+		vector<byte> twofishKey = marginConn->GetTwofishKey();
+		vector<byte> twofishIV(CryptoPP::Twofish::BLOCKSIZE,0);
+		if (TFDecrypt!=NULL)
+			delete TFDecrypt;
+		if (TFEncrypt!=NULL)
+			delete TFEncrypt;
+
+		TFDecrypt=new CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption(&twofishKey[0], twofishKey.size(), &twofishIV[0]);
+		TFEncrypt=new CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption(&twofishKey[0], twofishKey.size(), &twofishIV[0]);
+
+		//now we can verify if session key in this packet is correct
+		packetData.rpos(packetData.size()-CryptoPP::Twofish::BLOCKSIZE);
+		if (packetData.remaining() < CryptoPP::Twofish::BLOCKSIZE)
+		{
+			//wat
+			Valid_Client=false;
+			marginConn->ForceDisconnect();
+			return;
+		}
+		vector<byte> encryptedSessionId(packetData.remaining());
+		packetData.read(&encryptedSessionId[0],encryptedSessionId.size());
+		string decryptedOutput;
+		CryptoPP::StringSource(string( (const char*)&encryptedSessionId[0],encryptedSessionId.size() ), true, 
+			new CryptoPP::StreamTransformationFilter(
+			*TFDecrypt, new CryptoPP::StringSink(decryptedOutput),
+			CryptoPP::BlockPaddingSchemeDef::NO_PADDING));
+		ByteBuffer decryptedData;
+		decryptedData.append(decryptedOutput.data(),decryptedOutput.size());
+		uint32 recoveredSessionId=0;
+		decryptedData >> recoveredSessionId;
+
+		if (recoveredSessionId != sessionId)
+		{
+			ERROR_LOG("InitialUDPPacket(%s): Session Key Mismatch",Address().c_str());
+			Valid_Client = false;
+			marginConn->ForceDisconnect();
+			return;
+		}
+
+		encryptionInitialized=true;
+
+		//send latency/loss calibration heartbeats
+		const int numberOfBeats = 5;
+		for (int i=0;i<numberOfBeats;i++)
+		{
+			ByteBuffer beatPacket;
+			for (int j=0;j<numberOfBeats;j++)
+			{
+				beatPacket << uint8(0);
+			}
+			beatPacket << uint16(swap16(numberOfBeats));
+
+			int clientlen=sizeof(_address);
+			sendto(*_sock, beatPacket.contents(), beatPacket.size(), 0, (struct sockaddr*)&_address, clientlen);
+		}
+
+		//notify margin that udp session is established
+		if (marginConn->UdpReady() == false)
+		{
+			ERROR_LOG("InitialUDPPacket(%s): Margin not ready for UDP connection",Address().c_str());
+			encryptionInitialized=false;
+			Valid_Client = false;
+			marginConn->ForceDisconnect();
+			return;
+		}
+	}
 
 	if (Handled_Session == true && pData[0] != 0x01) // Ping...just reply with the same thing
 	{
@@ -75,7 +193,7 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 	}
 	else
 	{
-		if (pData[0] == 0x01)
+		if (pData[0] == 0x01 && encryptionInitialized==true)
 		{
 			SequencedPacket packetData=Decrypt(&pData[1],nLength-1);
 			client_sequence = packetData.getLocalSeq();
@@ -337,12 +455,6 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 		{
 		case 1:
 			{
-				for (unsigned int i=0;i<5;i++)
-				{
-					int clientlen=sizeof(_address);
-					sendto(*_sock, (const char *)GAMEResponseTo1_1_2_3_4_5, sizeof(GAMEResponseTo1_1_2_3_4_5), 0, (struct sockaddr*)&_address, clientlen);
-				}
-
 				Send(ByteBuffer(GAMEResponseTo1_6,sizeof(GAMEResponseTo1_6)));
 				Send(ByteBuffer(GAMEResponseTo1_7,sizeof(GAMEResponseTo1_7)));
 				Send(ByteBuffer(GAMEResponseTo1_8,sizeof(GAMEResponseTo1_8)));
@@ -380,12 +492,12 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 
 				byte *nameInPacket = &GAMEResponseTo6_1Modified[0x55];
 				memset(nameInPacket,0,32);
-				memcpy(nameInPacket,name.c_str(),name.length()+1);
+				memcpy(nameInPacket,m_handle.c_str(),m_handle.length()+1);
 
 				double playerX,playerY,playerZ;
-				playerX = 27800;
-				playerY = -5;
-				playerZ = -11700;
+				playerX = m_x;
+				playerY = m_y;
+				playerZ = m_z;
 				memcpy(&GAMEResponseTo6_1Modified[0x92],&playerX,sizeof(playerX));
 				memcpy(&GAMEResponseTo6_1Modified[0x9A],&playerY,sizeof(playerY));
 				memcpy(&GAMEResponseTo6_1Modified[0xA2],&playerZ,sizeof(playerZ));
@@ -394,23 +506,68 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 				byte *rawPointer = &GAMEResponseTo6_1Modified[0x80];
 
 				//load
-				RsiDataMale playerRsi; //change this to RsiDataFemale if you want a girl
-				playerRsi.FromBytes(rawPointer,13);
-				//read/modify
-				//read RsiData.h for a list of all the parameters
-				playerRsi["Sex"] = 0; //also change this to 1 if you want a girl
-				playerRsi["Shirt"] = 2;	
-				playerRsi["ShirtColor"] = 14;
-				playerRsi["Body"] = 2;
-				playerRsi["Hat"] = 10;
-				playerRsi["Pants"] = 2;
-				playerRsi["PantsColor"] = 13;
-				playerRsi["Hair"] = 5;
-				playerRsi["Glasses"] = 7;
-				playerRsi["Coat"] = 3;
-				playerRsi["CoatColor"] = 10;
-				//save
-				playerRsi.ToBytes(rawPointer,13);
+				RsiData *playerRsi = NULL;
+				//scope for auto_ptr
+				{
+					auto_ptr<QueryResult> result(sDatabase.Query("SELECT `sex`, `body`, `hat`, `face`, `shirt`,\
+																 `coat`, `pants`, `shoes`, `gloves`, `glasses`,\
+																 `hair`, `facialdetail`, `shirtcolor`, `pantscolor`,\
+																 `coatcolor`, `shoecolor`, `glassescolor`, `haircolor`,\
+																 `skintone`, `tattoo`, `facialdetailcolor`, `leggings` FROM `rsivalues` WHERE `charId` = '%ull' LIMIT 1",characterUID) );
+					if (result.get() == NULL)
+					{
+						INFO_LOG("SpawnRSI(%s): Character's RSI doesn't exist",Address().c_str());
+						playerRsi = new RsiDataMale;
+						playerRsi->FromBytes(rawPointer,15);
+					}
+					else
+					{
+						Field *field = result->Fetch();
+						uint8 sex = field[0].GetUInt8();
+
+						if (sex == 0) //male
+							playerRsi = new RsiDataMale;
+						else
+							playerRsi = new RsiDataFemale;
+
+						RsiData &playerRef = *playerRsi;
+
+						if (sex == 0) //male
+							playerRef["Sex"]=0;
+						else
+							playerRef["Sex"]=1;
+
+						playerRef["Body"] =			field[1].GetUInt8();
+						playerRef["Hat"] =			field[2].GetUInt8();
+						playerRef["Face"] =			field[3].GetUInt8();
+						playerRef["Shirt"] =		field[4].GetUInt8();
+						playerRef["Coat"] =			field[5].GetUInt8();
+						playerRef["Pants"] =		field[6].GetUInt8();
+						playerRef["Shoes"] =		field[7].GetUInt8();
+						playerRef["Gloves"] =		field[8].GetUInt8();
+						playerRef["Glasses"] =		field[9].GetUInt8();
+						playerRef["Hair"] =			field[10].GetUInt8();
+						playerRef["FacialDetail"]=	field[11].GetUInt8();
+						playerRef["ShirtColor"] =	field[12].GetUInt8();
+						playerRef["PantsColor"] =	field[13].GetUInt8();
+						playerRef["CoatColor"] =	field[14].GetUInt8();
+						playerRef["ShoeColor"] =	field[15].GetUInt8();
+						playerRef["GlassesColor"]=	field[16].GetUInt8();
+						playerRef["HairColor"] =	field[17].GetUInt8();
+						playerRef["SkinTone"] =		field[18].GetUInt8();
+						playerRef["Tattoo"] =		field[19].GetUInt8();
+						playerRef["FacialDetailColor"] =	field[20].GetUInt8();
+
+						if (sex != 0)
+						{
+							playerRef["Leggings"] =	field[21].GetUInt8();
+						}
+					}
+				}
+
+				//save and delete
+				playerRsi->ToBytes(rawPointer,15);
+				delete playerRsi;
 
 				Send(ByteBuffer(GAMEResponseTo6_1Modified,sizeof(GAMEResponseTo6_1Modified)));
 				Send(ByteBuffer(GAMEResponseTo6_2,sizeof(GAMEResponseTo6_2)));

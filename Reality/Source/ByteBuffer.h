@@ -191,6 +191,11 @@ public:
 		value = read<uint32> ();
 		return *this;
 	}
+	ByteBuffer &operator>>(uint64 &value)
+	{
+		value = read<uint64> ();
+		return *this;
+	}
 	ByteBuffer &operator>>(float &value)
 	{
 		value = read<float> ();
@@ -303,6 +308,11 @@ public:
 	inline uint16 size() const
 	{
 		return (uint16) _storage.size();
+	}
+
+	inline size_t remaining() const
+	{
+		return _storage.size() - this->rpos();
 	}
 
 	// one should never use resize probably

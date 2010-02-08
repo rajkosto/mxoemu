@@ -22,11 +22,6 @@
 #ifndef MXOSIM_GAMERESPONSES_H
 #define MXOSIM_GAMERESPONSES_H
 
-unsigned char GAMEResponseTo1_1_2_3_4_5[7] = // send 5 times
-{
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05
-} ;
-
 unsigned char GAMEResponseTo1_6[] =
 {
    /* 0x00, 0x00, 0x00, 0x01,*/ 0x82, 0x51, 

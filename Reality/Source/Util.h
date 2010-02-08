@@ -43,6 +43,9 @@ std::string Bin2Hex(const char *data,size_t count,uint32 flags = BIN2HEX_SPACES 
 std::string Bin2Hex(const class ByteBuffer &sourceBuf,uint32 flags = BIN2HEX_SPACES | BIN2HEX_NEWLINES);
 std::string Bin2Hex(const std::string &sourceStr,uint32 flags = BIN2HEX_SPACES | BIN2HEX_NEWLINES);
 
+std::string ClientVersionString(uint32 theVersion);
+
+
 std::string ConvertToLower(std::string input,size_t position);
 std::string XOR(std::string value,std::string key);
 

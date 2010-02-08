@@ -35,6 +35,9 @@ public:
 	void Start();
 	void Stop();
 	void Loop();
+
+	class MarginSocket *GetSocketByCharacterUID(uint64 charUID);
+	class MarginSocket *GetSocketBySessionId(uint32 sessionId);
 private:
 	MarginHandler marginSocketHandler;
 	typedef ListenSocket<MarginSocket> MarginListenSocket;

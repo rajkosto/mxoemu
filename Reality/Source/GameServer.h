@@ -32,6 +32,7 @@ class GameServer : public Singleton <GameServer>
 {
 	private:		
 		// Client List
+
 		typedef std::map<std::string, GameClient*> GClientList;
 		GClientList Clients;
 		struct sockaddr_in listen_addr, inc_addr;

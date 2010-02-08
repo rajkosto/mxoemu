@@ -64,8 +64,17 @@ void MarginServer::Stop()
 	}
 }
 
-
 void MarginServer::Loop(void)
 {
-	marginSocketHandler.Select(0, 100000);                      // 100 ms
+	marginSocketHandler.Select(0, 100000);// 100 ms
+}
+
+MarginSocket *MarginServer::GetSocketByCharacterUID( uint64 charUID )
+{
+	return marginSocketHandler.FindByCharacterUID(charUID);
+}
+
+MarginSocket *MarginServer::GetSocketBySessionId( uint32 sessionId )
+{
+	return marginSocketHandler.FindBySessionId(sessionId);
 }

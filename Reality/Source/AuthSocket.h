@@ -32,6 +32,11 @@ public:
 	AuthSocket(ISocketHandler& );
 	~AuthSocket();
 private:
+	void HandleGetPublicKeyRequest(ByteBuffer &packet);
+	void HandleAuthRequest(ByteBuffer &packet);
+	void HandleAuthChallengeResponse(ByteBuffer &packet);
+
+
 	void ProcessData(const byte *buf,size_t len);
 	bool VerifyPassword( const string& plaintextPass, const string& passwordSalt, const string& passwordHash );
 	uint32 packetNum;
@@ -43,6 +48,7 @@ private:
 	auto_ptr<Decryptor> TFDecrypt;
 	auto_ptr<Encryptor> TFEncrypt;
 
+	uint32 matrixVersion;
 	static const byte blankIV[16];
 	byte challenge[16];
 	byte finalChallenge[16];

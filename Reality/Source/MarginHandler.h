@@ -23,12 +23,16 @@
 #define MXOSIM_MARGINHANDLER_H
 
 #include <Sockets/SocketHandler.h>
+#include "Common.h"
 
 class MarginHandler : public SocketHandler
 {
 public:
 	MarginHandler();
 	~MarginHandler();
+
+	class MarginSocket *FindByCharacterUID(uint64 charUID);
+	class MarginSocket *FindBySessionId(uint32 sessionId);
 };
 
 #endif // _MARGINHANDLER_H

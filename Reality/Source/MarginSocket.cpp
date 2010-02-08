@@ -309,7 +309,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 				WARNING_LOG("MS_ConnectRequest: last byte is not 0, but %d",uint32(lastByte));
 			}
 			
-			WARNING_LOG("MS_ConnectRequest: matrixVersion: %s clientDllVersion: %s rest: %s",
+			DEBUG_LOG("MS_ConnectRequest: matrixVersion: %s clientDllVersion: %s rest: %s",
 				ClientVersionString(matrixVersion).c_str(),
 				ClientVersionString(clientDllVersion).c_str(),
 				Bin2Hex(&packetData.contents()[packetData.rpos()],packetData.remaining()).c_str());
@@ -378,10 +378,15 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 				}
 
 				Field *field = result->Fetch();
+
 				m_charName = field[2].GetString();
 				m_firstName = field[3].GetString();
 				m_lastName = field[4].GetString();
-				m_background = field[5].GetString();
+
+				if (field[5].GetString() != NULL)
+					m_background = field[5].GetString();
+				else
+					m_background = string();
 			}
 
 			//disconnect any other users that are connected on acc
@@ -439,7 +444,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 				break;
 			vector<byte> stringStorage(weirdStringLen);
 			packetData.read(&stringStorage[0],stringStorage.size());
-			if (packetData.size() > 1)
+			if (stringStorage.size() > 1)
 			{
 				soeChatString = string((const char*)&stringStorage[0],stringStorage.size()-1);
 				WARNING_LOG("MS_LoadCharacterRequest: weird string is %s",soeChatString.c_str());
@@ -536,8 +541,11 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 				0x13, 0x00
 			} ;
 
+			memset(&firstNameLastNameBackground[0x28],0,32);
 			strncpy((char*)&firstNameLastNameBackground[0x28],m_firstName.c_str(),31);
+			memset(&firstNameLastNameBackground[0x48],0,32);
 			strncpy((char*)&firstNameLastNameBackground[0x48],m_lastName.c_str(),31);
+			memset(&firstNameLastNameBackground[0x68],0,1024);
 			strncpy((char*)&firstNameLastNameBackground[0x68],m_background.c_str(),1023);
 
 			SendCharacterReply(0,false,2,ByteBuffer(firstNameLastNameBackground,sizeof(firstNameLastNameBackground)));

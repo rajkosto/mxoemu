@@ -62,12 +62,12 @@ private:
 
 	CryptoPP::AutoSeededRandomPool randPool;
 
-	auto_ptr<CryptoPP::RSAES_OAEP_SHA_Decryptor> rsaDecryptor;
-	auto_ptr<CryptoPP::RSAES_OAEP_SHA_Encryptor> rsaEncryptor;
-	auto_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer> signer1024bit;
-	auto_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier> verifier1024bit;
-	auto_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer> signer2048bit;
-	auto_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier> verifier2048bit;
+	shared_ptr<CryptoPP::RSAES_OAEP_SHA_Decryptor> rsaDecryptor;
+	shared_ptr<CryptoPP::RSAES_OAEP_SHA_Encryptor> rsaEncryptor;
+	shared_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer> signer1024bit;
+	shared_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier> verifier1024bit;
+	shared_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer> signer2048bit;
+	shared_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier> verifier2048bit;
 
 	CryptoPP::Integer pubKeyModulus;
 	vector<byte> pubKeySignature;

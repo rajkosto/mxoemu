@@ -93,8 +93,8 @@ void AuthServer::LoadSignKeys()
 		CryptoPP::RSA::PrivateKey privateKey( params );
 		CryptoPP::RSA::PublicKey publicKey( params );
 
-		signer2048bit = auto_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer>(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer(privateKey));
-		verifier2048bit = auto_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier>(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier(publicKey));
+		signer2048bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer(privateKey));
+		verifier2048bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier(publicKey));
 	}
 	else
 	{
@@ -110,8 +110,8 @@ void AuthServer::LoadSignKeys()
 			params.BERDecodePrivateKey(pkeySource,false,pkeySource.MaxRetrievable());
 			CryptoPP::RSA::PrivateKey privateKey( params );
 			CryptoPP::RSA::PublicKey publicKey( params );
-			signer2048bit = auto_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer>(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer(privateKey));
-			verifier2048bit = auto_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier>(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier(publicKey));	
+			signer2048bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer(privateKey));
+			verifier2048bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier(publicKey));	
 
 			//write to file
 			fileStream.open("signPriv.dat",ios::binary | ios::trunc);
@@ -296,10 +296,10 @@ void AuthServer::LoadCryptoKeys()
 
 		if (invalidKeys == false)
 		{
-			rsaDecryptor = auto_ptr<CryptoPP::RSAES_OAEP_SHA_Decryptor>(new CryptoPP::RSAES_OAEP_SHA_Decryptor(privateKey));
-			rsaEncryptor = auto_ptr<CryptoPP::RSAES_OAEP_SHA_Encryptor>(new CryptoPP::RSAES_OAEP_SHA_Encryptor(publicKey));
-			signer1024bit = auto_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer>(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer(privateKey));
-			verifier1024bit = auto_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier>(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier(publicKey));
+			rsaDecryptor.reset(new CryptoPP::RSAES_OAEP_SHA_Decryptor(privateKey));
+			rsaEncryptor.reset(new CryptoPP::RSAES_OAEP_SHA_Encryptor(publicKey));
+			signer1024bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer(privateKey));
+			verifier1024bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier(publicKey));
 			pubKeyModulus = publicKey.GetModulus();
 		}
 	}
@@ -323,10 +323,10 @@ void AuthServer::LoadCryptoKeys()
 			CryptoPP::RSA::PrivateKey privateKey( params );
 			CryptoPP::RSA::PublicKey publicKey( params );
 
-			rsaDecryptor = auto_ptr<CryptoPP::RSAES_OAEP_SHA_Decryptor>(new CryptoPP::RSAES_OAEP_SHA_Decryptor(privateKey));
-			rsaEncryptor = auto_ptr<CryptoPP::RSAES_OAEP_SHA_Encryptor>(new CryptoPP::RSAES_OAEP_SHA_Encryptor(publicKey));
-			signer1024bit = auto_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer>(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer(privateKey));
-			verifier1024bit = auto_ptr<CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier>(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier(publicKey));
+			rsaDecryptor.reset(new CryptoPP::RSAES_OAEP_SHA_Decryptor(privateKey));
+			rsaEncryptor.reset(new CryptoPP::RSAES_OAEP_SHA_Encryptor(publicKey));
+			signer1024bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer(privateKey));
+			verifier1024bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier(publicKey));
 			pubKeyModulus = publicKey.GetModulus();
 
 			//write to file
@@ -410,7 +410,7 @@ void AuthServer::Start()
 	LoadCryptoKeys();
 
 	int Port = sConfig.GetIntDefault("AuthServer.Port",11000);
-	INFO_LOG("Starting Auth server on port %d", Port);	
+	INFO_LOG(format("Starting Auth server on port %1%") % Port);	
 
 	if (listenSocketInst != NULL)
 	{
@@ -464,16 +464,16 @@ string AuthServer::GenerateSalt(uint32 length)
 
 bool AuthServer::CreateAccount( const string& username,const string& password )
 {
-	shared_ptr<QueryResult> query(sDatabase.Query("SELECT `userId` FROM `users` WHERE `username` = '%s'",sDatabase.EscapeString(username).c_str()));
+	shared_ptr<QueryResult> query(sDatabase.Query(format("SELECT `userId` FROM `users` WHERE `username` = '%1%'") % sDatabase.EscapeString(username).c_str()));
 	if (query.get() == NULL)
 	{
 		string salt = GenerateSalt(8);
 		string passwordHash = HashPassword(salt,password);
 
-		return sDatabase.Execute("INSERT INTO `users` SET `username`='%s', `passwordSalt`='%s', `passwordHash`='%s', `timeCreated`=UNIX_TIMESTAMP()",
-			sDatabase.EscapeString(username).c_str(),
-			sDatabase.EscapeString(salt).c_str(),
-			sDatabase.EscapeString(passwordHash).c_str() );
+		return sDatabase.Execute(format("INSERT INTO `users` SET `username`='%1%', `passwordSalt`='%2%', `passwordHash`='%3%', `timeCreated`=UNIX_TIMESTAMP()")
+			% sDatabase.EscapeString(username).c_str()
+			% sDatabase.EscapeString(salt).c_str()
+			% sDatabase.EscapeString(passwordHash).c_str() );
 	}
 	return false;
 }

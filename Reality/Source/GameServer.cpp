@@ -21,6 +21,8 @@
 
 #include "Common.h"
 #include "GameServer.h"
+#include "GameClient.h"
+#include "MarginServer.h"
 #include "Log.h"
 #include "Timer.h"
 #include "Config.h"
@@ -34,7 +36,7 @@ bool GameServer::Start()
 
 	Port = sConfig.GetIntDefault("GameServer.Port", 10000);
 
-	INFO_LOG("Starting Game server on port %d", Port);
+	INFO_LOG(format("Starting Game server on port %1%") % Port);
 
 #if PLATFORM == PLATFORM_WIN32
 	// Winsock Startup
@@ -47,9 +49,9 @@ bool GameServer::Start()
 	}
 #endif
 
-	Socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	m_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-	if (Socket == INVALID_SOCKET)
+	if (m_socket == INVALID_SOCKET)
 	{
 		CRITICAL_LOG("Unable to create socket!");
 		return false;
@@ -59,15 +61,15 @@ bool GameServer::Start()
 	unsigned long mode = 1;
 
 #if PLATFORM == PLATFORM_WIN32
-	int ret = ioctlsocket(Socket, FIONBIO, &mode );
+	int ret = ioctlsocket(m_socket, FIONBIO, &mode );
 #else
-	int ret = ioctl(Socket, FIONBIO, &mode);
+	int ret = ioctl(m_socket, FIONBIO, &mode);
 #endif
 
 	if (ret < 0)
 	{
 		CRITICAL_LOG("Unable to set socket to non blocking!");
-		Socket = INVALID_SOCKET;
+		m_socket = INVALID_SOCKET;
 		return false;
 	}
 
@@ -76,13 +78,13 @@ bool GameServer::Start()
 	listen_addr.sin_addr.s_addr = INADDR_ANY;
 	listen_addr.sin_port = htons(Port);
 
-	if (::bind(Socket, (struct sockaddr *) &listen_addr, sizeof(listen_addr)) < 0)
+	if (::bind(m_socket, (struct sockaddr *) &listen_addr, sizeof(listen_addr)) < 0)
 	{
 		CRITICAL_LOG("Unable to bind socket!");
-		Socket = INVALID_SOCKET;
+		m_socket = INVALID_SOCKET;
 		return false;
 	}
-	lastCleanupTime = getTime();
+	m_lastCleanupTime = getTime();
 
 	return true;
 }
@@ -92,55 +94,58 @@ void GameServer::Stop()
 	INFO_LOG("Game Server shutdown");
 
 #if PLATFORM == PLATFORM_WIN32
-	closesocket(Socket);
+	closesocket(m_socket);
 	WSACleanup();
 #else
-	close(Socket);
+	close(m_socket);
 #endif
 
-	Socket = INVALID_SOCKET;
+	m_socket = INVALID_SOCKET;
 }
 
 void GameServer::Loop(void)
 {
-	FD_ZERO(&Readable);
-	FD_SET(Socket, &Readable);
+	FD_ZERO(&m_readable);
+	FD_SET(m_socket, &m_readable);
 
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 100;
+	m_timeout.tv_sec = 0;
+	m_timeout.tv_usec = 100;
 
-	if (select(0, &Readable, NULL, NULL, &timeout) == SOCKET_ERROR)
+	if (select(0, &m_readable, NULL, NULL, &m_timeout) == SOCKET_ERROR)
 	{
 		CRITICAL_LOG("Select() Failed, Shutting down World server");
 		Stop();
 	}
 
-	if (FD_ISSET(Socket, &Readable))
+	if (FD_ISSET(m_socket, &m_readable))
 	{
 		Handle_Incoming();
 	}
-	CurTime = getTime();
-	if ((CurTime - lastCleanupTime) >= 5)
+
+	CheckAndResend();
+
+	m_currTime = getTime();
+	if ((m_currTime - m_lastCleanupTime) >= 5)
 	{
 		// Do client cleanup
-		GClientList::iterator i = Clients.begin();
+		GClientList::iterator i = m_clients.begin();
 		for (;;)
 		{
-			if (i == Clients.end())
+			if (i == m_clients.end())
 				break;
 
 			GameClient *Client = (*i).second;
-			if (Client->IsValid() == false || (CurTime
+			if (Client->IsValid() == false || (m_currTime
 				- Client->LastActive()) >= 30)
 			{
-				DEBUG_LOG("Routine dead client removal [%s]",Client->Address().c_str());
-				Clients.erase(i++);
+				DEBUG_LOG( format("Routine dead client removal [%1%]") % Client->Address() );
+				m_clients.erase(i++);
 				delete Client;
 			}
 			else
 				++i;
 		}
-		lastCleanupTime = CurTime;
+		m_lastCleanupTime = m_currTime;
 	}
 }
 
@@ -153,42 +158,86 @@ void GameServer::Handle_Incoming()
 	uint16 len = 0;
 	std::stringstream IP;
 
-	len = recvfrom(Socket, Buffer, RECV_BUFFER_SIZE, 0,
+	len = recvfrom(m_socket, Buffer, RECV_BUFFER_SIZE, 0,
 			(struct sockaddr*) &inc_addr, &addr_len);
 
 	if ((len > 0 && len <= RECV_BUFFER_SIZE && errno != EWOULDBLOCK) ||
 			(len > 0 && len <= RECV_BUFFER_SIZE))
 	{
 		IP << inet_ntoa(inc_addr.sin_addr) << ":" << inc_addr.sin_port;
-		GClientList::iterator i = Clients.find(IP.str());
-		if (i != Clients.end())
+		GClientList::iterator i = m_clients.find(IP.str());
+		if (i != m_clients.end())
 		{
-			if (Clients[IP.str()]->IsValid() == false)
+			if (m_clients[IP.str()]->IsValid() == false)
 			{
-				DEBUG_LOG("Removing dead client [%s]", IP.str().c_str());
-				delete Clients[IP.str()];
-				Clients.erase(Clients.find(IP.str()));
+				DEBUG_LOG( format("Removing dead client [%1%]") % IP.str() );
+				delete m_clients[IP.str()];
+				m_clients.erase(m_clients.find(IP.str()));
 			}
 			else
 			{
-				Clients[IP.str()]->HandlePacket(Buffer, len);
+				m_clients[IP.str()]->HandlePacket(Buffer, len);
 			}
 		}
 		else
 		{
-			Clients[IP.str()] = new GameClient(inc_addr, &Socket);
-			DEBUG_LOG("Client connected [%s], now have [%d] clients",
-					IP.str().c_str(), Clients_Connected());
-			Clients[IP.str()]->HandlePacket(Buffer, len);
+			m_clients[IP.str()] = new GameClient(inc_addr, &m_socket);
+			DEBUG_LOG(format ("Client connected [%1%], now have [%2%] clients")
+					% IP.str() % Clients_Connected());
+			m_clients[IP.str()]->HandlePacket(Buffer, len);
 		}
 
 	}
 }
 
+
 void GameServer::Broadcast( const ByteBuffer &message )
 {
-	for (GClientList::iterator i = Clients.begin();i != Clients.end();++i)
+	/*for (GClientList::iterator i = m_clients.begin();i != m_clients.end();++i)
 	{
-		i->second->Send(message);
+		i->second->QueueState(message);
+	}*/
+}
+
+GameClient *GameServer::GetClientWithSessionId(uint32 sessionId)
+{
+	for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();++it)
+	{
+		if (it->second->GetSessionId() == sessionId)
+		{
+			return it->second;
+		}
+	}
+	return NULL;
+}
+
+void GameServer::CheckAndResend()
+{
+	for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();++it)
+	{
+		it->second->CheckAndResend();
+	}
+}
+
+void GameServer::AnnounceStateUpdate( class GameClient* clFrom,class MsgBaseClass *theMsg )
+{
+	for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();++it)
+	{
+		if (it->second!=clFrom)
+		{
+			it->second->QueueState(theMsg);
+			it->second->FlushQueue();
+		}
+	}
+}
+
+void GameServer::AnnounceCommand( class GameClient* clFrom,class MsgBaseClass *theCmd )
+{
+	for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();++it)
+	{
+		if (it->second!=clFrom)
+		{
+			it->second->QueueCommand(theCmd);
+		}
 	}
 }

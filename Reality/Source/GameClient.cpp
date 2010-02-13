@@ -23,7 +23,6 @@
 
 #include "GameClient.h"
 #include "Timer.h"
-#include "GameResponses.h"
 #include "Util.h"
 #include "MersenneTwister.h"
 #include "EncryptedPacket.h"
@@ -33,108 +32,98 @@
 #include "MarginServer.h"
 #include "Database/Database.h"
 #include "Log.h"
+#include "GameServer.h"
 
 #pragma pack(1)
 
 GameClient::GameClient(struct sockaddr_in address, SOCKET *sock)
 {
-	_sock = sock;
-	_address = address;
-	server_sequence = 0;
-	client_sequence = 0;
-	numPackets = 0;
-	PlayerSetupState = 0;
-	marginConn = NULL;
-
-	TFDecrypt=NULL;
-	TFEncrypt=NULL;
-
-	Valid_Client=true;
-	Handled_Session=false;
-	encryptionInitialized = false;
+	m_sock = sock;
+	m_address = address;
+	m_serverSequence = 0;
+	m_serverCommandsSent = 0;
+	m_clientCommandsReceived = 0;
+	m_numPackets = 0;
+	m_clientPSS = 0;
+	m_lastClientSequence = 0;
+	m_validClient = true;
+	m_worldLoaded = false;
+	m_characterSpawned = false;
+	m_encryptionInitialized = false;
+	m_lastSimTimeMS = 0;
+	m_lastOrderedFlush = 0;
+	m_playerGoId=0;
 }
 
 GameClient::~GameClient()
 {
-	if (TFDecrypt != NULL)
+	if (m_playerGoId != 0)
 	{
-		delete TFDecrypt;
-		TFDecrypt = NULL;
+		sObjMgr.deallocatePlayer(m_playerGoId);
 	}
-	if (TFEncrypt != NULL)
+	sObjMgr.clientSigningOff(this);
+
+	MarginSocket *marginConn = sMargin.GetSocketByCharacterUID(m_characterUID);
+	if (marginConn != NULL)
 	{
-		delete TFEncrypt;
-		TFEncrypt = NULL;
+		marginConn->ForceDisconnect();
 	}
 }
 
 void GameClient::HandlePacket(char *pData, uint16 nLength)
 {
-	if (nLength < 1 || Valid_Client == false)
+	if (nLength < 1 || m_validClient == false)
 		return;
 
-	_last_activity = getTime();
-	numPackets++;
+	m_lastActivity = getTime();
+	m_lastPacketReceivedMS = getMSTime();
+	m_numPackets++;
 
-	if (encryptionInitialized == false && pData[0] == 0 && nLength == 43)
+	if (m_encryptionInitialized == false && pData[0] == 0 && nLength == 43)
 	{
 		ByteBuffer packetData;
 		packetData.append(pData,nLength);
 		packetData.rpos(0x0B);
-		if (packetData.remaining() < sizeof(characterUID))
+		if (packetData.remaining() < sizeof(m_characterUID))
 		{
-			Valid_Client = false;
+			m_validClient = false;
 			return;
 		}
-		packetData >> characterUID;
-		
-		//scope for auto_ptr
+		packetData >> m_characterUID;
+		try
 		{
-			auto_ptr<QueryResult> result(sDatabase.Query("SELECT `handle`, `firstName`, `lastName`, `background`, `x`, `y`, `z` FROM `characters` WHERE `charId` = '%ull' LIMIT 1",characterUID) );
-			if (result.get() == NULL)
-			{
-				ERROR_LOG("InitialUDPPacket(%s): Character doesn't exist",Address().c_str());
-				Valid_Client = false;
-				return;
-			}
-
-			Field *field = result->Fetch();
-			m_handle = field[0].GetString();
-			m_firstName = field[1].GetString();
-			m_lastName = field[2].GetString();
-			m_background = field[3].GetString();
-			m_x = field[4].GetFloat();
-			m_y = field[5].GetFloat();
-			m_z = field[6].GetFloat();
+			m_playerGoId = sObjMgr.allocatePlayer(this,m_characterUID);
+		}
+		catch (ObjectMgr::ObjectNotAvailable)
+		{
+			ERROR_LOG(format("InitialUDPPacket(%1%): Character doesn't exist") % Address() );
+			m_validClient = false;
+			return;
 		}
 
-		marginConn = MarginServer::getSingleton().GetSocketByCharacterUID(characterUID);
+		MarginSocket *marginConn = sMargin.GetSocketByCharacterUID(m_characterUID);
 		if (marginConn == NULL)
 		{
-			ERROR_LOG("InitialUDPPacket(%s): Margin session not found",Address().c_str());
-			Valid_Client = false;
+			ERROR_LOG(format("InitialUDPPacket(%1%): Margin session not found") % Address() );
+			m_validClient = false;
 			return;
 		}
-		sessionId = marginConn->GetSessionId();
-		charWorldId = marginConn->GetWorldCharId();
+		m_sessionId = marginConn->GetSessionId();
+		m_charWorldId = marginConn->GetWorldCharId();
 
 		//initialize encryptors with key from margin
 		vector<byte> twofishKey = marginConn->GetTwofishKey();
 		vector<byte> twofishIV(CryptoPP::Twofish::BLOCKSIZE,0);
-		if (TFDecrypt!=NULL)
-			delete TFDecrypt;
-		if (TFEncrypt!=NULL)
-			delete TFEncrypt;
 
-		TFDecrypt=new CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption(&twofishKey[0], twofishKey.size(), &twofishIV[0]);
-		TFEncrypt=new CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption(&twofishKey[0], twofishKey.size(), &twofishIV[0]);
+		m_TFDecrypt.reset(new CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption(&twofishKey[0], twofishKey.size(), &twofishIV[0]));
+		m_TFEncrypt.reset(new CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption(&twofishKey[0], twofishKey.size(), &twofishIV[0]));
 
 		//now we can verify if session key in this packet is correct
 		packetData.rpos(packetData.size()-CryptoPP::Twofish::BLOCKSIZE);
 		if (packetData.remaining() < CryptoPP::Twofish::BLOCKSIZE)
 		{
 			//wat
-			Valid_Client=false;
+			m_validClient=false;
 			marginConn->ForceDisconnect();
 			return;
 		}
@@ -143,22 +132,22 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 		string decryptedOutput;
 		CryptoPP::StringSource(string( (const char*)&encryptedSessionId[0],encryptedSessionId.size() ), true, 
 			new CryptoPP::StreamTransformationFilter(
-			*TFDecrypt, new CryptoPP::StringSink(decryptedOutput),
+			*m_TFDecrypt, new CryptoPP::StringSink(decryptedOutput),
 			CryptoPP::BlockPaddingSchemeDef::NO_PADDING));
 		ByteBuffer decryptedData;
 		decryptedData.append(decryptedOutput.data(),decryptedOutput.size());
 		uint32 recoveredSessionId=0;
 		decryptedData >> recoveredSessionId;
 
-		if (recoveredSessionId != sessionId)
+		if (recoveredSessionId != m_sessionId)
 		{
-			ERROR_LOG("InitialUDPPacket(%s): Session Key Mismatch",Address().c_str());
-			Valid_Client = false;
+			ERROR_LOG(format("InitialUDPPacket(%1%): Session Key Mismatch") % Address() );
+			m_validClient = false;
 			marginConn->ForceDisconnect();
 			return;
 		}
 
-		encryptionInitialized=true;
+		m_encryptionInitialized=true;
 
 		//send latency/loss calibration heartbeats
 		const int numberOfBeats = 5;
@@ -171,691 +160,508 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 			}
 			beatPacket << uint16(swap16(numberOfBeats));
 
-			int clientlen=sizeof(_address);
-			sendto(*_sock, beatPacket.contents(), beatPacket.size(), 0, (struct sockaddr*)&_address, clientlen);
+			int clientlen=sizeof(m_address);
+			sendto(*m_sock, beatPacket.contents(), beatPacket.size(), 0, (struct sockaddr*)&m_address, clientlen);
 		}
 
 		//notify margin that udp session is established
-		if (marginConn->UdpReady() == false)
+		if (marginConn->UdpReady(this) == false)
 		{
-			ERROR_LOG("InitialUDPPacket(%s): Margin not ready for UDP connection",Address().c_str());
-			encryptionInitialized=false;
-			Valid_Client = false;
+			ERROR_LOG(format("InitialUDPPacket(%1%): Margin not ready for UDP connection") % Address() );
+			m_encryptionInitialized=false;
+			m_validClient = false;
 			marginConn->ForceDisconnect();
 			return;
 		}
+		sObjMgr.getGOPtr(m_playerGoId)->InitializeWorld();
+		FlushQueue();
 	}
 
-	if (Handled_Session == true && pData[0] != 0x01) // Ping...just reply with the same thing
+	if (m_worldLoaded == true && pData[0] != 0x01) // Ping...just reply with the same thing
 	{
-		int clientlen=sizeof(_address);
-		sendto(*_sock, pData, nLength, 0, (struct sockaddr*)&_address,clientlen );
+		int clientlen=sizeof(m_address);
+		sendto(*m_sock, pData, nLength, 0, (struct sockaddr*)&m_address,clientlen );
 	}
 	else
 	{
-		if (pData[0] == 0x01 && encryptionInitialized==true)
+		if (pData[0] == 0x01 && m_encryptionInitialized==true)
 		{
 			SequencedPacket packetData=Decrypt(&pData[1],nLength-1);
-			client_sequence = packetData.getLocalSeq();
+			ByteBuffer dataToParse;
 
-			cout << "CSeq: " << packetData.getLocalSeq() << " SSeq: " << packetData.getRemoteSeq();
-			cout << " " << Bin2Hex(packetData) << endl;
+//			DEBUG_LOG( format("Recv PSS: %x CSeq: %d SSeq: %d |%s|") % uint32(packetData.getPSS()) % packetData.getLocalSeq() % packetData.getRemoteSeq() % Bin2Hex(packetData) );
 
-			string contents = string(packetData.contents(),packetData.size());
-
-			string::size_type loc = contents.find( "Spawnalot", 0 );
-			if( loc != std::string::npos ) 
+			//ack byte
+			if (packetData.contents()[0]==0x02)
 			{
-				if (PlayerSetupState==0x7F)
-					Send(ByteBuffer(rawData,sizeof(rawData)));
-				else {} //WTF
-				return;
+				uint32 pktsAcked = AcknowledgePacket(packetData.getRemoteSeq());
+				//assert(pktsAcked <= 1);
+				dataToParse.append(&packetData.contents()[1],packetData.size()-1);
+			}
+			else
+			{
+				dataToParse.append(&packetData.contents()[0],packetData.size());
 			}
 
-			loc = contents.find( "Spawnanother", 0 );
-			if( loc != std::string::npos ) 
+			//add to need to ack list
+			PacketReceived(packetData.getLocalSeq());						
+			if (m_clientPSS != packetData.getPSS())
 			{
-				if (PlayerSetupState==0x7F)
-					Send(ByteBuffer(rawData2,sizeof(rawData2)));
-				else {} //WTF
-				return;
+				PSSChanged(m_clientPSS,packetData.getPSS());
 			}
 
-			loc = contents.find( "SpawnHats", 0 );
-			if (loc != std::string::npos )
+			if (dataToParse.size() > 0)
 			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(8,8,SET_HATS);
-				}
-				else {} //WTF
-				return;
+				HandleEncrypted(dataToParse);
 			}
 
-			loc = contents.find( "SpawnFaces", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(4,8,SET_FACES);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnGlassesColors", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(2,8,SET_GLASSESCOLORS);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnGlasses", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(4,8,SET_GLASSES);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnHairColors", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(4,8,SET_HAIRCOLORS);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnHairs", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(4,8,SET_HAIRS);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnFacialDetailColors", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(1,8,SET_FACIALDETAILCOLORS);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnFacialDetails", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(2,8,SET_FACIALDETAILS);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnLeggings", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(2,8,SET_LEGGINGS);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnShirtColors", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(8,8,SET_SHIRTCOLORS);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnShirts", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(4,8,SET_SHIRTS);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnPantsColors", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(4,8,SET_PANTSCOLORS);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnCoatColors", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(4,8,SET_COATCOLORS);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnCoats", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(8,8,SET_COATS);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnPants", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(4,8,SET_PANTS);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnShoeColors", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(2,8,SET_SHOECOLORS);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnShoes", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(8,8,SET_SHOES);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnGloves", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(8,8,SET_GLOVES);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnSkinTones", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(4,8,SET_SKINTONES);
-				}
-				else {} //WTF
-				return;
-			}
-
-			loc = contents.find( "SpawnTattoos", 0 );
-			if (loc != std::string::npos )
-			{
-				if (PlayerSetupState==0x7F)
-				{
-					SpawnTroop(1,8,SET_TATTOOS);
-				}
-				else {} //WTF
-				return;
-			}
-
-			/*
-			loc = contents.find( "Move", 0 );
-			if( loc != std::string::npos ) 
-			{
-			if (PlayerSetupState==0x7F)
-			Send(std::string((const char *)move,sizeof(move)));
-			else {} //WTF
-			}*/
+			FlushQueue();
 		}
+	}
+}
 
-		switch(numPackets)
+void GameClient::HandleEncrypted( ByteBuffer &srcData )
+{
+	ByteBuffer dataCopy(&srcData.contents()[srcData.rpos()],srcData.remaining());
+	int32 commandOffset = -1;
+	ByteBuffer zeroFourBlock;
+
+	//try to find 04 block
+	while (dataCopy.remaining() > 0)
+	{
+		uint8 theByte;
+		dataCopy >> theByte;
+		if (theByte == 0x04)
 		{
-		case 1:
+			//reverse read of byte
+			dataCopy.rpos(dataCopy.rpos()-sizeof(theByte));
+			int32 thePos = dataCopy.rpos();
+
+			//try and parse
+			OrderedPacket testPacket;
+			bool parseSuccessfull = testPacket.FromBuffer(dataCopy);
+			if (parseSuccessfull == true && dataCopy.remaining() == 0)
 			{
-				Send(ByteBuffer(GAMEResponseTo1_6,sizeof(GAMEResponseTo1_6)));
-				Send(ByteBuffer(GAMEResponseTo1_7,sizeof(GAMEResponseTo1_7)));
-				Send(ByteBuffer(GAMEResponseTo1_8,sizeof(GAMEResponseTo1_8)));
-				Send(ByteBuffer(GAMEResponseTo1_9,sizeof(GAMEResponseTo1_9)));
-				Send(ByteBuffer(GAMEResponseTo1_10,sizeof(GAMEResponseTo1_10)));
-				Send(ByteBuffer(GAMEResponseTo1_11,sizeof(GAMEResponseTo1_11)));
-				Send(ByteBuffer(GAMEResponseTo1_12,sizeof(GAMEResponseTo1_12)));
-				Send(ByteBuffer(GAMEResponseTo1_13,sizeof(GAMEResponseTo1_13)));
-				Send(ByteBuffer(GAMEResponseTo1_14,sizeof(GAMEResponseTo1_14)));
-				Send(ByteBuffer(GAMEResponseTo1_15,sizeof(GAMEResponseTo1_15)));
-				Send(ByteBuffer(GAMEResponseTo1_16,sizeof(GAMEResponseTo1_16)));
-				Send(ByteBuffer(GAMEResponseTo1_17,sizeof(GAMEResponseTo1_17)));
-				Send(ByteBuffer(GAMEResponseTo1_18,sizeof(GAMEResponseTo1_18)));
-				Send(ByteBuffer(GAMEResponseTo1_19,sizeof(GAMEResponseTo1_19)));
-				Send(ByteBuffer(GAMEResponseTo1_20,sizeof(GAMEResponseTo1_20)));
-				break;
-			}
-		case 2:
-			{
-				PlayerSetupState = 1;
-				Send(ByteBuffer(GAMEResponseTo2,sizeof(GAMEResponseTo2)));
-				break;
-			}
-		case 5:
-			{
-				Send(ByteBuffer(GAMEResponseTo5,sizeof(GAMEResponseTo5)));
-				break;
-			}
-		case 6:
-			{
-				PlayerSetupState = 0x1F;
-
-				byte GAMEResponseTo6_1Modified[200];
-				memcpy(GAMEResponseTo6_1Modified,GAMEResponseTo6_1,sizeof(GAMEResponseTo6_1Modified));
-
-				byte *nameInPacket = &GAMEResponseTo6_1Modified[0x55];
-				memset(nameInPacket,0,32);
-				memcpy(nameInPacket,m_handle.c_str(),m_handle.length()+1);
-
-				double playerX,playerY,playerZ;
-				playerX = m_x;
-				playerY = m_y;
-				playerZ = m_z;
-				memcpy(&GAMEResponseTo6_1Modified[0x92],&playerX,sizeof(playerX));
-				memcpy(&GAMEResponseTo6_1Modified[0x9A],&playerY,sizeof(playerY));
-				memcpy(&GAMEResponseTo6_1Modified[0xA2],&playerZ,sizeof(playerZ));
-
-				//change rsi data
-				byte *rawPointer = &GAMEResponseTo6_1Modified[0x80];
-
-				//load
-				RsiData *playerRsi = NULL;
-				//scope for auto_ptr
-				{
-					auto_ptr<QueryResult> result(sDatabase.Query("SELECT `sex`, `body`, `hat`, `face`, `shirt`,\
-																 `coat`, `pants`, `shoes`, `gloves`, `glasses`,\
-																 `hair`, `facialdetail`, `shirtcolor`, `pantscolor`,\
-																 `coatcolor`, `shoecolor`, `glassescolor`, `haircolor`,\
-																 `skintone`, `tattoo`, `facialdetailcolor`, `leggings` FROM `rsivalues` WHERE `charId` = '%ull' LIMIT 1",characterUID) );
-					if (result.get() == NULL)
-					{
-						INFO_LOG("SpawnRSI(%s): Character's RSI doesn't exist",Address().c_str());
-						playerRsi = new RsiDataMale;
-						playerRsi->FromBytes(rawPointer,15);
-					}
-					else
-					{
-						Field *field = result->Fetch();
-						uint8 sex = field[0].GetUInt8();
-
-						if (sex == 0) //male
-							playerRsi = new RsiDataMale;
-						else
-							playerRsi = new RsiDataFemale;
-
-						RsiData &playerRef = *playerRsi;
-
-						if (sex == 0) //male
-							playerRef["Sex"]=0;
-						else
-							playerRef["Sex"]=1;
-
-						playerRef["Body"] =			field[1].GetUInt8();
-						playerRef["Hat"] =			field[2].GetUInt8();
-						playerRef["Face"] =			field[3].GetUInt8();
-						playerRef["Shirt"] =		field[4].GetUInt8();
-						playerRef["Coat"] =			field[5].GetUInt8();
-						playerRef["Pants"] =		field[6].GetUInt8();
-						playerRef["Shoes"] =		field[7].GetUInt8();
-						playerRef["Gloves"] =		field[8].GetUInt8();
-						playerRef["Glasses"] =		field[9].GetUInt8();
-						playerRef["Hair"] =			field[10].GetUInt8();
-						playerRef["FacialDetail"]=	field[11].GetUInt8();
-						playerRef["ShirtColor"] =	field[12].GetUInt8();
-						playerRef["PantsColor"] =	field[13].GetUInt8();
-						playerRef["CoatColor"] =	field[14].GetUInt8();
-						playerRef["ShoeColor"] =	field[15].GetUInt8();
-						playerRef["GlassesColor"]=	field[16].GetUInt8();
-						playerRef["HairColor"] =	field[17].GetUInt8();
-						playerRef["SkinTone"] =		field[18].GetUInt8();
-						playerRef["Tattoo"] =		field[19].GetUInt8();
-						playerRef["FacialDetailColor"] =	field[20].GetUInt8();
-
-						if (sex != 0)
-						{
-							playerRef["Leggings"] =	field[21].GetUInt8();
-						}
-					}
-				}
-
-				//save and delete
-				playerRsi->ToBytes(rawPointer,15);
-				delete playerRsi;
-
-				Send(ByteBuffer(GAMEResponseTo6_1Modified,sizeof(GAMEResponseTo6_1Modified)));
-				Send(ByteBuffer(GAMEResponseTo6_2,sizeof(GAMEResponseTo6_2)));
-				Send(ByteBuffer(GAMEResponseTo6_4,sizeof(GAMEResponseTo6_4)));
-				Send(ByteBuffer(GAMEResponseTo6_6,sizeof(GAMEResponseTo6_6)));
-				break;
-			}
-		case 9:
-			{
-				PlayerSetupState = 0x7F;
-				/*			sendme.FromString(std::string((const char *)GAMEResponseTo9_1_header,sizeof(GAMEResponseTo9_1_header)));
-				sendme.Append(name);
-				sendme.Append(std::string((const char *)GAMEResponseTo9_1_footer,sizeof(GAMEResponseTo9_1_footer)));
-				Send(sendme);*/
-				Send(std::string((const char *)GAMEResponseTo9_2,sizeof(GAMEResponseTo9_2)));
-				Handled_Session=true;
+				dataCopy.rpos(thePos);
+				zeroFourBlock = ByteBuffer(&dataCopy.contents()[dataCopy.rpos()],dataCopy.remaining());
+				commandOffset=thePos;
 				break;
 			}
 		}
+	}
 
-		if (Handled_Session)
+	ByteBuffer otherBlock;
+	if (commandOffset < 0 || zeroFourBlock.size() < 1)
+	{
+		otherBlock = ByteBuffer(dataCopy.contents(),dataCopy.size());
+	}
+	else if (commandOffset > 0)
+	{
+		otherBlock = ByteBuffer(dataCopy.contents(),commandOffset);
+	}
+
+	if (otherBlock.size() > 0)
+	{
+		HandleOther(otherBlock);
+	}
+	if (zeroFourBlock.size() > 0)
+	{
+		HandleOrdered(zeroFourBlock);
+	}
+}
+
+void GameClient::HandleOther( ByteBuffer &otherData )
+{
+	uint8 packetType;
+	otherData >> packetType;
+	otherData.rpos(otherData.rpos()-sizeof(packetType));
+
+	if (packetType == 0x03)
+	{
+		if (m_playerGoId == 0)
 		{
-			Send(std::string((const char *)GAMEResponseTo9_2,sizeof(GAMEResponseTo9_2)));
+			WARNING_LOG(format("HandleOther(%1%): 03 received but no player object to handle it") % this->Address() );
+			return;
+		}
+		sObjMgr.getGOPtr(m_playerGoId)->HandleStateUpdate(otherData);
+	}
+	else
+	{
+		WARNING_LOG(format("HandleOther(%1%): Received unknown packet type %2%") % this->Address() % Bin2Hex(otherData) );
+	}
+}
+
+bool msgblock_sequence_lessthan(MsgBlock s2, MsgBlock s1)
+{
+	return	( (s1.sequenceId > s2.sequenceId) && (s1.sequenceId-s2.sequenceId <= 65536/2) ) ||
+			( (s2.sequenceId > s1.sequenceId) && (s2.sequenceId-s1.sequenceId > 65536/2) );
+}
+
+bool msgblock_sequence_greaterthan(MsgBlock s1, MsgBlock s2)
+{
+	return	( (s1.sequenceId > s2.sequenceId) && (s1.sequenceId-s2.sequenceId <= 65536/2) ) ||
+		( (s2.sequenceId > s1.sequenceId) && (s2.sequenceId-s1.sequenceId > 65536/2) );
+}
+
+void GameClient::HandleOrdered( ByteBuffer &orderedData )
+{
+	OrderedPacket bigPacket;
+	if (bigPacket.FromBuffer(orderedData) == false)
+	{
+		ERROR_LOG(format("Error creating bigpacket from bytes %1%") % Bin2Hex(orderedData) );
+		return;
+	}
+
+	if (bigPacket.msgBlocks.size() < 1)
+	{
+		ERROR_LOG("Bigpacket has no msgblocks");
+		return;
+	}
+
+	if (bigPacket.msgBlocks.size() > 1)
+	{
+		bigPacket.msgBlocks.sort(msgblock_sequence_lessthan);
+	}
+
+	for (list<MsgBlock>::iterator it1=bigPacket.msgBlocks.begin();it1!=bigPacket.msgBlocks.end();++it1)
+	{
+		DEBUG_LOG( format("04 client order: %d, our order %d") % it1->sequenceId % m_clientCommandsReceived);
+		if ( isSequenceMoreRecent(it1->sequenceId,m_clientCommandsReceived,65536) == true || it1->sequenceId == m_clientCommandsReceived)
+		{
+			for (list<ByteBuffer>::iterator it2=it1->subPackets.begin();it2!=it1->subPackets.end();++it2)
+			{
+				if (m_playerGoId != 0)
+				{
+					sObjMgr.getGOPtr(m_playerGoId)->HandleCommand(*it2);
+					m_clientCommandsReceived++;
+				}
+			}
+		}
+		else
+		{
+			WARNING_LOG(format("Client order %1% smaller than server order %2%") % it1->sequenceId % m_clientCommandsReceived);
 		}
 	}
 }
 
 SequencedPacket GameClient::Decrypt(char *pData, uint16 nLength)
 {
-	EncryptedPacket decryptedData(ByteBuffer(pData,nLength),TFDecrypt);
+	EncryptedPacket decryptedData(ByteBuffer(pData,nLength),m_TFDecrypt.get());
 	return SequencedPacket(decryptedData);
 }
 
-void GameClient::Send(const ByteBuffer &contents)
+void GameClient::SendEncrypted(SequencedPacket withSequences)
 {
-	if (!TFEncrypt)
+	if (!m_TFEncrypt)
 		return;
 
-	server_sequence++;
-
-	if (server_sequence == 4096)
-		server_sequence=0;
-
-	SequencedPacket withSequences(server_sequence,client_sequence,PlayerSetupState,contents);
 	EncryptedPacket withEncryption(withSequences.getDataWithHeader());
 	ByteBuffer sendMe;
 	sendMe << uint8(1);
-	sendMe.append(withEncryption.toCipherText(TFEncrypt));
+	sendMe.append(withEncryption.toCipherText(m_TFEncrypt.get()));
 
-	int clientlen=sizeof(_address);
-    sendto(*_sock, sendMe.contents(), (int)sendMe.size(), 0, (struct sockaddr*)&_address,clientlen);
+	int clientlen=sizeof(m_address);
+    sendto(*m_sock, sendMe.contents(), (int)sendMe.size(), 0, (struct sockaddr*)&m_address,clientlen);
 }
 
-void GameClient::SpawnTroop( int rows, int columns,WhatToSet typeToSet )
+void GameClient::PSSChanged( uint8 oldPSS,uint8 newPSS )
 {
-	for (int derp=0;derp < 2;derp++)
+	m_clientPSS = newPSS;
+	if (m_clientPSS == 0x01)
 	{
-		for (int i=0;i<rows;i++)
+		//skip straight to 0x07
+//		m_clientPSS=0x07;	
+	}
+	else if (m_clientPSS == 0x07)
+	{
+		sObjMgr.getGOPtr(m_playerGoId)->SpawnSelf();
+		m_worldLoaded = true;
+	}
+	else if (m_clientPSS == 0x7F)
+	{
+		if (m_worldLoaded==false)
 		{
-			for (int j=0;j<columns;j++)
+			sObjMgr.getGOPtr(m_playerGoId)->SpawnSelf();
+			m_worldLoaded = true;
+		}
+		m_characterSpawned = true;
+	}
+}
+
+void GameClient::MoveMsgsToQueue()
+{
+	std::sort(m_packetsToAck.begin(),m_packetsToAck.end());
+	//first we send out all the 03
+	for (queueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();++it)
+	{
+		//consume an ack if we can
+		if (m_packetsToAck.size() > 0)
+		{			
+			uint16 theClientSeq = m_packetsToAck.front();
+			m_packetsToAck.pop_front();
+
+			AddPacketToQueue(theClientSeq,true,*it);
+		}
+		else
+		{
+			AddPacketToQueue(*it);
+		}
+	}
+	//all queued 03s have been transferred to packet queue, clear the 03 queue
+	m_queuedStates.clear();
+	
+	if (/*getMSTime() - m_lastOrderedFlush > 100*/1) //we will not send 04 packets more than 10 times a second
+	{
+		//send out subpackets, as much as we got, consuming as much acks as we can
+		while (m_queuedCommands.size() > 0)
+		{
+			MsgBlock currBlock;
+			currBlock.sequenceId = m_serverCommandsSent;
+
+			while (m_queuedCommands.size() > 0)
 			{
-				byte personData[243];
-				memcpy(personData,rawData,sizeof(personData));
-				int personNumber = (i*columns)+j;
-				stringstream personName;
-				switch (typeToSet)
+				ByteBuffer packetStaticBuf;
+				try
 				{
-				case SET_HATS:
-					personName << "Hat";
-					break;
-				case SET_FACES:
-					personName << "Face";
-					break;
-				case SET_GLASSES:
-					personName << "Glasses";
-					break;
-				case SET_HAIRS:
-					personName << "Hair";
-					break;
-				case SET_SHIRTS:
-					personName << "Shirt";
-					break;
-				case SET_FACIALDETAILS:
-					personName << "FacialDetail";
-					break;
-				case SET_LEGGINGS:
-					personName << "Leggings";
-					break;
-				case SET_SHIRTCOLORS:
-					personName << "ShirtColor";
-					break;
-				case SET_PANTSCOLORS:
-					personName << "PantsColor";
-					break;
-				case SET_COATS:
-					personName << "Coat";
-					break;
-				case SET_PANTS:
-					personName << "Pants";
-					break;
-				case SET_SHOES:
-					personName << "Shoes";
-					break;
-				case SET_GLOVES:
-					personName << "Gloves";
-					break;
-				case SET_COATCOLORS:
-					personName << "CoatColor";
-					break;
-				case SET_HAIRCOLORS:
-					personName << "HairColor";
-					break;
-				case SET_SKINTONES:
-					personName << "SkinTone";
-					break;
-				case SET_TATTOOS:
-					personName << "Tattoo";
-					break;
-				case SET_FACIALDETAILCOLORS:
-					personName << "FacialDetailColor";
-					break;
-				case SET_GLASSESCOLORS:
-					personName << "GlassesColor";
-					break;
-				case SET_SHOECOLORS:
-					personName << "ShoeColor";
+					packetStaticBuf = m_queuedCommands.front()->toBuf();
+				}
+				catch (MsgBaseClass::PacketNoLongerValid)
+				{
+					//just remove the command and go to the next one
+					m_queuedCommands.front().reset();
+					m_queuedCommands.pop_front();
+				}
+
+				currBlock.subPackets.push_back(packetStaticBuf);
+				m_serverCommandsSent++;
+
+				m_queuedCommands.front().reset();
+				m_queuedCommands.pop_front();
+
+				if (m_queuedCommands.size() < 1 || 
+					(currBlock.GetTotalSize() + packetStaticBuf.size() >= 700) )
+				{
 					break;
 				}
-				if (derp == 0)
+			}
+
+			//consume an ack if we can
+			if (m_packetsToAck.size() > 0)
+			{
+				uint16 theClientSeq = m_packetsToAck.front();
+				m_packetsToAck.pop_front();
+
+				AddPacketToQueue(theClientSeq,true,msgBaseClassPtr(new OrderedPacket(currBlock)));
+			}
+			else
+			{
+				AddPacketToQueue(msgBaseClassPtr(new OrderedPacket(currBlock)));
+			}
+
+/*			//send the same subpackets only in smaller chunks
+			uint16 altCommandsSent = currBlock.sequenceId;
+			if (currBlock.subPackets.size() >= 4)
+			{
+				OrderedPacket *bigPacket = new OrderedPacket();
+				int numAtATime = 2;
+				if (currBlock.subPackets.size() >= 12)
 				{
-					personName << "Guy";
+					numAtATime = 4;
+				}
+				else if (currBlock.subPackets.size() >= 6)
+				{
+					numAtATime = 3;
+				}
+
+				for (;;)
+				{
+					MsgBlock newBlock;
+					newBlock.sequenceId = altCommandsSent;
+					for (int i=0;i<numAtATime;i++)
+					{
+						if (currBlock.subPackets.size() < 1)
+							break;
+
+						newBlock.subPackets.push_back(currBlock.subPackets.front());
+						altCommandsSent++;
+						currBlock.subPackets.pop_front();
+					}
+
+					if (newBlock.subPackets.size() < 1)
+						break;
+
+					bigPacket->msgBlocks.push_back(newBlock);
+				}
+
+				if (bigPacket->msgBlocks.size() > 0)
+				{
+					//consume an ack if we can
+					if (m_packetsToAck.size() > 0)
+					{
+						uint16 theClientSeq = m_packetsToAck.front();
+						m_packetsToAck.pop_front();
+
+						AddPacketToQueue(theClientSeq,true,bigPacket);
+					}
+					else
+					{
+						AddPacketToQueue(bigPacket);
+					}
 				}
 				else
 				{
-					personName << "Gal";
+					delete bigPacket;
+					bigPacket=NULL;
 				}
-				personName << dec << personNumber;
+			}*/
+		}
+		m_lastOrderedFlush = getMSTime();
+	}	
 
-				memcpy(&personData[0x6A],personName.str().c_str(),personName.str().size()+1);
-				double personX,personY,personZ;
-				personX = 27800 - (200*j);
-				personY = -5;
-				personZ = (-11700) - (200*(i+rows*derp));
-				memcpy(&personData[0xC1],&personX,sizeof(personX));
-				memcpy(&personData[0xC9],&personY,sizeof(personY));
-				memcpy(&personData[0xD1],&personZ,sizeof(personZ));
-				uint16 personHalfObjId = 6400 + random(0,59135);
-				memcpy(&personData[0xF1],&personHalfObjId,sizeof(personHalfObjId));
+	//we ran out of packets but there are still more acks to be sent ?
+	if (m_packetsToAck.size() > 0)
+	{
+		for (deque<uint16>::iterator it=m_packetsToAck.begin();it!=m_packetsToAck.end();++it)
+		{
+			AddPacketToQueue(*it,true,msgBaseClassPtr(new EmptyMsg()));
+		}
+		m_packetsToAck.clear();
+	}
+}
 
-				byte *rawPointer = &personData[0xAF];
+void GameClient::FlushQueue()
+{
+	MoveMsgsToQueue();
 
-				shared_ptr<RsiData> genderSpecificRsiData;
-				if (derp == 0)
-				{
-					genderSpecificRsiData.reset(new RsiDataMale());
-				}
-				else if (derp == 1)
-				{
-					genderSpecificRsiData.reset(new RsiDataFemale());
-				}
+	for(sendQueueList::iterator it=m_sendQueue.begin();it!=m_sendQueue.end();)
+	{
+		//skip sent packets
+		if (it->sent==true)
+		{
+			++it;
+			continue;
+		}
 
-				RsiData &theRsiData = *genderSpecificRsiData;
+		ByteBuffer outputData;
 
-				theRsiData.FromBytes(rawPointer,13);
-				theRsiData["Sex"] = derp;
-				theRsiData["Body"] = 1;
-				theRsiData["Hat"] = 0;
-				theRsiData["Face"] = 0;
-				theRsiData["Shirt"] = 0;
-				theRsiData["Coat"] = 0;
-				theRsiData["Pants"] = 0;
-				theRsiData["Shoes"] = 0;
-				theRsiData["Gloves"] = 0;
-				theRsiData["Glasses"] = 0;
-				theRsiData["Hair"] = 0;
-				theRsiData["FacialDetail"] = 0;
-				theRsiData["ShirtColor"] = 0;
-				theRsiData["PantsColor"] = 0;
-				theRsiData["CoatColor"] = 0;
-				theRsiData["HairColor"] = 0;
-				theRsiData["SkinTone"] = 0;
-				theRsiData["Tattoo"] = 0;
-				theRsiData["FacialDetailColor"] = 0;
-
-				switch (typeToSet)
-				{
-				case SET_HATS:
-					theRsiData["Hat"] = personNumber;
-					break;
-				case SET_FACES:
-					theRsiData["Face"] = personNumber;
-					break;
-				case SET_GLASSES:
-					theRsiData["Hair"] = 5;
-					theRsiData["Glasses"] = personNumber;
-					break;
-				case SET_HAIRS:
-					theRsiData["Glasses"] = 0;
-					theRsiData["Hair"] = personNumber;
-					break;
-				case SET_SHIRTS:
-					theRsiData["Coat"] = 0;
-					theRsiData["Shirt"] = personNumber;
-					break;
-				case SET_FACIALDETAILS:
-					theRsiData["Glasses"] = 0;
-					theRsiData["Hat"] = 0;
-					theRsiData["FacialDetail"] = personNumber;
-					break;
-				case SET_LEGGINGS:
-					theRsiData["Pants"] = 0;
-					theRsiData["Shoes"] = 0;
-					if (derp == 1) // cant do this for guys, invalid var
-						theRsiData["Leggings"] = personNumber;
-					break;
-				case SET_SHIRTCOLORS:
-					theRsiData["Coat"] = 0;
-					theRsiData["Shirt"] = 2;
-					theRsiData["ShirtColor"] = personNumber;
-					break;
-				case SET_PANTSCOLORS:
-					theRsiData["Coat"] = 0;
-					theRsiData["Shirt"] = 0;
-					theRsiData["Pants"] = 1;
-					theRsiData["PantsColor"] = personNumber;
-					break;
-				case SET_COATS:
-					theRsiData["Coat"] = personNumber;
-					break;
-				case SET_PANTS:
-					theRsiData["Coat"] = 0;
-					theRsiData["Pants"] = personNumber;
-					break;
-				case SET_SHOES:
-					theRsiData["Shirt"] = 0;
-					theRsiData["Coat"] = 0;
-					theRsiData["Shoes"] = personNumber;
-					break;
-				case SET_GLOVES:
-					theRsiData["Shirt"] = 0;
-					theRsiData["Coat"] = 0;
-					theRsiData["Gloves"] = personNumber;
-					break;
-				case SET_COATCOLORS:
-					theRsiData["Coat"] = 1;
-					theRsiData["CoatColor"] = personNumber;
-					break;
-				case SET_HAIRCOLORS:
-					theRsiData["Glasses"] = 0;
-					theRsiData["Hair"] = 1;
-					theRsiData["HairColor"] = personNumber;
-					break;
-				case SET_SKINTONES:
-					theRsiData["Pants"] = 0;
-					theRsiData["Coat"] = 0;
-					theRsiData["Shirt"] = 0;
-					theRsiData["SkinTone"] = personNumber;
-					break;
-				case SET_TATTOOS:
-					theRsiData["Coat"] = 0;
-					theRsiData["Shirt"] = 0;
-					theRsiData["Pants"] = 0;
-					theRsiData["SkinTone"] = 1;
-					theRsiData["Tattoo"] = personNumber;
-					break;
-				case SET_FACIALDETAILCOLORS:
-					theRsiData["Glasses"] = 0;
-
-					theRsiData["Hat"] = 0;
-					theRsiData["FacialDetail"] = 10;
-					theRsiData["FacialDetailColor"] = personNumber;
-					break;
-				case SET_GLASSESCOLORS:
-					theRsiData["Hat"] = 0;
-					theRsiData["Glasses"] = 12;
-					theRsiData["GlassesColor"] = personNumber;
-					break;
-				case SET_SHOECOLORS:
-					theRsiData["Pants"] = 0;
-					theRsiData["Shoes"] = 27;
-					theRsiData["ShoeColor"] = personNumber;
-					break;
-				}
-				theRsiData.ToBytes(rawPointer,13);
-
-				Sleep(100);
-				Send(ByteBuffer(personData,sizeof(personData)));
+		if (it->ack==false)
+		{
+			//we send simtime synchronization every second
+			uint32 currTimeMS = getMSTime();
+			if (m_lastSimTimeMS==0 || currTimeMS-m_lastSimTimeMS>1000)
+			{
+				m_lastSimTimeMS = getMSTime();
+				outputData << uint8(0x82);
+				//theirs ticks at 64hz, ours ticks at 1000
+				double preciseInterval = double(m_lastSimTimeMS)/double(1000/64);
+				uint32 simTimeToSend = uint32(preciseInterval);
+				outputData << uint32(simTimeToSend);
 			}
 		}
+		else
+		{
+			//ack byte
+			outputData << uint8(0x02);
+		}
+
+		//serialize data from dynamic packet to a static one
+		ByteBuffer serializedData;
+		try
+		{
+			serializedData=it->theData->toBuf();
+		}
+		catch (MsgBaseClass::PacketNoLongerValid)
+		{
+			serializedData.clear();
+			//remove data from packet in queue, this will leave it to still have an ack if needed
+			it->theData.reset(new EmptyMsg());
+		}
+
+		//append that to our simtime or ack byte
+		if (serializedData.size() > 0)
+		{
+			outputData.append(serializedData.contents(),serializedData.size());
+		}
+		else if (it->ack == false)
+		{
+			//if no ack, and data is 0, no reason to send this packet, so remove from queue and carry on
+			it=m_sendQueue.erase(it);
+			continue;
+		}
+
+		//prepend sequences
+		SequencedPacket prepended(it->server_sequence,it->client_sequence,m_clientPSS,outputData);
+		SendEncrypted(prepended);
+
+//		DEBUG_LOG(format("Flush PSS: %x SSeq: %d CSeq: %d |%s|") % uint32(prepended.getPSS()) % prepended.getLocalSeq() % prepended.getRemoteSeq() % Bin2Hex(prepended));
+
+		//mark packet as sent
+		it->sent=true;
+		it->msTimeSent=getMSTime();
+
+		++it;
+	}
+}
+
+void GameClient::CheckAndResend()
+{
+	bool modified = false;
+	for(sendQueueList::iterator it=m_sendQueue.begin();it!=m_sendQueue.end();)
+	{
+		//skip unsent packets
+		if (it->sent == false)
+		{
+			++it;
+			continue;
+		}
+		bool deleted = false;
+
+		uint32 currTime = getMSTime();
+		if (currTime - it->msTimeSent > 500) //500ms is timeout for resend
+		{
+			//client obviously doesnt want to ack this packet
+			if (it->resentCounter > 5)
+			{
+				ByteBuffer resentPacketDumpedData;
+				try
+				{
+					resentPacketDumpedData = it->theData->toBuf();
+				}
+				catch (MsgBaseClass::PacketNoLongerValid)
+				{
+					INFO_LOG(format("Resent packet %1%'s data is no longer valid") % it->server_sequence);
+				}
+
+				INFO_LOG(format("Client doesn't want packet %1% of size %2%") % it->server_sequence % resentPacketDumpedData.size());
+
+				if (resentPacketDumpedData.size() > 1000)
+				{
+					WARNING_LOG(format("WTF, WHY IS THIS SO BIG, %1%") % Bin2Hex(resentPacketDumpedData) );
+				}
+
+				it=m_sendQueue.erase(it);
+				deleted=true;
+			}
+			else
+			{
+				it->resentCounter++;
+				it->sent = false;
+				it->msTimeSent=0;
+				uint16 oldSeq = it->server_sequence;
+				increaseServerSequence();
+				it->server_sequence = m_serverSequence;
+				//DEBUG_LOG(format("Resending packet sseq %1% under new sseq %2%") % oldSeq % it->server_sequence);
+				modified = true;
+			}
+		}
+
+		if (deleted==false)
+		{
+			++it;
+		}
+	}
+	if (modified == true)
+	{
+		FlushQueue();
 	}
 }

@@ -136,6 +136,11 @@ public:
 		append<uint32> (value);
 		return *this;
 	}
+	ByteBuffer &operator<<(uint64 value)
+	{
+		append<uint64> (value);
+		return *this;
+	}
 	ByteBuffer &operator<<(int value)
 	{
 		append<int> (value);

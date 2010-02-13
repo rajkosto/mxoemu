@@ -45,8 +45,8 @@ private:
 	typedef CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption Decryptor;
 	typedef CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption Encryptor;
 
-	auto_ptr<Decryptor> TFDecrypt;
-	auto_ptr<Encryptor> TFEncrypt;
+	shared_ptr<Decryptor> TFDecrypt;
+	shared_ptr<Encryptor> TFEncrypt;
 
 	uint32 matrixVersion;
 	static const byte blankIV[16];

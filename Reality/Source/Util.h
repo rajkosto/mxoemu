@@ -50,7 +50,8 @@ std::string ConvertToLower(std::string input,size_t position);
 std::string XOR(std::string value,std::string key);
 
 // This HAS to be called outside the threads __try / __except block!
-void SetThreadName(const char* format, ...);
+void SetThreadName(const char* fmt);
+
 time_t convTimePeriod ( uint32 dLength, char dType);
 
 #if PLATFORM == PLATFORM_WIN32

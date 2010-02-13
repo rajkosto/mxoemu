@@ -101,7 +101,7 @@ void AuthSocket::ProcessData( const byte *buf,size_t len )
 {
 	ByteBuffer packetContents(buf,len);
 
-	DEBUG_LOG("Auth Receieved |%s|",Bin2Hex(packetContents).c_str());
+	DEBUG_LOG(format("Auth Receieved |%1%|") % Bin2Hex(packetContents));
 
 	byte packetOpcode;
 	packetContents >> packetOpcode;
@@ -145,7 +145,7 @@ void AuthSocket::HandleGetPublicKeyRequest( ByteBuffer &packet )
 	string clientVersionStr = ClientVersionString(matrixVersion);
 	if (clientVersionStr != "7.5668" )
 	{
-		WARNING_LOG("Auth client connected with unknown version %s",ClientVersionString(matrixVersion).c_str());
+		WARNING_LOG(format("Auth client connected with unknown version %1%") % clientVersionStr );
 	}
 	uint32 rsaVersion;
 	packet >> rsaVersion;
@@ -180,7 +180,7 @@ void AuthSocket::HandleGetPublicKeyRequest( ByteBuffer &packet )
 
 	SendPacket(awesome);
 
-	DEBUG_LOG("Sending AS_GetPublicKeyReply: |%s|",Bin2Hex(awesome).c_str());
+	DEBUG_LOG(format("Sending AS_GetPublicKeyReply: |%1%|") % Bin2Hex(awesome));
 }
 
 void AuthSocket::HandleAuthRequest( ByteBuffer &packet )
@@ -216,7 +216,7 @@ void AuthSocket::HandleAuthRequest( ByteBuffer &packet )
 		return;
 	}
 
-	DEBUG_LOG("Got encrypted Blob: |%s|",Bin2Hex(decryptedBlob).c_str());
+	DEBUG_LOG(format("Got encrypted Blob: |%1%|") % Bin2Hex(decryptedBlob));
 
 	ByteBuffer rsaBlobBuffer(decryptedBlob.substr(sizeof(byte)));
 
@@ -229,21 +229,21 @@ void AuthSocket::HandleAuthRequest( ByteBuffer &packet )
 	}
 	uint16 someShort;
 	rsaBlobBuffer >> someShort;
-	DEBUG_LOG("someShort is %d",someShort);
+	DEBUG_LOG(format("someShort is %1%") % someShort);
 
 	byte twofishKey[16];
 	rsaBlobBuffer.read(twofishKey,sizeof(twofishKey));
-	DEBUG_LOG("Auth TF key: |%s|",Bin2Hex(twofishKey,sizeof(twofishKey)).c_str());
+	DEBUG_LOG(format("Auth TF key: |%s|") % Bin2Hex(twofishKey,sizeof(twofishKey)));
 
 	//instantiate ciphers
-	TFDecrypt = auto_ptr<Decryptor>(new Decryptor(twofishKey,sizeof(twofishKey),blankIV));
-	TFEncrypt = auto_ptr<Encryptor>(new Encryptor(twofishKey,sizeof(twofishKey),blankIV));
+	TFDecrypt.reset(new Decryptor(twofishKey,sizeof(twofishKey),blankIV));
+	TFEncrypt.reset(new Encryptor(twofishKey,sizeof(twofishKey),blankIV));
 
 	//should check this time to be the same as the one we sent it in previous packet
 	uint32 theTime;
 	rsaBlobBuffer >> theTime;
 	time_t expandedTime = theTime;
-	DEBUG_LOG("time is: %s",ctime(&expandedTime));
+	DEBUG_LOG(format("time is: %1%") % ctime(&expandedTime));
 
 	uint16 usernameLen;
 	rsaBlobBuffer >> usernameLen;
@@ -251,17 +251,17 @@ void AuthSocket::HandleAuthRequest( ByteBuffer &packet )
 	usernameVect.resize(usernameLen);
 	rsaBlobBuffer.read((uint8 *)&usernameVect[0],usernameVect.size());
 	string theUsername(&usernameVect[0],usernameVect.size()-1);
-	DEBUG_LOG("Username: |%s|",theUsername.c_str());
+	DEBUG_LOG(format("Username: |%1%|") % theUsername);
 
 	//copy to variable
 	m_username = theUsername;
 
-	//scope for auto_ptr
+	//scope for db ptr
 	{
-		auto_ptr<QueryResult> result(sDatabase.Query("SELECT `userId`, `username`, `passwordSalt`, `passwordHash`, `publicExponent`, `publicModulus`, `privateExponent`, `timeCreated` FROM `users` WHERE `username` = '%s' LIMIT 1",m_username.c_str()) );
+		scoped_ptr<QueryResult> result(sDatabase.Query(format("SELECT `userId`, `username`, `passwordSalt`, `passwordHash`, `publicExponent`, `publicModulus`, `privateExponent`, `timeCreated` FROM `users` WHERE `username` = '%1%' LIMIT 1") % m_username ) );
 		if (result.get() == NULL)
 		{
-			INFO_LOG("Username %s doesn't exist, disconnecting.",m_username.c_str());
+			INFO_LOG(format("Username %1% doesn't exist, disconnecting.") % m_username );
 			SetCloseAndDelete(true);
 			return;
 		}
@@ -307,12 +307,12 @@ void AuthSocket::HandleAuthRequest( ByteBuffer &packet )
 		*TFEncrypt, new CryptoPP::StringSink(ourChallenge),
 		CryptoPP::BlockPaddingSchemeDef::NO_PADDING));
 
-	DEBUG_LOG("TF Encrypted Challenge (as sent) |%s|",Bin2Hex(ourChallenge).c_str());
+	DEBUG_LOG(format("TF Encrypted Challenge (as sent) |%1%|") % Bin2Hex(ourChallenge));
 
 	//copy to variable
 	memcpy(challenge,(const byte*)ourChallenge.data(),sizeof(challenge));
 
-	DEBUG_LOG("Decrypted Challenge (feed to md5) |%s|",Bin2Hex(decryptedChallenge,sizeof(decryptedChallenge)).c_str());
+	DEBUG_LOG(format("Decrypted Challenge (feed to md5) |%1%|") % Bin2Hex(decryptedChallenge,sizeof(decryptedChallenge)) );
 
 	//do md5 transform to decrypted challenge to make final iv
 	byte MD5Digest[16];
@@ -320,7 +320,7 @@ void AuthSocket::HandleAuthRequest( ByteBuffer &packet )
 	md5Transformer.Update(decryptedChallenge,sizeof(decryptedChallenge));
 	md5Transformer.Final(MD5Digest);
 
-	DEBUG_LOG("Processed Challenge: |%s|",Bin2Hex(MD5Digest,sizeof(MD5Digest)).c_str());
+	DEBUG_LOG(format("Processed Challenge: |%1%|") % Bin2Hex(MD5Digest,sizeof(MD5Digest)) );
 
 	//store this challenge
 	memcpy(finalChallenge,MD5Digest,sizeof(finalChallenge));
@@ -333,14 +333,14 @@ void AuthSocket::HandleAuthRequest( ByteBuffer &packet )
 
 	SendPacket(reply);
 
-	DEBUG_LOG("Sending AS_AuthChallenge: |%s|",Bin2Hex(reply).c_str());
+	DEBUG_LOG(format("Sending AS_AuthChallenge: |%1%|") % Bin2Hex(reply) );
 }
 
 void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 {
 	uint16 someShort;
 	packet >> someShort;
-	DEBUG_LOG("someShort is: %d",someShort);
+	DEBUG_LOG(format("someShort is: %d") % someShort);
 
 	uint16 cipherTextLen;
 	packet >> cipherTextLen;
@@ -359,7 +359,7 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 		*TFDecrypt, new CryptoPP::StringSink(plainOutput),
 		CryptoPP::BlockPaddingSchemeDef::NO_PADDING));
 
-	DEBUG_LOG("Challenge response decrypted: |%s|",Bin2Hex(plainOutput).c_str());
+	DEBUG_LOG(format("Challenge response decrypted: |%1%|") % Bin2Hex(plainOutput) );
 
 	size_t packetSize = 0;
 	ByteBuffer chRspPlain(plainOutput);
@@ -374,9 +374,9 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 
 	if (memcmp(processedChallenge,finalChallenge,sizeof(processedChallenge)))
 	{
-		WARNING_LOG("Processed challenge mismatch: got |%s|, expected |%s|, disconnecting.",
-			Bin2Hex(processedChallenge,sizeof(processedChallenge)).c_str(),
-			Bin2Hex(finalChallenge,sizeof(finalChallenge)).c_str());
+		WARNING_LOG(format("Processed challenge mismatch: got |%1%|, expected |%2%|, disconnecting.")
+			% Bin2Hex(processedChallenge,sizeof(processedChallenge))
+			% Bin2Hex(finalChallenge,sizeof(finalChallenge)) );
 
 		SetCloseAndDelete(true);
 		return;
@@ -423,23 +423,23 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 
 	if (packetSize != chRspPlain.size())
 	{
-		WARNING_LOG("Challenge response blob size mismatch !, expected %d, received %d, disconnecting.",packetSize,chRspPlain.size());
+		WARNING_LOG(format("Challenge response blob size mismatch !, expected %1%, received %2%, disconnecting.") %packetSize % chRspPlain.size());
 		SetCloseAndDelete(true);
 		return;
 	}
 
-	DEBUG_LOG("Parsed contents: 1(const 23): |%d|, 2(size): |%d|, 3(size): |%d|, User Password: |%s|, SOE Password: |%s|",unknown1,unknown2,unknown3,&password[0],&soePass[0]);
+	DEBUG_LOG(format("Parsed contents: 1(const 23): |%1%|, 2(size): |%2%|, 3(size): |%3%|, User Password: |%4%|, SOE Password: |%5%|") % unknown1 % unknown2 % unknown3 % &password[0] % &soePass[0]);
 
 	if (VerifyPassword(string(&password[0]),m_passwordSalt,m_passwordHash) == false)
 	{
-		WARNING_LOG("User %s supplied an invalid password, disconnecting.",m_username.c_str());
+		WARNING_LOG(format("User %1% supplied an invalid password, disconnecting.") % m_username );
 		SetCloseAndDelete(true);
 		return;
 	}
 
 	if (m_publicExponent != 17 || m_publicModulus.size() != 96 || m_privateExponent.size() != 96)
 	{
-		INFO_LOG("Invalid RSA keys for user %s, regenerating.",m_username.c_str());
+		INFO_LOG(format("Invalid RSA keys for user %1%, regenerating.") % m_username );
 
 		for (;;)
 		{
@@ -464,11 +464,11 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 		}
 
 		//update db info
-		sDatabase.Execute("UPDATE `users` SET `publicExponent` = %u, `publicModulus` = %s, `privateExponent` = %s WHERE `userId` = %u",
-			m_publicExponent,
-			Bin2Hex(m_publicModulus,BIN2HEX_ZEROES).c_str(),
-			Bin2Hex(m_privateExponent,BIN2HEX_ZEROES).c_str(),
-			m_userId );
+		sDatabase.Execute(format("UPDATE `users` SET `publicExponent` = %1%, `publicModulus` = %2%, `privateExponent` = %3% WHERE `userId` = %4%") 
+			% m_publicExponent
+			% Bin2Hex(m_publicModulus,BIN2HEX_ZEROES)
+			% Bin2Hex(m_privateExponent,BIN2HEX_ZEROES)
+			% m_userId );
 	}
 
 	signedDataStruct signedData;
@@ -503,8 +503,8 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 
 	if (encryptedPrivateExponent.size() != 96)
 	{
-		ERROR_LOG("Encrypted private exponent ended up being something other than 96 bytes (%d bytes), disconnecting.",
-			encryptedPrivateExponent.size());
+		ERROR_LOG(format("Encrypted private exponent ended up being something other than 96 bytes (%1% bytes), disconnecting.")
+			% encryptedPrivateExponent.size());
 		SetCloseAndDelete(true);
 		return;
 	}
@@ -538,7 +538,7 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 
 	uint16 numCharacters;
 
-	auto_ptr<QueryResult> result(sDatabase.Query("SELECT `charId`, `worldId`, `status`, `handle` FROM `characters` WHERE `userId` = %u",m_userId));
+	scoped_ptr<QueryResult> result(sDatabase.Query(format("SELECT `charId`, `worldId`, `status`, `handle` FROM `characters` WHERE `userId` = %1%") % m_userId));
 	if(result.get() == NULL)
 		numCharacters = 0;
 	else
@@ -576,7 +576,7 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 			currCharacter.handleStrOffset = (numCharacters - i)*sizeof(CharacterData) + characterStrings.wpos();
 
 			string guidHex = Bin2Hex((const byte*)&currCharacter.charId,sizeof(currCharacter.charId));
-			WARNING_LOG("Character GUID: %s",guidHex.c_str());
+			WARNING_LOG(format("Character GUID: %1%") % guidHex );
 
 			//add the character to character datas
 			characterDatas.append((const byte*)&currCharacter,sizeof(currCharacter));
@@ -602,7 +602,7 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 	packetHeader.offsetServerData = worldPacket.wpos();	
 
 	//fetch server list data
-	result = auto_ptr<QueryResult>(sDatabase.Query("SELECT `worldId`, `name`, `type`, `status`, `load` FROM `worlds`"));
+	result.reset(sDatabase.Query("SELECT `worldId`, `name`, `type`, `status`, `load` FROM `worlds`"));
 	if(result.get() == NULL)
 	{
 		ERROR_LOG("No worlds in db, disconnecting.");
@@ -678,7 +678,7 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 	worldPacket.put(0,(const byte*)&packetHeader,sizeof(packetHeader));
 
 	//for debugging, lets dump the packet we just created
-	DEBUG_LOG("Sending AS_AuthReply: %s",Bin2Hex(worldPacket).c_str());
+	DEBUG_LOG(format("Sending AS_AuthReply: %1%") % Bin2Hex(worldPacket) );
 
 	SendPacket(worldPacket);
 }

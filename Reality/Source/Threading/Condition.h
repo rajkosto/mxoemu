@@ -23,6 +23,8 @@
 #define MXOSIM_CONDITION_H
 
 #include "../Common.h"
+#include "NativeMutex.h"
+#include "Errors.h"
 
 #if PLATFORM == PLATFORM_WIN32
 #define MAX_AWAITING_THREADS 10

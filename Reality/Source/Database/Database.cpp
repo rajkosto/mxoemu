@@ -61,7 +61,7 @@ bool Database::Initialize(const char* Hostname, unsigned int port, const char* U
 	mPassword = string(Password);
 	mDatabaseName = string(DatabaseName);
 
-	INFO_LOG("MySQLDatabase Connecting to `%s`, database `%s`...", Hostname, DatabaseName);
+	INFO_LOG(format("MySQLDatabase Connecting to `%1%`, database `%2%`...") % Hostname % DatabaseName);
 
 	m_connections = new DatabaseConnection[ConnectionCount];
 	for( i = 0; i < ConnectionCount; ++i )
@@ -76,7 +76,7 @@ bool Database::Initialize(const char* Hostname, unsigned int port, const char* U
 		temp2 = mysql_real_connect( temp, Hostname, Username, Password, DatabaseName, port, NULL, 0 );
 		if( temp2 == NULL )
 		{
-			CRITICAL_LOG("MySQLDatabase Connection failed due to: `%s`", mysql_error( temp ) );
+			CRITICAL_LOG(format("MySQLDatabase Connection failed due to: `%1%`") % mysql_error( temp ) );
 			return false;
 		}
 
@@ -113,83 +113,40 @@ DatabaseConnection * Database::GetFreeConnection()
 	return NULL;
 }
 
-QueryResult * Database::Query(const char* QueryString, ...)
+QueryResult *Database::Query( string QueryString )
 {	
-	char sql[16384];
-	va_list vlist;
-	va_start(vlist, QueryString);
-	vsnprintf(sql, 16384, QueryString, vlist);
-	va_end(vlist);
-
 	// Send the query
 	QueryResult * qResult = NULL;
 	DatabaseConnection * con = GetFreeConnection();
 
-	if(_SendQuery(con, sql, false))
+	if( _SendQuery( con, QueryString.c_str(), false ) )
 		qResult = _StoreQueryResult( con );
 
 	con->Busy.Release();
 	return qResult;
 }
 
-QueryResult * Database::QueryNA(const char* QueryString)
+QueryResult * Database::FQuery( string QueryString, DatabaseConnection * con)
 {	
 	// Send the query
 	QueryResult * qResult = NULL;
-	DatabaseConnection * con = GetFreeConnection();
-
-	if( _SendQuery( con, QueryString, false ) )
-		qResult = _StoreQueryResult( con );
-
-	con->Busy.Release();
-	return qResult;
-}
-
-QueryResult * Database::FQuery(const char * QueryString, DatabaseConnection * con)
-{	
-	// Send the query
-	QueryResult * qResult = NULL;
-	if( _SendQuery( con, QueryString, false ) )
+	if( _SendQuery( con, QueryString.c_str(), false ) )
 		qResult = _StoreQueryResult( con );
 
 	return qResult;
 }
 
-void Database::FWaitExecute(const char * QueryString, DatabaseConnection * con)
+void Database::FWaitExecute( string QueryString, DatabaseConnection * con)
 {	
 	// Send the query
-	_SendQuery( con, QueryString, false );
+	_SendQuery( con, QueryString.c_str(), false );
 }
 
-void QueryBuffer::AddQuery(const char * format, ...)
+void QueryBuffer::AddQuery(string fmt)
 {
-	char query[16384];
-	va_list vlist;
-	va_start(vlist, format);
-	vsnprintf(query, 16384, format, vlist);
-	va_end(vlist);
-
-	size_t len = strlen(query);
+	size_t len = fmt.length();
 	char * pBuffer = new char[len+1];
-	memcpy(pBuffer, query, len + 1);
-
-	queries.push_back(pBuffer);
-}
-
-void QueryBuffer::AddQueryNA( const char * str )
-{
-	size_t len = strlen(str);
-	char * pBuffer = new char[len+1];
-	memcpy(pBuffer, str, len + 1);
-
-	queries.push_back(pBuffer);
-}
-
-void QueryBuffer::AddQueryStr(const string& str)
-{
-	size_t len = str.size();
-	char * pBuffer = new char[len+1];
-	memcpy(pBuffer, str.c_str(), len + 1);
+	memcpy(pBuffer, fmt.c_str(), len + 1);
 
 	queries.push_back(pBuffer);
 }
@@ -213,58 +170,24 @@ void Database::PerformQueryBuffer(QueryBuffer * b, DatabaseConnection * ccon)
 		con->Busy.Release();
 }
 
-bool Database::Execute(const char* QueryString, ...)
-{
-	char query[16384];
-
-	va_list vlist;
-	va_start(vlist, QueryString);
-	vsnprintf(query, 16384, QueryString, vlist);
-	va_end(vlist);
-
-	if(!ThreadRunning)
-		return WaitExecuteNA(query);
-
-	size_t len = strlen(query);
-	char * pBuffer = new char[len+1];
-	memcpy(pBuffer, query, len + 1);
-
-	queries_queue.push(pBuffer);
-	return true;
-}
-
-bool Database::ExecuteNA(const char* QueryString)
+bool Database::Execute( string QueryString)
 {
 	if(!ThreadRunning)
-		return WaitExecuteNA(QueryString);
+		return WaitExecute(QueryString);
 
-	size_t len = strlen(QueryString);
+	size_t len = QueryString.length();
 	char * pBuffer = new char[len+1];
-	memcpy(pBuffer, QueryString, len + 1);
+	memcpy(pBuffer, QueryString.c_str(), len + 1);
 
 	queries_queue.push(pBuffer);
 	return true;
 }
 
 //this will wait for completion
-bool Database::WaitExecute(const char* QueryString, ...)
-{
-	char sql[16384];
-	va_list vlist;
-	va_start(vlist, QueryString);
-	vsnprintf(sql, 16384, QueryString, vlist);
-	va_end(vlist);
-
-	DatabaseConnection * con = GetFreeConnection();
-	bool Result = _SendQuery(con, sql, false);
-	con->Busy.Release();
-	return Result;
-}
-
-bool Database::WaitExecuteNA(const char* QueryString)
+bool Database::WaitExecute( string QueryString)
 {
 	DatabaseConnection * con = GetFreeConnection();
-	bool Result = _SendQuery(con, QueryString, false);
+	bool Result = _SendQuery(con, QueryString.c_str(), false);
 	con->Busy.Release();
 	return Result;
 }
@@ -305,23 +228,17 @@ bool Database::run()
 	return false;
 }
 
-void AsyncQuery::AddQuery(const char * format, ...)
+void AsyncQuery::AddQuery( string fmt )
 {
 	AsyncQueryResult res;
 	res.query = NULL;
 	res.result = NULL;
-	va_list ap;
-	char buffer[10000];
-	size_t len;
-	va_start(ap, format);
-	vsnprintf(buffer, 10000, format, ap);
-	va_end(ap);
-	len = strlen(buffer);
-	if(len)
+	int len = fmt.length();
+	if(len>0)
 	{
 		res.query = new char[len+1];
 		res.query[len] = 0;
-		memcpy(res.query, buffer, len);
+		memcpy(res.query, fmt.c_str(), len);
 		queries.push_back(res);
 	}
 }
@@ -497,7 +414,7 @@ bool Database::_SendQuery(DatabaseConnection *con, const char* Sql, bool Self)
 			result = _SendQuery(con, Sql, true);
 		}
 		else
-			ERROR_LOG("Sql query failed due to [%s], Query: [%s]\n", mysql_error( con->conn ), Sql);
+			ERROR_LOG(format("Sql query failed due to [%1%], Query: [%2%]\n") % mysql_error( con->conn ) % Sql);
 	}
 
 	return (result == 0 ? true : false);
@@ -573,7 +490,7 @@ bool Database::_Reconnect(DatabaseConnection * conn)
 	temp2 = mysql_real_connect( temp, mHostname.c_str(), mUsername.c_str(), mPassword.c_str(), mDatabaseName.c_str(), mPort, NULL , 0 );
 	if( temp2 == NULL )
 	{
-		CRITICAL_LOG("Could not reconnect to database because of `%s`", mysql_error( temp ) );
+		CRITICAL_LOG(format("Could not reconnect to database because of `%1%`") % mysql_error( temp ) );
 		mysql_close( temp );
 		return false;
 	}

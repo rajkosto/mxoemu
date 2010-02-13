@@ -33,6 +33,8 @@
 #include "MarginSocket.h"
 #include "MarginServer.h"
 #include "Database/Database.h"
+#include "GameClient.h"
+#include "GameServer.h"
 
 #pragma pack(1)
 
@@ -50,6 +52,16 @@ MarginSocket::MarginSocket(ISocketHandler& h) : TCPVarLenSocket(h)
 
 MarginSocket::~MarginSocket()
 {
+}
+
+void MarginSocket::OnDisconnect( short info, int code )
+{
+/*	GameClient *udpClient = sGame.GetClientWithSessionId(sessionId);
+	if (udpClient != NULL)
+	{
+		udpClient->Invalidate();
+	}*/
+	cout << "Margin socket with " << GetRemoteSocketAddress()->Convert(true) << " disconnected" << endl;
 }
 
 void MarginSocket::SendCrypted( EncryptedPacket &cryptedPacket )
@@ -98,7 +110,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 {
 	ByteBuffer packetContents(buf,len);
 
-	DEBUG_LOG("Margin Receieved |%s|",Bin2Hex(packetContents).c_str());
+	DEBUG_LOG(format("Margin Receieved |%1%|") % Bin2Hex(packetContents) );
 
 	bool encrypted = true;
 
@@ -124,7 +136,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 		EncryptedPacket packetTodecrypt(packetContents,TFDecrypt.get());
 		packetData = packetTodecrypt;
 
-		DEBUG_LOG("Margin Decrypted |%s|",Bin2Hex(packetData).c_str());
+		DEBUG_LOG(format("Margin Decrypted |%1%|") % Bin2Hex(packetData) );
 	}
 	else
 	{
@@ -148,7 +160,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 
 			if (firstNumber != 3)
 			{
-				WARNING_LOG("CERT_ConnectRequest first num not 3 (actually %d)",firstNumber);
+				WARNING_LOG(format("CERT_ConnectRequest first num not 3 (actually %1%)") % firstNumber);
 			}
 
 			uint16 authStart;
@@ -190,12 +202,12 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			m_userId = signedData.userId1;
 			m_username = signedData.userName;
 
-			//scope for auto_ptr
+			//scope for db ptr
 			{
-				auto_ptr<QueryResult> result(sDatabase.Query("SELECT `userId`, `username` FROM `users` WHERE `username` = '%s' LIMIT 1",m_username.c_str()) );
+				scoped_ptr<QueryResult> result(sDatabase.Query(format("SELECT `userId`, `username` FROM `users` WHERE `username` = '%1%' LIMIT 1") % m_username) );
 				if (result.get() == NULL)
 				{
-					INFO_LOG("CERT_ConnectRequest: Username %s doesn't exist, disconnecting.",m_username.c_str());
+					INFO_LOG(format("CERT_ConnectRequest: Username %1% doesn't exist, disconnecting.") % m_username );
 					SetCloseAndDelete(true);
 					return;
 				}
@@ -204,7 +216,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 				uint32 dbUserId = field[0].GetUInt32();
 				if (m_userId != dbUserId)
 				{
-					ERROR_LOG("CERT_ConnectRequest: UserId from packet %d mismatches one from DB %d, disconnecting.",m_userId,dbUserId);
+					ERROR_LOG(format("CERT_ConnectRequest: UserId from packet %1% mismatches one from DB %2%, disconnecting.") % m_userId % dbUserId);
 					SetCloseAndDelete(true);
 					return;					
 				}
@@ -217,8 +229,8 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			randPool.GenerateBlock(challenge,sizeof(challenge));
 
 			//since we now have key, lets initialize our encryptor/decryptor
-			TFEncrypt = auto_ptr<Encryptor>(new Encryptor(twofishKey,sizeof(twofishKey),blankIV));
-			TFDecrypt = auto_ptr<Decryptor>(new Decryptor(twofishKey,sizeof(twofishKey),blankIV));
+			TFEncrypt.reset(new Encryptor(twofishKey,sizeof(twofishKey),blankIV));
+			TFDecrypt.reset(new Decryptor(twofishKey,sizeof(twofishKey),blankIV));
 
 			//the rsa encrypted packet is 00 then twofish key then challenge, so its 31 bytes
 			ByteBuffer tobeRSAd;
@@ -251,7 +263,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 
 			SendPacket(response);
 			
-			DEBUG_LOG("Sending CERT_Challenge: |%s|",Bin2Hex(response).c_str());
+			DEBUG_LOG(format("Sending CERT_Challenge: |%1%|") % Bin2Hex(response) );
 			break;
 		}
 	case CERT_ChallengeResponse:
@@ -275,7 +287,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 
 			SendCrypted(response);
 
-			DEBUG_LOG("Sending CERT_ConnectReply: |%s|",Bin2Hex(response).c_str());
+			DEBUG_LOG(format("Sending CERT_ConnectReply: |%1%|") % Bin2Hex(response) );
 			break;
 		}
 	case MS_ConnectRequest:
@@ -306,13 +318,13 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			packetData >> lastByte;
 			if (lastByte != 0)
 			{
-				WARNING_LOG("MS_ConnectRequest: last byte is not 0, but %d",uint32(lastByte));
+				WARNING_LOG(format("MS_ConnectRequest: last byte is not 0, but %1%") % uint32(lastByte));
 			}
 			
-			DEBUG_LOG("MS_ConnectRequest: matrixVersion: %s clientDllVersion: %s rest: %s",
-				ClientVersionString(matrixVersion).c_str(),
-				ClientVersionString(clientDllVersion).c_str(),
-				Bin2Hex(&packetData.contents()[packetData.rpos()],packetData.remaining()).c_str());
+			DEBUG_LOG(format("MS_ConnectRequest: matrixVersion: %2% clientDllVersion: %2% rest: %3%")
+				% ClientVersionString(matrixVersion)
+				% ClientVersionString(clientDllVersion)
+				% Bin2Hex(&packetData.contents()[packetData.rpos()],packetData.remaining()));
 
 			//real server response with MS_ConnectChallenge which has 16 bytes some data, then 00 00 01 00
 			EncryptedPacket response;
@@ -326,7 +338,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 
 			SendCrypted(response);
 
-			DEBUG_LOG("Sending MS_ConnectChallenge: |%s|",Bin2Hex(response).c_str());
+			DEBUG_LOG(format("Sending MS_ConnectChallenge: |%1%|") % Bin2Hex(response) );
 			break;
 		}
 	case MS_ConnectChallengeResponse:
@@ -357,7 +369,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 
 			readyForUdp = true;
 
-			DEBUG_LOG("Sending MS_ConnectReply: |%s|",Bin2Hex(response).c_str());
+			DEBUG_LOG(format("Sending MS_ConnectReply: |%1%|") % Bin2Hex(response) );
 			break;
 		}
 	case MS_LoadCharacterRequest:
@@ -367,12 +379,12 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 				break;
 
 			packetData >> charId;
-			//scope for auto_ptr
+			//scope for db ptr
 			{
-				auto_ptr<QueryResult> result(sDatabase.Query("SELECT `charId`, `userId`, `handle`, `firstName`, `lastName`, `background` FROM `characters` WHERE `userId` = '%u' AND `charId` = '%ull' LIMIT 1",m_userId,charId) );
+				scoped_ptr<QueryResult> result(sDatabase.Query(format("SELECT `charId`, `userId`, `handle`, `firstName`, `lastName`, `background` FROM `characters` WHERE `userId` = '%1%' AND `charId` = '%2%' LIMIT 1") % m_userId % charId) );
 				if (result.get() == NULL)
 				{
-					ERROR_LOG("MS_LoadCharacterRequest: Character doesn't exist or username %s doesn't own it",m_username.c_str());
+					ERROR_LOG(format("MS_LoadCharacterRequest: Character doesn't exist or username %1% doesn't own it") % m_username );
 					SetCloseAndDelete(true);
 					return;
 				}
@@ -390,11 +402,11 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			}
 
 			//disconnect any other users that are connected on acc
-			{
+/*			{
 				MarginSocket *othrUser = sMargin.GetSocketByCharacterUID(charId);
 				if (othrUser!=NULL && othrUser!=this)
 					othrUser->ForceDisconnect();
-			}
+			}*/
 
 
 			//then 32 zeroes
@@ -404,7 +416,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			packetData.read(&justZeroes[0],justZeroes.size());
 			if (std::accumulate(justZeroes.begin(),justZeroes.end(),0) != 0)
 			{
-				WARNING_LOG("MS_LoadCharacterRequest: Zeroes were %s",Bin2Hex(&justZeroes[0],justZeroes.size()).c_str());
+				WARNING_LOG(format("MS_LoadCharacterRequest: Zeroes were %1%") % Bin2Hex(&justZeroes[0],justZeroes.size()) );
 			}
 
 			uint32 strangeCounter=0;
@@ -425,7 +437,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			}
 			if (strangeCounter != 9)
 			{
-				WARNING_LOG("MS_LoadCharacterRequest: Strange counter was not 9 but %d",strangeCounter);
+				WARNING_LOG(format("MS_LoadCharacterRequest: Strange counter was not 9 but %1%") % strangeCounter);
 			}
 
 			//abs position in packet of weird string size uint16
@@ -447,7 +459,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			if (stringStorage.size() > 1)
 			{
 				soeChatString = string((const char*)&stringStorage[0],stringStorage.size()-1);
-				WARNING_LOG("MS_LoadCharacterRequest: weird string is %s",soeChatString.c_str());
+				WARNING_LOG(format("MS_LoadCharacterRequest: weird string is %1%") % soeChatString );
 			}
 			else
 			{
@@ -893,7 +905,7 @@ void MarginSocket::SendCharacterReply( uint16 shortAfterId,bool lastPacket,uint8
 	SendCrypted(derp);
 }
 
-bool MarginSocket::UdpReady()
+bool MarginSocket::UdpReady(GameClient *theClient)
 {
 	if (!readyForUdp)
 		return false;

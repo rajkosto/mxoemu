@@ -25,10 +25,6 @@
 #include <time.h>
 #include <stdlib.h>
 
-#define MILLISECONDS ((clock() * CLK_TCK) * 1000)
-#define SECONDS (((clock() * CLK_TCK) * 1000) * 1000)
-
-
 /**
  * This is a very simple timer that can be used to schedule different
  * events to happen over certain periods of time. The timer period is
@@ -91,5 +87,16 @@ inline uint32 getTime()
 {
     return (uint32)time(NULL);
 }
+
+#ifdef WIN32
+__forceinline uint32 getMSTime() { return GetTickCount(); }
+#else
+inline uint32 getMSTime()
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+}
+#endif
 
 #endif

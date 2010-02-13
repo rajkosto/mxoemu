@@ -22,41 +22,51 @@
 #ifndef MXOSIM_GAMESERVER_H
 #define MXOSIM_GAMESERVER_H
 
-#include "GameClient.h"
+#include "Common.h"
+#include "ByteBuffer.h"
 #include "Singleton.h"
 #include "Sockets.h"
+#include "ObjectMgr.h"
 
-#define RECV_BUFFER_SIZE 1024
+#define RECV_BUFFER_SIZE 2048
 
 class GameServer : public Singleton <GameServer>
 {
-	private:		
-		// Client List
+public:
+	GameServer() { };
+	~GameServer() { /* TODO: Add destructor code */ };
+	bool Start();
+	void Stop();
+	void Loop();
+	int Clients_Connected(void) { return (int)m_clients.size(); }
+	void Handle_Incoming();
+	class GameClient *GetClientWithSessionId(uint32 sessionId);
+	void CheckAndResend();
+	void Broadcast(const ByteBuffer &message);
+	void AnnounceStateUpdate(class GameClient* clFrom,class MsgBaseClass *theMsg);
+	void AnnounceCommand(class GameClient* clFrom,class MsgBaseClass *theCmd);
+	ObjectMgr &getObjMgr() { return m_objMgr; }
 
-		typedef std::map<std::string, GameClient*> GClientList;
-		GClientList Clients;
-		struct sockaddr_in listen_addr, inc_addr;
+private:	
+	// Client List
+	typedef std::map<std::string, class GameClient*> GClientList;
+	GClientList m_clients;
+	struct sockaddr_in listen_addr, inc_addr;
 
-		// Socket stuff
-		SOCKET Socket;
-		fd_set Readable;
+	// Socket stuff
+	SOCKET m_socket;
+	fd_set m_readable;
 
-		struct timeval timeout;
-		uint32 lastCleanupTime;
-		uint32 CurTime;
-	public:
-		GameServer() { /* TODO: Add constructor code */ };
-		~GameServer() { /* TODO: Add destructor code */ };
-		bool Start();
-		void Stop();
-		void Loop();
-		int Clients_Connected(void) { return (int)Clients.size(); }
-		void Handle_Incoming();
-		void Broadcast(const ByteBuffer &message);
+	struct timeval m_timeout;
+	uint32 m_lastCleanupTime;
+	uint32 m_currTime;
+
+	ObjectMgr m_objMgr;
 };
 
 
 #define sGame GameServer::getSingleton()
+#define sObjMgr GameServer::getSingleton().getObjMgr()
 
 #endif
 

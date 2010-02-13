@@ -24,6 +24,8 @@
 
 #include "Singleton.h"
 #include "Threading/NativeMutex.h"
+#include <boost/format.hpp>
+using boost::format;
 
 class Log : public Singleton< Log >
 {
@@ -41,11 +43,16 @@ public:
 	void OpenLogFile( const char *logFileName );
 
 	//logging funcs
-	void Critical( const char *str, ... );
-	void Error( const char *str, ... );
-	void Warning( const char *str, ... );
-	void Info( const char *str, ...	);
-	void Debug( const char *str, ... );
+	void Critical( boost::format &fmt );
+	void Critical( string fmt );
+	void Error( boost::format &fmt );
+	void Error( string fmt );
+	void Warning( boost::format &fmt );
+	void Warning( string fmt );
+	void Info( boost::format &fmt );
+	void Info( string fmt );
+	void Debug( boost::format &fmt );
+	void Debug( string fmt );
 private:
 	string ProcessString(LogLevel level,const string &str,bool forFile = false);
 	void OutputConsole(LogLevel level,const string &str);

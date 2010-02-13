@@ -75,11 +75,11 @@ bool Master::Run()
 {
 	if (!sConfig.SetSource(REALITY_CONFIG))
 	{
-		CRITICAL_LOG("Could not find configuration file %s.", REALITY_CONFIG);
+		CRITICAL_LOG(format("Could not find configuration file %1%.") % REALITY_CONFIG);
 		exit(0);
 	}
 
-	INFO_LOG("Reality v0.01 Alpha %i bit version started",(sizeof(int*) * 8));
+	INFO_LOG(format("Reality v0.01 Alpha %1% bit version started") % (sizeof(int*) * 8));
 
 	if( !_StartDB() )
 	{

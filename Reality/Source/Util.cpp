@@ -147,22 +147,15 @@ string ConvertToLower(string input,size_t position)
 	return output;
 }
 
-void SetThreadName(const char* format, ...)
+void SetThreadName(const char *fmt)
 {
-	// This isn't supported on nix?
-	va_list ap;
-	va_start(ap, format);
-
 #if PLATFORM == PLATFORM_WIN32 && COMPILER == COMPILER_MICROSOFT
-
-	char thread_name[200];
-	vsnprintf(thread_name, 200, format, ap);
 
 	THREADNAME_INFO info;
 	info.dwType = 0x1000;
 	info.dwThreadID = GetCurrentThreadId();
 	info.dwFlags = 0;
-	info.szName = thread_name;
+	info.szName = fmt;
 
 	__try
 	{
@@ -178,8 +171,6 @@ void SetThreadName(const char* format, ...)
 	}
 
 #endif
-
-	va_end(ap);
 }
 
 time_t convTimePeriod ( uint32 dLength, char dType )

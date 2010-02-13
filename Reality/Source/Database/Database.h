@@ -29,6 +29,9 @@
 #include "Field.h"
 #include <mysql/mysql.h>
 
+#include <boost/format.hpp>
+using boost::format;
+
 using namespace std;
 class QueryResult;
 class QueryThread;
@@ -55,7 +58,8 @@ class AsyncQuery
 public:
 	AsyncQuery(SQLCallbackBase * f) : func(f) {}
 	~AsyncQuery();
-	void AddQuery(const char * format, ...);
+	void AddQuery(string fmt);
+	void AddQuery(format &fmt) { AddQuery(fmt.str()); }
 	void Perform();
 	inline void SetDB(Database * dbb) { db = dbb; }
 };
@@ -65,9 +69,8 @@ class QueryBuffer
 	vector<char*> queries;
 public:
 	friend class Database;
-	void AddQuery( const char * format, ... );
-	void AddQueryNA( const char * str );
-	void AddQueryStr(const string& str);
+	void AddQuery(string fmt);
+	void AddQuery(format &fmt) { AddQuery(fmt.str()); }
 };
 
 class Database : public ThreadContext
@@ -94,14 +97,14 @@ public:
 
 	void Shutdown();
 
-	QueryResult* Query(const char* QueryString, ...);
-	QueryResult* QueryNA(const char* QueryString);
-	QueryResult * FQuery(const char * QueryString, DatabaseConnection *con);
-	void FWaitExecute(const char * QueryString, DatabaseConnection *con);
-	bool WaitExecute(const char* QueryString, ...);//Wait For Request Completion
-	bool WaitExecuteNA(const char* QueryString);//Wait For Request Completion
-	bool Execute(const char* QueryString, ...);
-	bool ExecuteNA(const char* QueryString);
+	QueryResult* Query(string QueryString);
+	QueryResult* Query(format &fmt) { return Query(fmt.str()); }
+	QueryResult * FQuery( string QueryString, DatabaseConnection *con);
+	void FWaitExecute( string QueryString, DatabaseConnection *con);
+	bool WaitExecute( string QueryString);//Wait For Request Completion
+	bool WaitExecute(format &fmt) { return WaitExecute(fmt.str()); }
+	bool Execute( string QueryString);
+	bool Execute(format &fmt) { return Execute(fmt.str()); }
 
 	inline const string& GetHostName() { return mHostname; }
 	inline const string& GetDatabaseName() { return mDatabaseName; }

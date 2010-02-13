@@ -43,7 +43,7 @@ MarginServer::~MarginServer()
 void MarginServer::Start()
 {
     int Port = sConfig.GetIntDefault("MarginServer.Port",10000);
-	INFO_LOG("Starting Margin server on port %d", Port);	
+	INFO_LOG(format("Starting Margin server on port %1%") % Port);	
 
 	if (listenSocketInst != NULL)
 	{

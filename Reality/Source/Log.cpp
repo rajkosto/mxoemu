@@ -161,72 +161,53 @@ void Log::Output( LogLevel level,const string &str )
 	OutputFile(level,str);
 }
 
-void Log::Critical( const char *str, ... )
+void Log::Critical( boost::format &fmt )
 {
-	if( str == NULL )
-		return;
-
-	char outstring[65536];
-	va_list ap;
-	va_start(ap, str);
-	vsprintf(outstring,str,ap);
-	va_end(ap);
-
-	Output(LOGLEVEL_CRITICAL,string(outstring));
+	Critical(fmt.str());
 }
 
-void Log::Error( const char *str, ... )
+void Log::Critical( string fmt )
 {
-	if( str == NULL )
-		return;
-
-	char outstring[65536];
-	va_list ap;
-	va_start(ap, str);
-	vsprintf(outstring,str,ap);
-	va_end(ap);
-
-	Output(LOGLEVEL_ERROR,string(outstring));
+	Output(LOGLEVEL_CRITICAL,fmt);
 }
 
-void Log::Warning( const char *str, ... )
+void Log::Error( boost::format &fmt )
 {
-	if( str == NULL )
-		return;
-
-	char outstring[65536];
-	va_list ap;
-	va_start(ap, str);
-	vsprintf(outstring,str,ap);
-	va_end(ap);
-
-	Output(LOGLEVEL_WARNING,string(outstring));
+	Error(fmt.str());
 }
 
-void Log::Info( const char *str, ... )
+void Log::Error( string fmt )
 {
-	if( str == NULL )
-		return;
-
-	char outstring[65536];
-	va_list ap;
-	va_start(ap, str);
-	vsprintf(outstring,str,ap);
-	va_end(ap);
-
-	Output(LOGLEVEL_INFO,string(outstring));
+	Output(LOGLEVEL_ERROR,fmt);
 }
 
-void Log::Debug( const char *str, ... )
+void Log::Warning( boost::format &fmt )
 {
-	if( str == NULL )
-		return;
-
-	char outstring[65536];
-	va_list ap;
-	va_start(ap, str);
-	vsprintf(outstring,str,ap);
-	va_end(ap);
-
-	Output(LOGLEVEL_DEBUG,string(outstring));
+	Warning(fmt.str());
 }
+
+void Log::Warning( string fmt )
+{
+	Output(LOGLEVEL_WARNING,fmt);
+}
+
+void Log::Info( boost::format &fmt )
+{
+	Info(fmt.str());
+}
+
+void Log::Info( string fmt )
+{
+	Output(LOGLEVEL_INFO,fmt);
+}
+
+void Log::Debug( boost::format &fmt )
+{
+	Debug(fmt.str());
+}
+
+void Log::Debug( string fmt )
+{
+	Output(LOGLEVEL_DEBUG,fmt);
+}
+

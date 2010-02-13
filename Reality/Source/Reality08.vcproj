@@ -184,6 +184,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\CryptoTest.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Main.cpp"
 				>
 			</File>
@@ -193,6 +197,14 @@
 			</File>
 			<File
 				RelativePath=".\Master.h"
+				>
+			</File>
+			<File
+				RelativePath=".\seqchecktest.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SubPacketsTest.h"
 				>
 			</File>
 		</Filter>
@@ -316,10 +328,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\GameResponses.h"
-				>
-			</File>
-			<File
 				RelativePath=".\GameRunnable.h"
 				>
 			</File>
@@ -329,6 +337,34 @@
 			</File>
 			<File
 				RelativePath=".\GameServer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\LocationVector.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MessageTypes.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MessageTypes.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ObjectMgr.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ObjectMgr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PlayerObject.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PlayerObject.h"
 				>
 			</File>
 			<File

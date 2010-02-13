@@ -202,6 +202,11 @@ static inline void xchg32 (void *a, void *b)
 #include <algorithm>
 #include <numeric>
 
+#include <boost/scoped_ptr.hpp>
+using boost::scoped_ptr;
+#include <boost/lexical_cast.hpp>
+using boost::lexical_cast;
+
 #if COMPILER == COMPILER_INTEL
 #include <ext/hash_map>
 #elif COMPILER == COMPILER_GNU && __GNUC__ >= 4

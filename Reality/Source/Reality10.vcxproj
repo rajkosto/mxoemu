@@ -1,0 +1,191 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>Reality</ProjectName>
+    <ProjectGuid>{7D6FA0B1-8216-4490-9078-AE0112037A1E}</ProjectGuid>
+    <RootNamespace>Reality</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30128.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\Dependencies10\CryptoPP\Win32\Include;..\..\Dependencies10\Sockets\Project.net\Include;..\..\Dependencies10\MySQL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>ws2_32.lib;libmysql.lib;cryptlib.lib;Sockets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>..\Binaries\RealityD.exe</OutputFile>
+      <AdditionalLibraryDirectories>..\..\Dependencies10\CryptoPP\Win32\Output\Debug;..\..\Dependencies10\MySQL\lib\32;..\..\Dependencies10\Sockets\Project.net\lib\D;..\..\Dependencies10\ZThread\lib\D;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\..\Dependencies10\CryptoPP\Win32\Include;..\..\Dependencies10\Sockets\Project.net\Include;..\..\Dependencies10\MySQL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>ws2_32.lib;libmysql.lib;cryptlib.lib;Sockets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>..\Binaries\Reality.exe</OutputFile>
+      <AdditionalLibraryDirectories>..\..\Dependencies10\CryptoPP\Win32\Output\Release;..\..\Dependencies10\MySQL\lib\32;..\..\Dependencies10\Sockets\Project.net\lib\R;..\..\Dependencies10\ZThread\lib\R;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="CryptoTest.h" />
+    <ClInclude Include="Master.h" />
+    <ClInclude Include="seqchecktest.h" />
+    <ClInclude Include="SubPacketsTest.h" />
+    <ClInclude Include="DotConfPP\dotconfpp.h" />
+    <ClInclude Include="DotConfPP\mempool.h" />
+    <ClInclude Include="ByteBuffer.h" />
+    <ClInclude Include="CallBack.h" />
+    <ClInclude Include="Config.h" />
+    <ClInclude Include="Errors.h" />
+    <ClInclude Include="Log.h" />
+    <ClInclude Include="MersenneTwister.h" />
+    <ClInclude Include="Singleton.h" />
+    <ClInclude Include="Util.h" />
+    <ClInclude Include="Database\Database.h" />
+    <ClInclude Include="Database\DatabaseEnv.h" />
+    <ClInclude Include="Database\Field.h" />
+    <ClInclude Include="GameClient.h" />
+    <ClInclude Include="GameRunnable.h" />
+    <ClInclude Include="GameServer.h" />
+    <ClInclude Include="LocationVector.h" />
+    <ClInclude Include="MessageTypes.h" />
+    <ClInclude Include="ObjectMgr.h" />
+    <ClInclude Include="PlayerObject.h" />
+    <ClInclude Include="RsiData.h" />
+    <ClInclude Include="SequencedPacket.h" />
+    <ClInclude Include="BitStream.h" />
+    <ClInclude Include="BitVarStream.h" />
+    <ClInclude Include="Common.h" />
+    <ClInclude Include="Crypto.h" />
+    <ClInclude Include="Sockets.h" />
+    <ClInclude Include="Timer.h" />
+    <ClInclude Include="EncryptedPacket.h" />
+    <ClInclude Include="MarginHandler.h" />
+    <ClInclude Include="MarginRunnable.h" />
+    <ClInclude Include="MarginServer.h" />
+    <ClInclude Include="MarginSocket.h" />
+    <ClInclude Include="AuthHandler.h" />
+    <ClInclude Include="AuthRunnable.h" />
+    <ClInclude Include="AuthServer.h" />
+    <ClInclude Include="AuthSocket.h" />
+    <ClInclude Include="SignedDataStruct.h" />
+    <ClInclude Include="TCPVariableLengthPacket.h" />
+    <ClInclude Include="TCPVarLenSocket.h" />
+    <ClInclude Include="Threading\Condition.h" />
+    <ClInclude Include="Threading\Guard.h" />
+    <ClInclude Include="Threading\LockedQueue.h" />
+    <ClInclude Include="Threading\NativeMutex.h" />
+    <ClInclude Include="Threading\Queue.h" />
+    <ClInclude Include="Threading\RWLock.h" />
+    <ClInclude Include="Threading\Threading.h" />
+    <ClInclude Include="Threading\ThreadPool.h" />
+    <ClInclude Include="Threading\ThreadStarter.h" />
+    <ClInclude Include="ConsoleThread.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Master.cpp" />
+    <ClCompile Include="DotConfPP\dotconfpp.cpp" />
+    <ClCompile Include="DotConfPP\mempool.cpp" />
+    <ClCompile Include="CallBack.cpp" />
+    <ClCompile Include="Config.cpp" />
+    <ClCompile Include="Log.cpp" />
+    <ClCompile Include="MersenneTwister.cpp" />
+    <ClCompile Include="Util.cpp" />
+    <ClCompile Include="Database\Database.cpp" />
+    <ClCompile Include="GameClient.cpp" />
+    <ClCompile Include="GameServer.cpp" />
+    <ClCompile Include="MessageTypes.cpp" />
+    <ClCompile Include="ObjectMgr.cpp" />
+    <ClCompile Include="PlayerObject.cpp" />
+    <ClCompile Include="SequencedPacket.cpp" />
+    <ClCompile Include="BitStream.cpp" />
+    <ClCompile Include="BitVarStream.cpp" />
+    <ClCompile Include="EncryptedPacket.cpp" />
+    <ClCompile Include="MarginHandler.cpp" />
+    <ClCompile Include="MarginServer.cpp" />
+    <ClCompile Include="MarginSocket.cpp" />
+    <ClCompile Include="AuthHandler.cpp" />
+    <ClCompile Include="AuthServer.cpp" />
+    <ClCompile Include="AuthSocket.cpp" />
+    <ClCompile Include="TCPVariableLengthPacket.cpp" />
+    <ClCompile Include="TCPVarLenSocket.cpp" />
+    <ClCompile Include="Threading\NativeMutex.cpp" />
+    <ClCompile Include="Threading\ThreadPool.cpp" />
+    <ClCompile Include="ConsoleThread.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

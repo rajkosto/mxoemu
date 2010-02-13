@@ -53,9 +53,16 @@ bool ConsoleThread::run()
 			lineParser >> username;
 			lineParser >> password;
 
-			bool accountCreated = sAuth.CreateAccount(username,password);
-			if (accountCreated)
-				INFO_LOG("Created account with username %s password %s",username.c_str(),password.c_str());
+			if (username.length() < 1 || password.length() < 1)
+			{
+				WARNING_LOG("Invalid username or password");
+			}
+			else
+			{
+				bool accountCreated = sAuth.CreateAccount(username,password);
+				if (accountCreated)
+					INFO_LOG(format("Created account with username %1% password %2%") % username % password );
+			}
 		}
 		else if (strcmp(command.c_str(), "send") == 0)
 		{

@@ -33,6 +33,8 @@ public:
 	MarginSocket(ISocketHandler& );
 	~MarginSocket();
 
+	void OnDisconnect(short info, int code);
+
 	uint32 GetSessionId() {return sessionId;}
 	uint64 GetCharUID() {return charId;};
 	uint32 GetWorldCharId() {return worldCharId;}
@@ -42,8 +44,11 @@ public:
 		memcpy(&tempVect[0],&twofishKey[0],tempVect.size());
 		return tempVect;
 	}
-	void ForceDisconnect() {this->SetCloseAndDelete(true);}
-	bool UdpReady();
+	void ForceDisconnect() 
+	{
+		this->SetCloseAndDelete(true);
+	}
+	bool UdpReady(class GameClient *theClient);
 private:
 	void ProcessData(const byte *buf,size_t len);
 	void SendCrypted(class EncryptedPacket &cryptedPacket);
@@ -64,8 +69,8 @@ private:
 	typedef CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption Decryptor;
 	typedef CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption Encryptor;
 
-	auto_ptr<Decryptor> TFDecrypt;
-	auto_ptr<Encryptor> TFEncrypt;
+	shared_ptr<Decryptor> TFDecrypt;
+	shared_ptr<Encryptor> TFEncrypt;
 
 	uint32 sessionId;
 	uint64 charId;

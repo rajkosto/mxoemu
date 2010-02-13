@@ -35,6 +35,7 @@ public:
 
 	inline const char *GetString() { return mValue; }
 	inline float GetFloat() { return mValue ? static_cast<float>(atof(mValue)) : 0; }
+	inline double GetDouble() { return atof(mValue); }
 	inline bool GetBool() { return mValue ? atoi(mValue) > 0 : false; }
 	inline uint8 GetUInt8() { return mValue ? static_cast<uint8>(atol(mValue)) : 0; }
 	inline int8 GetInt8() { return mValue ? static_cast<int8>(atol(mValue)) : 0; }

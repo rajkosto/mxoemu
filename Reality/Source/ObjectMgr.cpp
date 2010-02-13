@@ -45,7 +45,7 @@ void ObjectMgr::deallocatePlayer( uint32 goId )
 			uint32 theGoId = it2->second;
 			if (theGoId == goId)
 			{
-				it2 = it1->second.erase(it2);
+				it1->second.erase(it2++);
 			}
 			else
 			{

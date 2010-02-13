@@ -204,116 +204,11 @@ static inline void xchg32 (void *a, void *b)
 
 #include <boost/scoped_ptr.hpp>
 using boost::scoped_ptr;
+#include <boost/shared_ptr.hpp>
+using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
 #include <boost/lexical_cast.hpp>
 using boost::lexical_cast;
-
-#if COMPILER == COMPILER_INTEL
-#include <ext/hash_map>
-#elif COMPILER == COMPILER_GNU && __GNUC__ >= 4
-#include <tr1/memory>
-#include <tr1/unordered_map>
-#include <tr1/unordered_set>
-#elif COMPILER == COMPILER_GNU && __GNUC__ >= 3
-#include <ext/hash_map>
-#include <ext/hash_set>
-#elif COMPILER == COMPILER_MICROSOFT && _MSC_VER >= 1500 && _HAS_TR1   // VC9.0 SP1 and later
-#include <memory>
-#include <unordered_map>
-#include <unordered_set>
-#elif COMPILER == COMPILER_MICROSOFT && _MSC_VER >= 1500 && !_HAS_TR1
-#pragma message ("FATAL ERROR: Please install Service Pack 1 for Visual Studio 2008")
-#elif COMPILER == COMPILER_MICROSOFT && _MSC_VER < 1500
-#include <boost/tr1/memory.hpp>
-#include <boost/tr1/unordered_map.hpp>
-#include <boost/tr1/unordered_set.hpp>
-#else
-#include <memory>
-#include <hash_map>
-#include <hash_set>
-#endif
-
-#ifdef _STLPORT_VERSION
-#define HM_NAMESPACE std
-using std::hash_map;
-using std::hash_set;
-#elif COMPILER == COMPILER_MICROSOFT && _MSC_VER >= 1500 && _HAS_TR1
-using namespace std::tr1;
-using std::tr1::shared_ptr;
-#undef HM_NAMESPACE
-#define HM_NAMESPACE tr1
-#define hash_map unordered_map
-#define TRHAX 1
-#elif COMPILER == COMPILER_MICROSOFT && (_MSC_VER < 1500 || !_HAS_TR1)
-using namespace std::tr1;
-using std::tr1::shared_ptr;
-#undef HM_NAMESPACE
-#define HM_NAMESPACE tr1
-#define hash_map unordered_map
-#define ENABLE_SHITTY_STL_HACKS 1
-
-// hacky stuff for vc++
-#define snprintf _snprintf
-#define vsnprintf _vsnprintf
-#elif COMPILER == COMPILER_INTEL
-#define HM_NAMESPACE std
-using std::hash_map;
-using std::hash_set;
-#elif COMPILER == COMPILER_GNU && __GNUC__ >= 4
-using namespace std::tr1;
-using std::tr1::shared_ptr;
-#undef HM_NAMESPACE
-#define HM_NAMESPACE tr1
-#define shared_ptr std::tr1::shared_ptr
-#define hash_map unordered_map
-#define TRHAX 1
-#elif COMPILER == COMPILER_GNU && __GNUC__ >= 3
-#define HM_NAMESPACE __gnu_cxx
-using __gnu_cxx::hash_map;
-using __gnu_cxx::hash_set;
-
-namespace __gnu_cxx
-{
-	template<> struct hash<unsigned long long>
-	{
-		size_t operator()(const unsigned long long &__x) const { return (size_t)__x; }
-	};
-	template<typename T> struct hash<T *>
-	{
-		size_t operator()(T * const &__x) const { return (size_t)__x; }
-	};
-
-};
-#else
-#define HM_NAMESPACE std
-using std::hash_map;
-#endif
-#if COMPILER == COMPILER_GNU && __GNUC__ >=4 && __GNUC_MINOR__ == 1 && __GNUC_PATCHLEVEL__ == 2
-//GCC I HATE YOU!
-namespace std
-{
-	namespace tr1
-	{
-		template<> struct hash<long long unsigned int> : public std::unary_function<long long unsigned int, std::size_t>
-		{
-			std::size_t operator()(const long long unsigned int val) const
-			{
-				return static_cast<std::size_t>(val);
-			}
-		};
-	}
-}
-#endif
-
-namespace std
-{
-	namespace tr1
-	{
-		template<typename T> struct hash<shared_ptr<T> >
-		{
-			size_t operator()(shared_ptr<T> const &__x) const { return (size_t)__x.get(); }
-		};
-	}
-}
 
 using namespace std;
 

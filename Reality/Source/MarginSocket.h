@@ -57,7 +57,7 @@ private:
 	{
 		numCharacterReplies=0;
 	}
-	void SendCharacterReply(uint16 shortAfterId,bool lastPacket,uint8 opcode,ByteBuffer &theData);
+	void SendCharacterReply(uint16 shortAfterId,bool lastPacket,uint8 opcode,ByteBuffer theData);
 
 	uint32 m_userId;
 	string m_username;

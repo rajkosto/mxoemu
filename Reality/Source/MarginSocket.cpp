@@ -471,7 +471,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			//10 00 00 00 00 11 a0 07 00 00 00 01 00 01 00 00 
 			//               ?? ?? ?? ?? <- world character id (unique per world, the uint64 charId is globally unique across worlds)
 			byte firstOne[] = {0x00,0x00};
-			SendCharacterReply(0,0,1,ByteBuffer(firstOne,sizeof(firstOne)));
+			SendCharacterReply(0,false,1,ByteBuffer(firstOne,sizeof(firstOne)));
 
 			byte firstNameLastNameBackground[] =
 			{
@@ -888,7 +888,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 	}
 }
 
-void MarginSocket::SendCharacterReply( uint16 shortAfterId,bool lastPacket,uint8 opcode,ByteBuffer &theData )
+void MarginSocket::SendCharacterReply( uint16 shortAfterId,bool lastPacket,uint8 opcode,ByteBuffer theData )
 {
 	numCharacterReplies++;
 

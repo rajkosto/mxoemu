@@ -1,0 +1,55 @@
+VERSION =	2.3.5
+DIFF_VERSION =	2.3.4
+
+# Sockets
+OBJS =		\
+		Ajp13Socket.o \
+		AjpBaseSocket.o \
+		Base64.o \
+		Debug.o \
+		Event.o \
+		EventHandler.o \
+		EventTime.o \
+		Exception.o \
+		File.o \
+		FileStream.o \
+		HTTPSocket.o \
+		HttpBaseSocket.o \
+		HttpClientSocket.o \
+		HttpDebugSocket.o \
+		HttpGetSocket.o \
+		HttpPostSocket.o \
+		HttpPutSocket.o \
+		HttpRequest.o \
+		HttpResponse.o \
+		HttpTransaction.o \
+		HttpdCookies.o \
+		HttpdForm.o \
+		HttpdSocket.o \
+		IEventOwner.o \
+		Ipv4Address.o \
+		Ipv6Address.o \
+		Lock.o \
+		MemFile.o \
+		Mutex.o \
+		Parse.o \
+		ResolvServer.o \
+		ResolvSocket.o \
+		SSLInitializer.o \
+		SctpSocket.o \
+		SmtpdSocket.o \
+		Socket.o \
+		SocketHandler.o \
+		SocketStream.o \
+		StdoutLog.o \
+		StreamSocket.o \
+		StreamWriter.o \
+		TcpSocket.o \
+		Thread.o \
+		UdpSocket.o \
+		Utility.o \
+		socket_include.o \
+		XmlDocument.o \
+		XmlNode.o \
+		XmlException.o
+

@@ -1,0 +1,20 @@
+CXX =		/opt/SUNWspro/bin/CC
+
+CFLAGS +=	-g $(INCLUDE) -MD -D_VERSION='"$(VERSION)"'
+CFLAGS +=	-features=rtti -mt
+
+# turn off optimization if compiling with gcc 2.9.x:
+#CFLAGS +=	-O0
+CFLAGS +=	-O2
+
+
+# uncomment depending on your operating system
+CFLAGS +=	-DSOLARIS
+
+
+LIBS +=		\
+		-lssl -lcrypto \
+		-lpthread
+
+OBJS +=		Semaphore.o
+

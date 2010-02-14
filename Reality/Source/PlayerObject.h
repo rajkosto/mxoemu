@@ -1,7 +1,29 @@
-#ifndef PLAYEROBJECT_H
-#define PLAYEROBJECT_H
+// *************************************************************************************************
+// --------------------------------------
+// Copyright (C) 2006-2010 Rajko Stojadinovic
+//
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+//
+// *************************************************************************************************
+
+#ifndef MXOEMU_PLAYEROBJECT_H
+#define MXOEMU_PLAYEROBJECT_H
 
 #include "LocationVector.h"
+#include "MessageTypes.h"
 
 class PlayerObject
 {
@@ -37,7 +59,7 @@ public:
 	uint8 getAlignment() const {return m_alignment;}
 	bool getPvpFlag() const {return m_pvpflag;}
 
-	vector<class MsgBaseClass*> getCurrentStatePackets();
+	vector<msgBaseClassPtr> getCurrentStatePackets();
 private:
 	class GameClient &m_parent;
 	

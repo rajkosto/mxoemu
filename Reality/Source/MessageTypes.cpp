@@ -1,3 +1,24 @@
+// *************************************************************************************************
+// --------------------------------------
+// Copyright (C) 2006-2010 Rajko Stojadinovic
+//
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+//
+// *************************************************************************************************
+
 #include "MessageTypes.h"
 #include "PlayerObject.h"
 #include "GameClient.h"
@@ -168,7 +189,7 @@ const ByteBuffer& PlayerSpawnMsg::toBuf()
 		throw PacketNoLongerValid();		
 	}
 	memcpy(viewIdPos,&viewId,sizeof(viewId));
-	DEBUG_LOG(format("Player %1% spawn packet serializing for client %2% with viewID %3%") % m_objectId % m_toWho->Address() % viewId);
+	DEBUG_LOG(format("Player %1%:%2% spawn packet serializing for client %3% with viewID %4%") % m_player->getHandle() % m_objectId % m_toWho->Address() % viewId);
 
 	m_buf.clear();
 	m_buf.append(sampleSpawnPacket,sizeof(sampleSpawnPacket));

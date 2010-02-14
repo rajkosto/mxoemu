@@ -43,8 +43,6 @@
 #include <strings.h>
 #endif
 
-using namespace std;
-
 #include "mempool.h"
 
 class DOTCONFDocument;

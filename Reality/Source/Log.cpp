@@ -131,7 +131,7 @@ void Log::OutputConsole( LogLevel level,const string &str )
 	{
 		string outputMe = ProcessString(level,str,false);
 		printMutex.Acquire();
-		cout << outputMe << endl;
+		cout << outputMe << std::endl;
 		printMutex.Release();
 	}
 }
@@ -149,7 +149,7 @@ void Log::OutputFile( LogLevel level,const string &str )
 		if (LogFile.is_open() == true)
 		{
 			fileMutex.Acquire();
-			LogFile << outputMe << endl;
+			LogFile << outputMe << std::endl;
 			fileMutex.Release();
 		}
 	}

@@ -219,7 +219,7 @@ void GameServer::CheckAndResend()
 	}
 }
 
-void GameServer::AnnounceStateUpdate( class GameClient* clFrom,class MsgBaseClass *theMsg )
+void GameServer::AnnounceStateUpdate( class GameClient* clFrom,msgBaseClassPtr theMsg )
 {
 	for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();++it)
 	{
@@ -230,7 +230,7 @@ void GameServer::AnnounceStateUpdate( class GameClient* clFrom,class MsgBaseClas
 	}
 }
 
-void GameServer::AnnounceCommand( class GameClient* clFrom,class MsgBaseClass *theCmd )
+void GameServer::AnnounceCommand( class GameClient* clFrom,msgBaseClassPtr theCmd )
 {
 	for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();++it)
 	{

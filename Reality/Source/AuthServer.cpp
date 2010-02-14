@@ -464,7 +464,7 @@ string AuthServer::GenerateSalt(uint32 length)
 
 bool AuthServer::CreateAccount( const string& username,const string& password )
 {
-	shared_ptr<QueryResult> query(sDatabase.Query(format("SELECT `userId` FROM `users` WHERE `username` = '%1%'") % sDatabase.EscapeString(username)));
+	scoped_ptr<QueryResult> query(sDatabase.Query(format("SELECT `userId` FROM `users` WHERE `username` = '%1%'") % sDatabase.EscapeString(username)));
 	if (query == NULL)
 	{
 		string salt = GenerateSalt(8);

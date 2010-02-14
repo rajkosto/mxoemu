@@ -97,11 +97,11 @@ bool ConsoleThread::run()
 			}
 			catch (...)
 			{
-				cout << "Invalid hex string" << endl;		
+				cout << "Invalid hex string" << std::endl;		
 				continue;
 			}
 			sGame.Broadcast(ByteBuffer(binaryOutput));
-			cout << "OK" << endl;
+			cout << "OK" << std::endl;
 		}
 	}
 

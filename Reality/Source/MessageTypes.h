@@ -1,5 +1,26 @@
-#ifndef MESSAGETYPES_H
-#define MESSAGETYPES_H
+// *************************************************************************************************
+// --------------------------------------
+// Copyright (C) 2006-2010 Rajko Stojadinovic
+//
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+//
+// *************************************************************************************************
+
+#ifndef MXOSIM_MESSAGETYPES_H
+#define MXOSIM_MESSAGETYPES_H
 
 #include "Common.h"
 #include "ByteBuffer.h"
@@ -80,16 +101,6 @@ class SystemChatMsg : public StaticMsg
 public:
 	SystemChatMsg(string theChatMsg) 
 	{
-		InitFromString(theChatMsg);
-	}
-	SystemChatMsg(format &fmt)
-	{
-		InitFromString(fmt.str());
-	}
-	~SystemChatMsg() {}
-private:
-	void InitFromString(string theChatMsg)
-	{
 		m_buf.clear();
 		//2E0700000000000000000024000000000000000000000000000000000000000000000000 DATALEN(UINT16) ZEROSTR
 		const byte headerData[] =
@@ -104,6 +115,7 @@ private:
 		m_buf << uint16(dataSize);
 		m_buf.append(theChatMsg.c_str(),dataSize);
 	}
+	~SystemChatMsg() {}
 };
 
 class PlayerChatMsg : public StaticMsg

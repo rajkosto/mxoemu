@@ -27,6 +27,7 @@
 #include "Singleton.h"
 #include "Sockets.h"
 #include "ObjectMgr.h"
+#include "MessageTypes.h"
 
 #define RECV_BUFFER_SIZE 2048
 
@@ -43,8 +44,8 @@ public:
 	class GameClient *GetClientWithSessionId(uint32 sessionId);
 	void CheckAndResend();
 	void Broadcast(const ByteBuffer &message);
-	void AnnounceStateUpdate(class GameClient* clFrom,class MsgBaseClass *theMsg);
-	void AnnounceCommand(class GameClient* clFrom,class MsgBaseClass *theCmd);
+	void AnnounceStateUpdate(class GameClient* clFrom,msgBaseClassPtr theMsg);
+	void AnnounceCommand(class GameClient* clFrom,msgBaseClassPtr theCmd);
 	ObjectMgr &getObjMgr() { return m_objMgr; }
 
 private:	

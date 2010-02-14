@@ -29,7 +29,6 @@
 #include "Field.h"
 #include <mysql/mysql.h>
 
-using namespace std;
 class QueryResult;
 class QueryThread;
 class Database;

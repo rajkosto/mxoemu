@@ -23,7 +23,6 @@
 #include "Util.h"
 #include <cstdlib>
 #include "ByteBuffer.h"
-using namespace std;
 
 vector<string> StrSplit(const string &src, const string &sep)
 {
@@ -70,7 +69,7 @@ string Bin2Hex(const byte *data,size_t count,uint32 flags)
 
 			if (n <= 15)
 				myStream << "0";
-			myStream << hex << (int)n;
+			myStream << std::hex << (int)n;
 
 			//if no zeroes, just use space to separate
 			if (flags & BIN2HEX_SPACES && !(flags & BIN2HEX_ZEROES) )

@@ -19,8 +19,8 @@
 //
 // *************************************************************************************************
 
-#ifndef SEQUENCEDPACKET_H
-#define SEQUENCEDPACKET_H
+#ifndef MXOEMU_SEQUENCEDPACKET_H
+#define MXOEMU_SEQUENCEDPACKET_H
 
 #include "Util.h"
 #include "ByteBuffer.h"

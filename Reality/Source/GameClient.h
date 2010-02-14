@@ -59,18 +59,18 @@ public:
 	void HandleEncrypted(ByteBuffer &srcData);
 	void HandleOther(ByteBuffer &otherData);
 	void HandleOrdered(ByteBuffer &orderedData);
-	void QueueState(MsgBaseClass *theData)
+	void QueueState(msgBaseClassPtr theData)
 	{
-		msgBaseClassPtr realPtr = msgBaseClassPtr(theData);
+		msgBaseClassPtr &realPtr = theData;
 		shared_ptr<ObjectUpdateMsg> amIObjectUpdate = dynamic_pointer_cast<ObjectUpdateMsg>(realPtr);
 		if (amIObjectUpdate != NULL)
 			amIObjectUpdate->setReceiver(this);
 
 		m_queuedStates.push_back(realPtr);
 	}
-	void QueueCommand(MsgBaseClass *theCmd)
+	void QueueCommand(msgBaseClassPtr theCmd)
 	{
-		msgBaseClassPtr realPtr = msgBaseClassPtr(theCmd);
+		msgBaseClassPtr &realPtr = theCmd;
 		shared_ptr<ObjectUpdateMsg> amIObjectUpdate = dynamic_pointer_cast<ObjectUpdateMsg>(realPtr);
 		if (amIObjectUpdate != NULL)
 			amIObjectUpdate->setReceiver(this);
@@ -185,11 +185,11 @@ private:
 		ByteBuffer outputData = dataToSend->toBuf();
 		if (outputData.size() > 0)
 		{
-			DEBUG_LOG(format("Queue SSeq: %d CSeq: %d Ack: %d Data: |%s|") % theServerSeq % clientSeq % ackPacket % Bin2Hex(outputData));
+			DEBUG_LOG(format("(%s) Queue SSeq: %d CSeq: %d Ack: %d Data: |%s|") % Address() % theServerSeq % clientSeq % ackPacket % Bin2Hex(outputData));
 		}
 		else
 		{
-			DEBUG_LOG(format("Queue SSeq: %d CSeq: %d Ack: %d No Data") % theServerSeq % clientSeq % ackPacket);
+			DEBUG_LOG(format("(%s) Queue SSeq: %d CSeq: %d Ack: %d No Data") % Address() % theServerSeq % clientSeq % ackPacket);
 		}
 		m_sendQueue.push_back(PacketInQueue(m_clientPSS,theServerSeq,clientSeq,ackPacket,dataToSend));
 	}

@@ -1,3 +1,24 @@
+// *************************************************************************************************
+// --------------------------------------
+// Copyright (C) 2006-2010 Rajko Stojadinovic
+//
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+//
+// *************************************************************************************************
+
 #include "Common.h"
 #include "PlayerObject.h"
 #include "RsiData.h"
@@ -116,7 +137,7 @@ PlayerObject::~PlayerObject()
 	if (m_spawnedInWorld == true)
 	{
 		INFO_LOG(format("Player object for %1%:%2% deconstructing") % m_handle % m_goId);
-		sGame.AnnounceStateUpdate(&m_parent,new DeletePlayerMsg(m_goId));
+		sGame.AnnounceStateUpdate(&m_parent,make_shared<DeletePlayerMsg>(m_goId));
 
 		m_spawnedInWorld=false;
 	}
@@ -132,28 +153,28 @@ uint8 PlayerObject::getRsiData( byte* outputBuf,uint32 maxBufLen ) const
 
 void PlayerObject::InitializeWorld()
 {
-	m_parent.QueueCommand(new LoadWorldCmd((LoadWorldCmd::mxoLocation)m_district,"SatiSky"));
-	m_parent.QueueCommand(new SetExperienceCmd(m_exp));
-	m_parent.QueueCommand(new SetInformationCmd(m_cash));
-	m_parent.QueueCommand(new HexGenericMsg("80b24e0008000802"));
-	m_parent.QueueCommand(new HexGenericMsg("80b2520005000802"));
-	m_parent.QueueCommand(new HexGenericMsg("80b2540008000802"));
-	m_parent.QueueCommand(new HexGenericMsg("80b24f0008000802"));
-	m_parent.QueueCommand(new HexGenericMsg("80b251000b000802"));
-	m_parent.QueueCommand(new HexGenericMsg("80b2110001000802"));
-	m_parent.QueueCommand(new HexGenericMsg("80bc4503110000020000001100010000000000000000"));
-	m_parent.QueueCommand(new HexGenericMsg("80bc450002000002000000cc00000000000000000000"));
-	m_parent.QueueCommand(new HexGenericMsg("80bc1500030000f70300000802000000000000000000"));
-	m_parent.QueueCommand(new HexGenericMsg("80bc1500040000f70300000702ecffffff0000000000"));
-	m_parent.QueueCommand(new HexGenericMsg("80bc1500050000f70300005004000000000000000000"));
-	m_parent.QueueCommand(new HexGenericMsg("80bc1500060000f7030000f403000000000000000000"));
-	m_parent.QueueCommand(new HexGenericMsg("80bc1500070000f70300005104f6ffffff0000000000"));
-	m_parent.QueueCommand(new HexGenericMsg("80bc1500080000f703000052040f0000000000000000"));
-	m_parent.QueueCommand(new HexGenericMsg("47000004010000000000000000000000000000001a0006000000010000000001010000000000800000000000000000"));
-	m_parent.QueueCommand(new HexGenericMsg("2e0700000000000000000000005900002e00000000000000000000000000000000000000"));
-	m_parent.QueueCommand(new HexGenericMsg("80865220060000000000000000000000000000000000000000210000000000230000000000"));
-	m_parent.QueueCommand(new EventURLCmd("http://mxoemu.info/forum/index.php"));
-	m_parent.QueueCommand(new SystemChatMsg("COME ON CHECK THIS OUT"));
+	m_parent.QueueCommand(make_shared<LoadWorldCmd>((LoadWorldCmd::mxoLocation)m_district,"SatiSky"));
+	m_parent.QueueCommand(make_shared<SetExperienceCmd>(m_exp));
+	m_parent.QueueCommand(make_shared<SetInformationCmd>(m_cash));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80b24e0008000802"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80b2520005000802"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80b2540008000802"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80b24f0008000802"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80b251000b000802"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80b2110001000802"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80bc4503110000020000001100010000000000000000"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80bc450002000002000000cc00000000000000000000"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80bc1500030000f70300000802000000000000000000"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80bc1500040000f70300000702ecffffff0000000000"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80bc1500050000f70300005004000000000000000000"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80bc1500060000f7030000f403000000000000000000"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80bc1500070000f70300005104f6ffffff0000000000"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80bc1500080000f703000052040f0000000000000000"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("47000004010000000000000000000000000000001a0006000000010000000001010000000000800000000000000000"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("2e0700000000000000000000005900002e00000000000000000000000000000000000000"));
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80865220060000000000000000000000000000000000000000210000000000230000000000"));
+	m_parent.QueueCommand(make_shared<EventURLCmd>("http://mxoemu.info/forum/index.php"));
+	m_parent.QueueCommand(make_shared<SystemChatMsg>("COME ON CHECK THIS OUT"));
 }
 
 void PlayerObject::SpawnSelf()
@@ -161,9 +182,9 @@ void PlayerObject::SpawnSelf()
 	if (m_spawnedInWorld == false)
 	{
 		//first object spawn in world the client likes to control, so we have to self spawn first
-		m_parent.QueueState(new PlayerSpawnMsg(m_goId));
+		m_parent.QueueState(make_shared<PlayerSpawnMsg>(m_goId));
 		//announce our presence to others
-		sGame.AnnounceStateUpdate(&m_parent,new PlayerSpawnMsg(m_goId));
+		sGame.AnnounceStateUpdate(&m_parent,make_shared<PlayerSpawnMsg>(m_goId));
 		m_spawnedInWorld=true;
 	}
 }
@@ -187,8 +208,8 @@ void PlayerObject::PopulateWorld()
 		//we self spawned already, so no
 		if (theOtherObject!=this)
 		{
-			vector<MsgBaseClass*> objectsPackets = theOtherObject->getCurrentStatePackets();
-			for (vector<MsgBaseClass*>::iterator it2=objectsPackets.begin();it2!=objectsPackets.end();++it2)
+			vector<msgBaseClassPtr> objectsPackets = theOtherObject->getCurrentStatePackets();
+			for (vector<msgBaseClassPtr>::iterator it2=objectsPackets.begin();it2!=objectsPackets.end();++it2)
 			{
 				m_parent.QueueState(*it2);
 			}
@@ -199,7 +220,7 @@ void PlayerObject::PopulateWorld()
 void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
 {
 	srcData.rpos(0);
-	DEBUG_LOG(format("03 data: %1%") % Bin2Hex(srcData) );
+	DEBUG_LOG(format("(%1%) 03 data: %2%") % m_parent.Address() % Bin2Hex(srcData) );
 	uint8 zeroThree;
 	if (srcData.remaining() < sizeof(zeroThree))
 		return;
@@ -218,7 +239,7 @@ void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
 	//otherwise just propagate update to all other players
 	ByteBuffer theStateData;
 	theStateData.append(&srcData.contents()[srcData.rpos()],srcData.remaining());
-	sGame.AnnounceStateUpdate(&m_parent,new StateUpdateMsg(m_goId,theStateData));
+	sGame.AnnounceStateUpdate(&m_parent,make_shared<StateUpdateMsg>(m_goId,theStateData));
 }
 
 void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
@@ -243,7 +264,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 			stringLenPos=swap16(stringLenPos);
 			if (stringLenPos != 8)
 			{
-				WARNING_LOG(format("Chat packet stringLenPos not 8 but %1%, packet %2%") % stringLenPos % Bin2Hex(srcCmd));
+				WARNING_LOG(format("(%1) Chat packet stringLenPos not 8 but %2%, packet %3%") % m_parent.Address() % stringLenPos % Bin2Hex(srcCmd));
 				return;
 			}
 			if (srcCmd.size() < stringLenPos)
@@ -261,20 +282,20 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 			string theMessage((const char*)&messageBuf[0],messageBuf.size()-1);
 
 			INFO_LOG(format("%1% says %2%") % m_handle % theMessage);
-			m_parent.QueueCommand(new SystemChatMsg(format("You said %1%") % theMessage));
-			sGame.AnnounceCommand(&m_parent,new PlayerChatMsg(m_handle,theMessage));
+			m_parent.QueueCommand(boost::make_shared<SystemChatMsg>((format("You said %1%") % theMessage).str()));
+			sGame.AnnounceCommand(&m_parent,boost::make_shared<PlayerChatMsg>(m_handle,theMessage));
 
 			return;
 		}
 	}
 
 	srcCmd.rpos(0);
-	DEBUG_LOG(format("unknown 04 command: %1%") % Bin2Hex(srcCmd) );
+	DEBUG_LOG(format("(%1%) unknown 04 command: %2%") % m_parent.Address() % Bin2Hex(srcCmd) );
 }
 
-vector<MsgBaseClass*> PlayerObject::getCurrentStatePackets()
+vector<msgBaseClassPtr> PlayerObject::getCurrentStatePackets()
 {
-	vector<MsgBaseClass*> tempVect;
-	tempVect.push_back(new PlayerSpawnMsg(m_goId));
+	vector<msgBaseClassPtr> tempVect;
+	tempVect.push_back(make_shared<PlayerSpawnMsg>(m_goId));
 	return tempVect;
 }

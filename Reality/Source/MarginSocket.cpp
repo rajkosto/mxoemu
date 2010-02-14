@@ -61,7 +61,7 @@ void MarginSocket::OnDisconnect( short info, int code )
 	{
 		udpClient->Invalidate();
 	}*/
-	cout << "Margin socket with " << GetRemoteSocketAddress()->Convert(true) << " disconnected" << endl;
+	INFO_LOG(format("Margin socket with %1% disconnected") % GetRemoteSocketAddress()->Convert(true));
 }
 
 void MarginSocket::SendCrypted( EncryptedPacket &cryptedPacket )

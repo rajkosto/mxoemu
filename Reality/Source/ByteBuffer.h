@@ -23,7 +23,6 @@
 #define MXOSIM_BYTEBUFFER_H
 
 #include <cstring>
-using namespace std;
 
 class ByteBuffer
 {

@@ -178,6 +178,18 @@ static inline void xchg32 (void *a, void *b)
 #define BITS_TO_BYTES(x) (((x)+7)>>3)
 #define BYTES_TO_BITS(x) ((x)<<3)
 
+#include <boost/shared_ptr.hpp>
+using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
+#include <boost/make_shared.hpp>
+using boost::make_shared;
+#include <boost/scoped_ptr.hpp>
+using boost::scoped_ptr;
+#include <boost/lexical_cast.hpp>
+using boost::lexical_cast;
+#include <boost/format.hpp>
+using boost::format;
+
 #include <string>
 #include <list>
 #include <map>
@@ -200,18 +212,24 @@ static inline void xchg32 (void *a, void *b)
 #include <stdexcept>
 #include <algorithm>
 #include <numeric>
-#include <memory>
 
-using namespace std;
-using std::tr1::shared_ptr;
-using std::tr1::dynamic_pointer_cast;
-
-#include <boost/scoped_ptr.hpp>
-using boost::scoped_ptr;
-#include <boost/lexical_cast.hpp>
-using boost::lexical_cast;
-#include <boost/format.hpp>
-using boost::format;
+using std::cout;
+using std::cin;
+using std::ifstream;
+using std::ofstream;
+using std::ios;
+using std::stringstream;
+using std::ostringstream;
+using std::istringstream;
+using std::exception;
+using std::runtime_error;
+using std::invalid_argument;
+using std::out_of_range;
+using std::vector;
+using std::deque;
+using std::list;
+using std::map;
+using std::string;
 
 #undef FD_SETSIZE
 #define FD_SETSIZE 200  // 200 per thread should be plenty :p

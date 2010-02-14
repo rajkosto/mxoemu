@@ -184,7 +184,7 @@ void AuthServer::GenerateCryptoKeys( string &privKeyOut, string &pubKeyOut )
 
 void AuthServer::LoadCryptoKeys()
 {
-	if (signer2048bit.get() == NULL || verifier2048bit.get() == NULL)
+	if (signer2048bit == NULL || verifier2048bit == NULL)
 	{
 		LoadSignKeys();
 	}
@@ -464,16 +464,16 @@ string AuthServer::GenerateSalt(uint32 length)
 
 bool AuthServer::CreateAccount( const string& username,const string& password )
 {
-	shared_ptr<QueryResult> query(sDatabase.Query(format("SELECT `userId` FROM `users` WHERE `username` = '%1%'") % sDatabase.EscapeString(username).c_str()));
-	if (query.get() == NULL)
+	shared_ptr<QueryResult> query(sDatabase.Query(format("SELECT `userId` FROM `users` WHERE `username` = '%1%'") % sDatabase.EscapeString(username)));
+	if (query == NULL)
 	{
 		string salt = GenerateSalt(8);
 		string passwordHash = HashPassword(salt,password);
 
 		return sDatabase.Execute(format("INSERT INTO `users` SET `username`='%1%', `passwordSalt`='%2%', `passwordHash`='%3%', `timeCreated`=UNIX_TIMESTAMP()")
-			% sDatabase.EscapeString(username).c_str()
-			% sDatabase.EscapeString(salt).c_str()
-			% sDatabase.EscapeString(passwordHash).c_str() );
+			% sDatabase.EscapeString(username)
+			% sDatabase.EscapeString(salt)
+			% sDatabase.EscapeString(passwordHash) );
 	}
 	return false;
 }

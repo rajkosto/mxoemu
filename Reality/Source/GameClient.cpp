@@ -189,19 +189,22 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 			SequencedPacket packetData=Decrypt(&pData[1],nLength-1);
 			ByteBuffer dataToParse;
 
-//			DEBUG_LOG( format("Recv PSS: %x CSeq: %d SSeq: %d |%s|") % uint32(packetData.getPSS()) % packetData.getLocalSeq() % packetData.getRemoteSeq() % Bin2Hex(packetData) );
+			uint32 pktsAcked = AcknowledgePacket(packetData.getRemoteSeq());
+			assert(pktsAcked <= 1);
 
-			//ack byte
-			if (packetData.contents()[0]==0x02)
+			uint8 firstByte = packetData.contents()[0];
+			//normal packet byte
+			if (firstByte==0x02)
 			{
-				uint32 pktsAcked = AcknowledgePacket(packetData.getRemoteSeq());
-				//assert(pktsAcked <= 1);
 				dataToParse.append(&packetData.contents()[1],packetData.size()-1);
 			}
 			else
 			{
+				WARNING_LOG("First byte of client packet isnt 0x02 !");
 				dataToParse.append(&packetData.contents()[0],packetData.size());
 			}
+
+			//DEBUG_LOG( format("Recv PSS: %x CSeq: %d SSeq: %d |%s|") % uint32(packetData.getPSS()) % packetData.getLocalSeq() % packetData.getRemoteSeq() % Bin2Hex(dataToParse) );
 
 			//add to need to ack list
 			PacketReceived(packetData.getLocalSeq());						
@@ -370,12 +373,20 @@ void GameClient::PSSChanged( uint8 oldPSS,uint8 newPSS )
 	if (m_clientPSS == 0x01)
 	{
 		//skip straight to 0x07
-//		m_clientPSS=0x07;	
+		m_clientPSS=0x07;	
+		if (m_worldLoaded==false)
+		{
+			sObjMgr.getGOPtr(m_playerGoId)->SpawnSelf();
+			m_worldLoaded = true;
+		}
 	}
 	else if (m_clientPSS == 0x07)
 	{
-		sObjMgr.getGOPtr(m_playerGoId)->SpawnSelf();
-		m_worldLoaded = true;
+		if (m_worldLoaded==false)
+		{
+			sObjMgr.getGOPtr(m_playerGoId)->SpawnSelf();
+			m_worldLoaded = true;
+		}
 	}
 	else if (m_clientPSS == 0x7F)
 	{
@@ -385,6 +396,7 @@ void GameClient::PSSChanged( uint8 oldPSS,uint8 newPSS )
 			m_worldLoaded = true;
 		}
 		m_characterSpawned = true;
+		sObjMgr.getGOPtr(m_playerGoId)->PopulateWorld();
 	}
 }
 
@@ -410,7 +422,7 @@ void GameClient::MoveMsgsToQueue()
 	//all queued 03s have been transferred to packet queue, clear the 03 queue
 	m_queuedStates.clear();
 	
-	if (/*getMSTime() - m_lastOrderedFlush > 100*/1) //we will not send 04 packets more than 10 times a second
+	if (getMSTime() - m_lastOrderedFlush > 50) //we will not send 04 packets more than 20 times a second
 	{
 		//send out subpackets, as much as we got, consuming as much acks as we can
 		while (m_queuedCommands.size() > 0)
@@ -457,63 +469,6 @@ void GameClient::MoveMsgsToQueue()
 			{
 				AddPacketToQueue(msgBaseClassPtr(new OrderedPacket(currBlock)));
 			}
-
-/*			//send the same subpackets only in smaller chunks
-			uint16 altCommandsSent = currBlock.sequenceId;
-			if (currBlock.subPackets.size() >= 4)
-			{
-				OrderedPacket *bigPacket = new OrderedPacket();
-				int numAtATime = 2;
-				if (currBlock.subPackets.size() >= 12)
-				{
-					numAtATime = 4;
-				}
-				else if (currBlock.subPackets.size() >= 6)
-				{
-					numAtATime = 3;
-				}
-
-				for (;;)
-				{
-					MsgBlock newBlock;
-					newBlock.sequenceId = altCommandsSent;
-					for (int i=0;i<numAtATime;i++)
-					{
-						if (currBlock.subPackets.size() < 1)
-							break;
-
-						newBlock.subPackets.push_back(currBlock.subPackets.front());
-						altCommandsSent++;
-						currBlock.subPackets.pop_front();
-					}
-
-					if (newBlock.subPackets.size() < 1)
-						break;
-
-					bigPacket->msgBlocks.push_back(newBlock);
-				}
-
-				if (bigPacket->msgBlocks.size() > 0)
-				{
-					//consume an ack if we can
-					if (m_packetsToAck.size() > 0)
-					{
-						uint16 theClientSeq = m_packetsToAck.front();
-						m_packetsToAck.pop_front();
-
-						AddPacketToQueue(theClientSeq,true,bigPacket);
-					}
-					else
-					{
-						AddPacketToQueue(bigPacket);
-					}
-				}
-				else
-				{
-					delete bigPacket;
-					bigPacket=NULL;
-				}
-			}*/
 		}
 		m_lastOrderedFlush = getMSTime();
 	}	
@@ -542,28 +497,6 @@ void GameClient::FlushQueue()
 			continue;
 		}
 
-		ByteBuffer outputData;
-
-		if (it->ack==false)
-		{
-			//we send simtime synchronization every second
-			uint32 currTimeMS = getMSTime();
-			if (m_lastSimTimeMS==0 || currTimeMS-m_lastSimTimeMS>1000)
-			{
-				m_lastSimTimeMS = getMSTime();
-				outputData << uint8(0x82);
-				//theirs ticks at 64hz, ours ticks at 1000
-				double preciseInterval = double(m_lastSimTimeMS)/double(1000/64);
-				uint32 simTimeToSend = uint32(preciseInterval);
-				outputData << uint32(simTimeToSend);
-			}
-		}
-		else
-		{
-			//ack byte
-			outputData << uint8(0x02);
-		}
-
 		//serialize data from dynamic packet to a static one
 		ByteBuffer serializedData;
 		try
@@ -577,7 +510,27 @@ void GameClient::FlushQueue()
 			it->theData.reset(new EmptyMsg());
 		}
 
-		//append that to our simtime or ack byte
+		ByteBuffer outputData;
+		//we send simtime synchronization only in the first packet (anything else seems to break the game)
+		uint32 currTimeMS = getMSTime();
+		if ( /*(*/m_lastSimTimeMS==0 /*|| currTimeMS-m_lastSimTimeMS>1000) 
+			&& serializedData.size() > 0
+			&& dynamic_pointer_cast<OrderedPacket>(it->theData) != NULL*/)
+		{
+			m_lastSimTimeMS = getMSTime();
+			outputData << uint8(0x82);
+			//theirs ticks at 64hz, ours ticks at 1000
+			double preciseInterval = double(m_lastSimTimeMS)/double(1000/64);
+			uint32 simTimeToSend = uint32(preciseInterval);
+			outputData << uint32(simTimeToSend);
+		}
+		else
+		{
+			//nosimtime byte
+			outputData << uint8(0x02);
+		}
+
+		//append that to our simtime or nosimtime byte
 		if (serializedData.size() > 0)
 		{
 			outputData.append(serializedData.contents(),serializedData.size());
@@ -590,7 +543,7 @@ void GameClient::FlushQueue()
 		}
 
 		//prepend sequences
-		SequencedPacket prepended(it->server_sequence,it->client_sequence,m_clientPSS,outputData);
+		SequencedPacket prepended(it->server_sequence,it->client_sequence,it->clientPSS,outputData);
 		SendEncrypted(prepended);
 
 //		DEBUG_LOG(format("Flush PSS: %x SSeq: %d CSeq: %d |%s|") % uint32(prepended.getPSS()) % prepended.getLocalSeq() % prepended.getRemoteSeq() % Bin2Hex(prepended));
@@ -617,7 +570,7 @@ void GameClient::CheckAndResend()
 		bool deleted = false;
 
 		uint32 currTime = getMSTime();
-		if (currTime - it->msTimeSent > 500) //500ms is timeout for resend
+		if (currTime - it->msTimeSent > 500) //500 is timeout for resend
 		{
 			//client obviously doesnt want to ack this packet
 			if (it->resentCounter > 5)
@@ -644,12 +597,82 @@ void GameClient::CheckAndResend()
 			}
 			else
 			{
-				it->resentCounter++;
-				it->sent = false;
-				it->msTimeSent=0;
-				uint16 oldSeq = it->server_sequence;
-				increaseServerSequence();
-				it->server_sequence = m_serverSequence;
+				bool subdivided=false;
+				//is it a 04 packet ?
+				shared_ptr<OrderedPacket> daPacket = dynamic_pointer_cast<OrderedPacket>(it->theData);
+				if (daPacket != NULL)
+				{
+					DEBUG_LOG(format("Packet %1% is a 04 packet, with %2% msgblocks %3% msgs") % it->server_sequence % daPacket->msgBlocks.size() % daPacket->msgBlocks.front().subPackets.size());
+					shared_ptr<OrderedPacket> newPacket(new OrderedPacket());
+					for (list<MsgBlock>::iterator blockPtr=daPacket->msgBlocks.begin();blockPtr!=daPacket->msgBlocks.end();++blockPtr)
+					{
+						MsgBlock currBlock = *blockPtr;
+						//send the same subpackets only in smaller chunks
+						uint16 altCommandsSent = currBlock.sequenceId;
+						if (currBlock.subPackets.size() > 4)
+						{
+							int numAtATime = 2;
+							if (currBlock.subPackets.size() >= 12)
+							{
+								numAtATime = 4;
+							}
+							else if (currBlock.subPackets.size() >= 6)
+							{
+								numAtATime = 3;
+							}
+
+							for (;;)
+							{
+								MsgBlock newBlock;
+								newBlock.sequenceId = altCommandsSent;
+								for (int i=0;i<numAtATime;i++)
+								{
+									if (currBlock.subPackets.size() < 1)
+										break;
+
+									newBlock.subPackets.push_back(currBlock.subPackets.front());
+									altCommandsSent++;
+									currBlock.subPackets.pop_front();
+								}
+
+								if (newBlock.subPackets.size() < 1)
+									break;
+
+								newPacket->msgBlocks.push_back(newBlock);
+							}
+						}
+					}
+					if (newPacket->msgBlocks.size() > 1)
+					{
+						uint16 oldServerSeq = it->server_sequence;
+						uint16 oldClientSeq = it->client_sequence;
+						uint8 oldClientPSS = it->clientPSS;
+						bool oldAck = it->ack;
+
+						it = m_sendQueue.erase(it);
+						deleted=true;
+
+						INFO_LOG(format("Subdivided packet sseq %1% from 1 msgblocks to %2% msgblocks") % oldServerSeq % newPacket->msgBlocks.size());
+						//reverse iterator because push_front inserts into reverse anyway
+						for (list<MsgBlock>::reverse_iterator hurr=newPacket->msgBlocks.rbegin();hurr!=newPacket->msgBlocks.rend();++hurr)
+						{
+							increaseServerSequence();
+							m_sendQueue.push_front( PacketInQueue(oldClientPSS,m_serverSequence,oldClientSeq,oldAck,shared_ptr<OrderedPacket>(new OrderedPacket(*hurr))) );
+						}
+						subdivided=true;
+					}
+				}
+				
+				if (subdivided==false)
+				{
+					it->resentCounter++;
+					it->sent = false;
+					it->msTimeSent=0;
+					uint16 oldSeq = it->server_sequence;
+					increaseServerSequence();
+					it->server_sequence = m_serverSequence;
+				}
+
 				//DEBUG_LOG(format("Resending packet sseq %1% under new sseq %2%") % oldSeq % it->server_sequence);
 				modified = true;
 			}

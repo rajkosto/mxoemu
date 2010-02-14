@@ -259,7 +259,7 @@ void AuthSocket::HandleAuthRequest( ByteBuffer &packet )
 	//scope for db ptr
 	{
 		scoped_ptr<QueryResult> result(sDatabase.Query(format("SELECT `userId`, `username`, `passwordSalt`, `passwordHash`, `publicExponent`, `publicModulus`, `privateExponent`, `timeCreated` FROM `users` WHERE `username` = '%1%' LIMIT 1") % m_username ) );
-		if (result.get() == NULL)
+		if (result == NULL)
 		{
 			INFO_LOG(format("Username %1% doesn't exist, disconnecting.") % m_username );
 			SetCloseAndDelete(true);
@@ -539,7 +539,7 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 	uint16 numCharacters;
 
 	scoped_ptr<QueryResult> result(sDatabase.Query(format("SELECT `charId`, `worldId`, `status`, `handle` FROM `characters` WHERE `userId` = %1%") % m_userId));
-	if(result.get() == NULL)
+	if(result == NULL)
 		numCharacters = 0;
 	else
 		numCharacters = result->GetRowCount();
@@ -603,7 +603,7 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 
 	//fetch server list data
 	result.reset(sDatabase.Query("SELECT `worldId`, `name`, `type`, `status`, `load` FROM `worlds`"));
-	if(result.get() == NULL)
+	if(result == NULL)
 	{
 		ERROR_LOG("No worlds in db, disconnecting.");
 		SetCloseAndDelete(true);

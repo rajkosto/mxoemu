@@ -25,7 +25,7 @@ class ObjectUpdateMsg : public MsgBaseClass
 public:
 	ObjectUpdateMsg(uint32 objectId);
 	~ObjectUpdateMsg();
-	void setReceiver(class GameClient *toWho);
+	virtual void setReceiver(class GameClient *toWho);
 protected:
 	uint32 m_objectId;
 	class GameClient *m_toWho;
@@ -49,12 +49,14 @@ public:
 	const ByteBuffer& toBuf();
 };
 
-class SelfSpawnMsg : public ObjectUpdateMsg
+class StateUpdateMsg : public ObjectUpdateMsg
 {
 public:
-	SelfSpawnMsg(uint32 objectId);
-	~SelfSpawnMsg();
+	StateUpdateMsg(uint32 objectId, ByteBuffer stateData);
+	~StateUpdateMsg();
 	const ByteBuffer& toBuf();
+private:
+	ByteBuffer restOfData;
 };
 
 class StaticMsg : public MsgBaseClass
@@ -78,6 +80,16 @@ class SystemChatMsg : public StaticMsg
 public:
 	SystemChatMsg(string theChatMsg) 
 	{
+		InitFromString(theChatMsg);
+	}
+	SystemChatMsg(format &fmt)
+	{
+		InitFromString(fmt.str());
+	}
+	~SystemChatMsg() {}
+private:
+	void InitFromString(string theChatMsg)
+	{
 		m_buf.clear();
 		//2E0700000000000000000024000000000000000000000000000000000000000000000000 DATALEN(UINT16) ZEROSTR
 		const byte headerData[] =
@@ -92,19 +104,53 @@ public:
 		m_buf << uint16(dataSize);
 		m_buf.append(theChatMsg.c_str(),dataSize);
 	}
-	~SystemChatMsg() {}
+};
+
+class PlayerChatMsg : public StaticMsg
+{
+public:
+	PlayerChatMsg(string charHandle,string theChatMsg) 
+	{
+		m_buf.clear();
+		
+		m_buf << swap16(0x2E10);
+		m_buf << uint8(0); //could be 1 as well ?
+		m_buf << uint32(swap32(0x12610200)); //some id, different, ill just use something
+		size_t injectHandleLenPosHere = m_buf.wpos();
+		uint32 handleLenPos=0;
+		m_buf << handleLenPos; //will come back here and overwrite later
+		size_t injectMessageLenPosHere = m_buf.wpos();
+		uint32 messageLenPos=0;
+		m_buf << messageLenPos;
+		m_buf.wpos(m_buf.wpos()+0x15);
+		handleLenPos=m_buf.wpos();
+		uint16 handleLen=charHandle.length()+1;
+		m_buf << handleLen;
+		m_buf.append(charHandle.c_str(),handleLen);
+		messageLenPos = m_buf.wpos();
+		uint16 messageLen=theChatMsg.length()+1;
+		m_buf << messageLen;
+		m_buf.append(theChatMsg.c_str(),messageLen);
+
+		//overwrite the pos we didnt before
+		m_buf.wpos(injectHandleLenPosHere);
+		m_buf << handleLenPos;
+		m_buf.wpos(injectMessageLenPosHere);
+		m_buf << messageLenPos;
+	}
+	~PlayerChatMsg() {}
 };
 
 class HexGenericMsg : public StaticMsg
 {
 public:
-	HexGenericMsg(const char *hexadecimalData)
+	HexGenericMsg(string hexadecimalData)
 	{
 		m_buf.clear();
 		string output;
 		CryptoPP::HexDecoder decoder;
 		decoder.Attach( new CryptoPP::StringSink( output ) );
-		decoder.Put( (const byte*)hexadecimalData, strlen(hexadecimalData) );
+		decoder.Put( (const byte*)hexadecimalData.c_str(), hexadecimalData.length() );
 		decoder.MessageEnd();
 		m_buf.append(output);
 	}
@@ -214,11 +260,32 @@ struct MsgBlock
 		subPackets.clear();
 		for (uint8 i=0;i<numSubPackets;i++)
 		{
-			uint8 subPacketSize;
-			if (source.remaining() < sizeof(subPacketSize))
+			uint8 firstTwoBytes[2];
+			if (source.remaining() < sizeof(uint8))
 				return false;
+			source >> firstTwoBytes[0];
 
-			source >> subPacketSize;
+			int sizeOfPacketSize = 1;
+			if (firstTwoBytes[0] > 0x7F)
+			{
+				sizeOfPacketSize = 2;
+				firstTwoBytes[0] -= 0x80;
+
+				if (source.remaining() < sizeof(uint8))
+					return false;
+
+				source >> firstTwoBytes[1];
+			}
+			uint16 subPacketSize = 0;
+			if (sizeOfPacketSize == 1)
+			{
+				subPacketSize = firstTwoBytes[0];
+			}
+			else if (sizeOfPacketSize == 2)
+			{
+				memcpy(&subPacketSize,firstTwoBytes,sizeof(subPacketSize));
+				subPacketSize = swap16(subPacketSize);
+			}
 
 			if (subPacketSize<1)
 				return false;
@@ -248,7 +315,16 @@ struct MsgBlock
 		destination << uint8(numSubPackets);
 		for (list<ByteBuffer>::iterator it=subPackets.begin();it!=subPackets.end();++it)
 		{
-			destination << uint8(it->size());
+			uint16 packetSize = it->size();
+			if (packetSize > 0x7f)
+			{
+				packetSize = htons(packetSize | 0x8000);
+				destination << uint16(packetSize);
+			}
+			else
+			{
+				destination << uint8(packetSize);
+			}
 			destination.append(it->contents(),it->size());
 		}
 	}
@@ -337,7 +413,7 @@ public:
 	{
 		m_buf.clear();
 		ToBuffer(m_buf);
-		return StaticMsg::toBuf();
+		return m_buf;
 	}
 	list<MsgBlock> msgBlocks;
 };

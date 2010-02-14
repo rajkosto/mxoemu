@@ -136,7 +136,7 @@ void GameServer::Loop(void)
 
 			GameClient *Client = (*i).second;
 			if (Client->IsValid() == false || (m_currTime
-				- Client->LastActive()) >= 30)
+				- Client->LastActive()) >= 20)
 			{
 				DEBUG_LOG( format("Routine dead client removal [%1%]") % Client->Address() );
 				m_clients.erase(i++);
@@ -226,7 +226,6 @@ void GameServer::AnnounceStateUpdate( class GameClient* clFrom,class MsgBaseClas
 		if (it->second!=clFrom)
 		{
 			it->second->QueueState(theMsg);
-			it->second->FlushQueue();
 		}
 	}
 }

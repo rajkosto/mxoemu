@@ -125,7 +125,7 @@ uint16 ObjectMgr::allocateViewId( GameClient* requester)
 	viewIdsMap &viewsOfClient = m_views[requester];
 
 	//go through all possible viewIds, when we find one thats not in the list, return it
-	for (uint16 i=0x8000;i<0xFFFF;i++)
+	for (uint16 i=2;i<0xFFFF;i++) //we start from 2 because 1 is the object manager id, it spawns and deletes objects
 	{
 		if (viewsOfClient.find(i)==viewsOfClient.end())
 		{

@@ -66,7 +66,7 @@ void MarginSocket::OnDisconnect( short info, int code )
 
 void MarginSocket::SendCrypted( EncryptedPacket &cryptedPacket )
 {
-	if (TFEncrypt.get() != NULL)
+	if (TFEncrypt != NULL)
 	{
 		SendPacket(TCPVariableLengthPacket(cryptedPacket.toCipherText(TFEncrypt.get())));
 	}
@@ -131,7 +131,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 
 	ByteBuffer packetData;
 
-	if (encrypted == true && TFDecrypt.get() != NULL)
+	if (encrypted == true && TFDecrypt != NULL)
 	{
 		EncryptedPacket packetTodecrypt(packetContents,TFDecrypt.get());
 		packetData = packetTodecrypt;
@@ -156,6 +156,11 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 	case CERT_ConnectRequest:
 		{
 			uint16 firstNumber;
+			if (packetData.remaining() < sizeof(firstNumber))
+			{
+				SetCloseAndDelete(true);
+				return;
+			}
 			packetData >> firstNumber;
 
 			if (firstNumber != 3)
@@ -164,6 +169,11 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			}
 
 			uint16 authStart;
+			if (packetData.remaining() < sizeof(authStart))
+			{
+				SetCloseAndDelete(true);
+				return;
+			}
 			packetData >> authStart;
 
 			if (authStart != swap16(0x3601))
@@ -172,9 +182,19 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			}
 
 			byte signature[128];
+			if (packetData.remaining() < sizeof(signature))
+			{
+				SetCloseAndDelete(true);
+				return;
+			}
 			packetData.read(signature,sizeof(signature));
 
 			signedDataStruct signedData;
+			if (packetData.remaining() < sizeof(signedData))
+			{
+				SetCloseAndDelete(true);
+				return;
+			}
 			packetData.read((byte*)&signedData,sizeof(signedData));
 
 			//verify signature, but first we need to md5
@@ -205,7 +225,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			//scope for db ptr
 			{
 				scoped_ptr<QueryResult> result(sDatabase.Query(format("SELECT `userId`, `username` FROM `users` WHERE `username` = '%1%' LIMIT 1") % m_username) );
-				if (result.get() == NULL)
+				if (result == NULL)
 				{
 					INFO_LOG(format("CERT_ConnectRequest: Username %1% doesn't exist, disconnecting.") % m_username );
 					SetCloseAndDelete(true);
@@ -269,6 +289,11 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 	case CERT_ChallengeResponse:
 		{
 			byte clientsChallenge[16];
+			if (packetData.remaining() < sizeof(clientsChallenge))
+			{
+				SetCloseAndDelete(true);
+				return;
+			}
 			packetData.read(clientsChallenge,sizeof(clientsChallenge));
 
 			if (!memcmp(clientsChallenge,challenge,sizeof(challenge)))
@@ -382,7 +407,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			//scope for db ptr
 			{
 				scoped_ptr<QueryResult> result(sDatabase.Query(format("SELECT `charId`, `userId`, `handle`, `firstName`, `lastName`, `background` FROM `characters` WHERE `userId` = '%1%' AND `charId` = '%2%' LIMIT 1") % m_userId % charId) );
-				if (result.get() == NULL)
+				if (result == NULL)
 				{
 					ERROR_LOG(format("MS_LoadCharacterRequest: Character doesn't exist or username %1% doesn't own it") % m_username );
 					SetCloseAndDelete(true);

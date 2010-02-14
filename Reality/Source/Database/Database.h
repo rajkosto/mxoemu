@@ -29,9 +29,6 @@
 #include "Field.h"
 #include <mysql/mysql.h>
 
-#include <boost/format.hpp>
-using boost::format;
-
 using namespace std;
 class QueryResult;
 class QueryThread;

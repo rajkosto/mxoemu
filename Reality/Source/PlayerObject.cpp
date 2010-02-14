@@ -18,7 +18,7 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 													 `level`, `profession`, `alignment`, `pvpflag`, `exp`, `cash`, `district`\
 													 FROM `characters` WHERE `charId` = '%1%' LIMIT 1") % m_characterUID) );
 
-		if (result.get() == NULL)
+		if (result == NULL)
 		{
 			throw CharacterNotFound();
 		}
@@ -50,7 +50,7 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 													 `hair`, `facialdetail`, `shirtcolor`, `pantscolor`,\
 													 `coatcolor`, `shoecolor`, `glassescolor`, `haircolor`,\
 													 `skintone`, `tattoo`, `facialdetailcolor`, `leggings` FROM `rsivalues` WHERE `charId` = '%1%' LIMIT 1") % m_characterUID) );
-		if (result.get() == NULL)
+		if (result == NULL)
 		{
 			INFO_LOG(format("SpawnRSI(%1%): Character's RSI doesn't exist") % m_handle );
 			m_rsi.reset(new RsiDataMale);
@@ -124,7 +124,7 @@ PlayerObject::~PlayerObject()
 
 uint8 PlayerObject::getRsiData( byte* outputBuf,uint32 maxBufLen ) const
 {
-	if (m_rsi.get() == NULL)
+	if (m_rsi == NULL)
 		return 0;
 
 	return m_rsi->ToBytes(outputBuf,maxBufLen);
@@ -160,37 +160,96 @@ void PlayerObject::SpawnSelf()
 {
 	if (m_spawnedInWorld == false)
 	{
-		m_parent.QueueState(new SelfSpawnMsg(m_goId));
+		//first object spawn in world the client likes to control, so we have to self spawn first
+		m_parent.QueueState(new PlayerSpawnMsg(m_goId));
+		//announce our presence to others
 		sGame.AnnounceStateUpdate(&m_parent,new PlayerSpawnMsg(m_goId));
-
 		m_spawnedInWorld=true;
+	}
+}
+
+void PlayerObject::PopulateWorld()
+{
+	//we need to get all other world entities and populate our client with it
+	vector<uint32> allWorldObjects = sObjMgr.getAllGOIds();
+	for (vector<uint32>::iterator it=allWorldObjects.begin();it!=allWorldObjects.end();++it)
+	{
+		PlayerObject *theOtherObject = NULL;
+		try
+		{
+			theOtherObject = sObjMgr.getGOPtr(*it);;
+		}
+		catch (ObjectMgr::ObjectNotAvailable)
+		{
+			continue;
+		}
+
+		//we self spawned already, so no
+		if (theOtherObject!=this)
+		{
+			vector<MsgBaseClass*> objectsPackets = theOtherObject->getCurrentStatePackets();
+			for (vector<MsgBaseClass*>::iterator it2=objectsPackets.begin();it2!=objectsPackets.end();++it2)
+			{
+				m_parent.QueueState(*it2);
+			}
+		}
 	}
 }
 
 void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
 {
 	srcData.rpos(0);
-	DEBUG_LOG(format("unknown 03 command: %1%") % Bin2Hex(srcData) );
+	DEBUG_LOG(format("03 data: %1%") % Bin2Hex(srcData) );
+	uint8 zeroThree;
+	if (srcData.remaining() < sizeof(zeroThree))
+		return;
+	srcData >> zeroThree;
+	if (zeroThree != 3)
+		return;
+	uint16 viewIdToUpdate;
+	if (srcData.remaining() < sizeof(viewIdToUpdate))
+		return;
+	srcData >> viewIdToUpdate;
+	if (viewIdToUpdate != sObjMgr.getViewForGO(&m_parent,m_goId))
+	{
+		WARNING_LOG(format("Client %1% Player %2%:%3% trying to update someone else's object view %4%") % m_parent.Address() % m_handle % m_goId % viewIdToUpdate);
+		return;
+	}
+	//otherwise just propagate update to all other players
+	ByteBuffer theStateData;
+	theStateData.append(&srcData.contents()[srcData.rpos()],srcData.remaining());
+	sGame.AnnounceStateUpdate(&m_parent,new StateUpdateMsg(m_goId,theStateData));
 }
 
 void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 {
-	uint16 cmdOpcode;
-	if (srcCmd.remaining() < sizeof(cmdOpcode) )
+	uint8 firstByte;
+	if (srcCmd.remaining() < sizeof(firstByte) )
 		return;
-	srcCmd >> cmdOpcode;
-	switch (swap16(cmdOpcode))
+	srcCmd >> firstByte;
+	if (firstByte == 0x28)
 	{
-	case 0x2810:
+		uint8 secondByte;
+		if (srcCmd.remaining() < sizeof(secondByte))
+			return;
+		srcCmd >> secondByte;
+
+		if (secondByte == 0x10)
 		{
-			uint16 chatType;
-			if (srcCmd.remaining() < sizeof(chatType))
+			uint16 stringLenPos;
+			if (srcCmd.remaining() < sizeof(stringLenPos))
 				return;
-			srcCmd >> chatType;
-			uint32 shouldBeZero;
-			if (srcCmd.remaining() < sizeof(shouldBeZero))
+			srcCmd >> stringLenPos;
+			stringLenPos=swap16(stringLenPos);
+			if (stringLenPos != 8)
+			{
+				WARNING_LOG(format("Chat packet stringLenPos not 8 but %1%, packet %2%") % stringLenPos % Bin2Hex(srcCmd));
 				return;
-			srcCmd >> shouldBeZero;
+			}
+			if (srcCmd.size() < stringLenPos)
+				return;
+
+			srcCmd.rpos(stringLenPos);
 			uint16 messageLen;
 			if (srcCmd.remaining() < sizeof(messageLen))
 				return;
@@ -201,16 +260,21 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 			srcCmd.read(&messageBuf[0],messageBuf.size());
 			string theMessage((const char*)&messageBuf[0],messageBuf.size()-1);
 
-			INFO_LOG(format("%1% chat type %2% zeroes %3% says %4%") % m_handle % swap16(chatType) % shouldBeZero % theMessage);
-			m_parent.QueueCommand(new SystemChatMsg(theMessage));
+			INFO_LOG(format("%1% says %2%") % m_handle % theMessage);
+			m_parent.QueueCommand(new SystemChatMsg(format("You said %1%") % theMessage));
+			sGame.AnnounceCommand(&m_parent,new PlayerChatMsg(m_handle,theMessage));
 
-			break;
-		}
-	default:
-		{
-			srcCmd.rpos(0);
-			DEBUG_LOG(format("unknown 04 command: %1%") % Bin2Hex(srcCmd) );
-			break;
+			return;
 		}
 	}
+
+	srcCmd.rpos(0);
+	DEBUG_LOG(format("unknown 04 command: %1%") % Bin2Hex(srcCmd) );
+}
+
+vector<MsgBaseClass*> PlayerObject::getCurrentStatePackets()
+{
+	vector<MsgBaseClass*> tempVect;
+	tempVect.push_back(new PlayerSpawnMsg(m_goId));
+	return tempVect;
 }

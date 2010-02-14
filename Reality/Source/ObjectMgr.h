@@ -3,6 +3,8 @@
 
 #include "Common.h"
 
+const uint32 OBJECTMANAGER_STARTINGOBJECTID = 1000000; //we have plenty of uint32s
+
 class ObjectMgr
 {
 public:
@@ -10,7 +12,7 @@ public:
 	class ClientNotAvailable {};
 	class NoMoreFreeViews {};
 
-	ObjectMgr():m_currFreeObjectId(1000*1000) {}
+	ObjectMgr():m_currFreeObjectId(OBJECTMANAGER_STARTINGOBJECTID) {}
 	~ObjectMgr(){}
 
 	uint32 allocatePlayer(class GameClient *requester, uint64 charUID );
@@ -19,6 +21,16 @@ public:
 	uint32 getGOId(class PlayerObject* forWhichObj);
 	uint16 getViewForGO(class GameClient *requester, uint32 goId);
 	void clientSigningOff(class GameClient *requester);
+	vector<uint32> getAllGOIds()
+	{
+		vector<uint32> tempVect;
+		for (objectsMap::iterator it=m_objects.begin();it!=m_objects.end();++it)
+		{
+			if (it->first >= OBJECTMANAGER_STARTINGOBJECTID && it->second != NULL)
+				tempVect.push_back(it->first);
+		}
+		return tempVect;
+	}
 private:
 	typedef shared_ptr<PlayerObject> objectPtr;
 	typedef map<uint32,objectPtr> objectsMap;

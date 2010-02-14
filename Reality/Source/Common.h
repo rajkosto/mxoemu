@@ -109,7 +109,6 @@ typedef unsigned char byte;
 #define SI64FMTD "%lld"
 #endif
 
-
 // Short for unsigned long
 typedef unsigned long ulong;
 // Short for 'unsigned int'
@@ -201,16 +200,18 @@ static inline void xchg32 (void *a, void *b)
 #include <stdexcept>
 #include <algorithm>
 #include <numeric>
+#include <memory>
+
+using namespace std;
+using std::tr1::shared_ptr;
+using std::tr1::dynamic_pointer_cast;
 
 #include <boost/scoped_ptr.hpp>
 using boost::scoped_ptr;
-#include <boost/shared_ptr.hpp>
-using boost::shared_ptr;
-using boost::dynamic_pointer_cast;
 #include <boost/lexical_cast.hpp>
 using boost::lexical_cast;
-
-using namespace std;
+#include <boost/format.hpp>
+using boost::format;
 
 #undef FD_SETSIZE
 #define FD_SETSIZE 200  // 200 per thread should be plenty :p

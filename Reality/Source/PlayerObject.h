@@ -13,6 +13,7 @@ public:
 
 	void InitializeWorld();
 	void SpawnSelf();
+	void PopulateWorld();
 
 	void initGoId(uint32 theGoId);
 	void HandleStateUpdate(ByteBuffer &srcData);
@@ -35,6 +36,8 @@ public:
 	uint8 getLevel() const {return m_lvl;}
 	uint8 getAlignment() const {return m_alignment;}
 	bool getPvpFlag() const {return m_pvpflag;}
+
+	vector<class MsgBaseClass*> getCurrentStatePackets();
 private:
 	class GameClient &m_parent;
 	

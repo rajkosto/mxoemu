@@ -141,8 +141,9 @@ private:
 	struct PacketInQueue
 	{
 		//the packet will own the data pointer
-		PacketInQueue(uint16 serverSeq, uint16 clientSeq, bool ackPacket, msgBaseClassPtr dataToSend)
+		PacketInQueue(uint8 thePSS, uint16 serverSeq, uint16 clientSeq, bool ackPacket, msgBaseClassPtr dataToSend)
 		{
+			clientPSS = thePSS;
 			server_sequence = serverSeq;
 			client_sequence = clientSeq;
 			ack=ackPacket;
@@ -153,6 +154,7 @@ private:
 		}
 		~PacketInQueue() {}
 
+		uint8 clientPSS;
 		uint16 server_sequence;
 		uint16 client_sequence;
 		bool ack;
@@ -189,7 +191,7 @@ private:
 		{
 			DEBUG_LOG(format("Queue SSeq: %d CSeq: %d Ack: %d No Data") % theServerSeq % clientSeq % ackPacket);
 		}
-		m_sendQueue.push_back(PacketInQueue(theServerSeq,clientSeq,ackPacket,dataToSend));
+		m_sendQueue.push_back(PacketInQueue(m_clientPSS,theServerSeq,clientSeq,ackPacket,dataToSend));
 	}
 	void AddPacketToQueue(msgBaseClassPtr dataToSend)
 	{

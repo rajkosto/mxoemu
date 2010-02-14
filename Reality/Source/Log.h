@@ -24,8 +24,6 @@
 
 #include "Singleton.h"
 #include "Threading/NativeMutex.h"
-#include <boost/format.hpp>
-using boost::format;
 
 class Log : public Singleton< Log >
 {

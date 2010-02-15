@@ -395,16 +395,18 @@ void GameClient::PSSChanged( uint8 oldPSS,uint8 newPSS )
 			sObjMgr.getGOPtr(m_playerGoId)->SpawnSelf();
 			m_worldLoaded = true;
 		}
-		m_characterSpawned = true;
-		sObjMgr.getGOPtr(m_playerGoId)->PopulateWorld();
+		if (m_characterSpawned == false)
+		{
+			sObjMgr.getGOPtr(m_playerGoId)->PopulateWorld();
+			m_characterSpawned = true;
+		}
 	}
 }
 
 void GameClient::MoveMsgsToQueue()
 {
-	std::sort(m_packetsToAck.begin(),m_packetsToAck.end());
 	//first we send out all the 03
-	for (queueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();++it)
+	for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();++it)
 	{
 		//consume an ack if we can
 		if (m_packetsToAck.size() > 0)
@@ -412,11 +414,11 @@ void GameClient::MoveMsgsToQueue()
 			uint16 theClientSeq = m_packetsToAck.front();
 			m_packetsToAck.pop_front();
 
-			AddPacketToQueue(theClientSeq,true,*it);
+			AddPacketToQueue(theClientSeq,true,it->stateData,it->noResend);
 		}
 		else
 		{
-			AddPacketToQueue(*it);
+			AddPacketToQueue(it->stateData,it->noResend);
 		}
 	}
 	//all queued 03s have been transferred to packet queue, clear the 03 queue
@@ -551,8 +553,11 @@ void GameClient::FlushQueue()
 		//mark packet as sent
 		it->sent=true;
 		it->msTimeSent=getMSTime();
-
-		++it;
+		//if packet is non resendable, remove it
+		if (it->noResends==true)
+			it=m_sendQueue.erase(it);
+		else
+			++it;
 	}
 }
 

@@ -21,7 +21,7 @@
 			OutputDirectory="..\$(ConfigurationName)"
 			IntermediateDirectory="..\$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="1"
+			CharacterSet="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib libmysql.lib cryptlib.lib Sockets.lib"
+				AdditionalDependencies="Dbghelp.lib ws2_32.lib libmysql.lib cryptlib.lib Sockets.lib"
 				OutputFile="..\Binaries\RealityD.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\Dependencies\CryptoPP\Win32\Output\Debug;..\..\Dependencies\MySQL\lib\32;..\..\Dependencies\Sockets\Project.net\lib\D;..\..\Dependencies\ZThread\lib\D"
@@ -100,7 +100,7 @@
 			OutputDirectory="..\$(ConfigurationName)"
 			IntermediateDirectory="..\$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="1"
+			CharacterSet="0"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -139,7 +139,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib libmysql.lib cryptlib.lib Sockets.lib"
+				AdditionalDependencies="Dbghelp.lib ws2_32.lib libmysql.lib cryptlib.lib Sockets.lib"
 				OutputFile="..\Binaries\Reality.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\Dependencies\CryptoPP\Win32\Output\Release;..\..\Dependencies\MySQL\lib\32;..\..\Dependencies\Sockets\Project.net\lib\R;..\..\Dependencies\ZThread\lib\R"
@@ -184,7 +184,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\CryptoTest.h"
+				RelativePath=".\CrashHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\CrashHandler.h"
 				>
 			</File>
 			<File
@@ -200,11 +204,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\seqchecktest.h"
+				RelativePath=".\StackWalker.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\SubPacketsTest.h"
+				RelativePath=".\StackWalker.h"
 				>
 			</File>
 		</Filter>
@@ -575,6 +579,18 @@
 		<Filter
 			Name="Tests"
 			>
+			<File
+				RelativePath=".\CryptoTest.h"
+				>
+			</File>
+			<File
+				RelativePath=".\seqchecktest.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SubPacketsTest.h"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

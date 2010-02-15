@@ -219,13 +219,13 @@ void GameServer::CheckAndResend()
 	}
 }
 
-void GameServer::AnnounceStateUpdate( class GameClient* clFrom,msgBaseClassPtr theMsg )
+void GameServer::AnnounceStateUpdate( class GameClient* clFrom,msgBaseClassPtr theMsg, bool immediateOnly )
 {
 	for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();++it)
 	{
 		if (it->second!=clFrom)
 		{
-			it->second->QueueState(theMsg);
+			it->second->QueueState(theMsg,immediateOnly);
 		}
 	}
 }

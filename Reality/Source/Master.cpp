@@ -193,3 +193,38 @@ void Master::_UnhookSignals()
 #endif
 
 }
+
+#ifdef WIN32
+
+NativeMutex m_crashedMutex;
+
+// Crash Handler
+void OnCrash( bool Terminate )
+{
+	ERROR_LOG( "Advanced crash handler initialized." );
+
+	if( !m_crashedMutex.AttemptAcquire() )
+		TerminateThread( GetCurrentThread(), 0 );
+
+	try
+	{
+		ERROR_LOG( "Waiting for all database queries to finish..." );
+		sDatabase.EndThreads();
+	}
+	catch(...)
+	{
+		ERROR_LOG( "Threw an exception while attempting to save all data." );
+	}
+
+	ERROR_LOG( "Closing." );
+
+	// Terminate Entire Application
+	if( Terminate )
+	{
+		HANDLE pH = OpenProcess( PROCESS_TERMINATE, TRUE, GetCurrentProcessId() );
+		TerminateProcess( pH, 1 );
+		CloseHandle( pH );
+	}
+}
+
+#endif

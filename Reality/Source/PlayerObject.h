@@ -59,6 +59,9 @@ public:
 	uint8 getAlignment() const {return m_alignment;}
 	bool getPvpFlag() const {return m_pvpflag;}
 
+	void checkAndStore();
+	void saveDataToDB();
+
 	vector<msgBaseClassPtr> getCurrentStatePackets();
 private:
 	class GameClient &m_parent;
@@ -73,7 +76,7 @@ private:
 	uint32 m_goId;
 	uint64 m_exp,m_cash;
 	uint8 m_district;
-	LocationVector m_pos;
+	LocationVector m_pos,m_savedPos;
 	shared_ptr<class RsiData> m_rsi;
 	uint16 m_healthC,m_healthM,m_innerStrC,m_innerStrM;
 	uint8 m_prof,m_lvl,m_alignment;
@@ -81,6 +84,7 @@ private:
 	uint32 testCount;
 
 	bool m_spawnedInWorld;
+	uint32 m_lastStore;
 };
 
 #endif

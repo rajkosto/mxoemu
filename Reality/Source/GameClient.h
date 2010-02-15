@@ -59,14 +59,14 @@ public:
 	void HandleEncrypted(ByteBuffer &srcData);
 	void HandleOther(ByteBuffer &otherData);
 	void HandleOrdered(ByteBuffer &orderedData);
-	void QueueState(msgBaseClassPtr theData)
+	void QueueState(msgBaseClassPtr theData,bool immediateOnly=false)
 	{
 		msgBaseClassPtr &realPtr = theData;
 		shared_ptr<ObjectUpdateMsg> amIObjectUpdate = dynamic_pointer_cast<ObjectUpdateMsg>(realPtr);
 		if (amIObjectUpdate != NULL)
 			amIObjectUpdate->setReceiver(this);
 
-		m_queuedStates.push_back(realPtr);
+		m_queuedStates.push_back(queuedState(realPtr,immediateOnly));
 	}
 	void QueueCommand(msgBaseClassPtr theCmd)
 	{
@@ -136,12 +136,23 @@ private:
 
 	typedef deque<msgBaseClassPtr> queueType;
 	queueType m_queuedCommands;
-	queueType m_queuedStates;
+	struct queuedState
+	{
+		queuedState(msgBaseClassPtr theState, bool immediateOnly=false)
+		{
+			stateData = theState;
+			noResend=immediateOnly;
+		}
+		bool noResend;
+		msgBaseClassPtr stateData;
+	};
+	typedef deque<queuedState> stateQueueType;
+	stateQueueType m_queuedStates;
 
 	struct PacketInQueue
 	{
 		//the packet will own the data pointer
-		PacketInQueue(uint8 thePSS, uint16 serverSeq, uint16 clientSeq, bool ackPacket, msgBaseClassPtr dataToSend)
+		PacketInQueue(uint8 thePSS, uint16 serverSeq, uint16 clientSeq, bool ackPacket, msgBaseClassPtr dataToSend, bool immediateOnly=false)
 		{
 			clientPSS = thePSS;
 			server_sequence = serverSeq;
@@ -151,6 +162,7 @@ private:
 			sent=false;
 			msTimeSent=0;
 			resentCounter=0;
+			noResends=immediateOnly;
 		}
 		~PacketInQueue() {}
 
@@ -162,10 +174,11 @@ private:
 		bool sent;
 		uint32 msTimeSent;
 		uint32 resentCounter;
+		bool noResends;
 	};
 	typedef list<PacketInQueue> sendQueueList;
 	sendQueueList m_sendQueue;
-	void AddPacketToQueue(uint16 clientSeq, bool ackPacket, msgBaseClassPtr dataToSend)
+	void AddPacketToQueue(uint16 clientSeq, bool ackPacket, msgBaseClassPtr dataToSend, bool immediateOnly=false)
 	{
 		//if its a static packet of 0 bytes and no ack, no reason to send it
 		if (ackPacket == false)
@@ -191,11 +204,11 @@ private:
 		{
 			DEBUG_LOG(format("(%s) Queue SSeq: %d CSeq: %d Ack: %d No Data") % Address() % theServerSeq % clientSeq % ackPacket);
 		}
-		m_sendQueue.push_back(PacketInQueue(m_clientPSS,theServerSeq,clientSeq,ackPacket,dataToSend));
+		m_sendQueue.push_back(PacketInQueue(m_clientPSS,theServerSeq,clientSeq,ackPacket,dataToSend,immediateOnly));
 	}
-	void AddPacketToQueue(msgBaseClassPtr dataToSend)
+	void AddPacketToQueue(msgBaseClassPtr dataToSend, bool immediateOnly=false)
 	{
-		AddPacketToQueue(m_lastClientSequence,false,dataToSend);
+		AddPacketToQueue(m_lastClientSequence,false,dataToSend,immediateOnly);
 	}
 
 	void MoveMsgsToQueue();

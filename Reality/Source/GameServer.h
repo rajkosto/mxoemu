@@ -44,7 +44,7 @@ public:
 	class GameClient *GetClientWithSessionId(uint32 sessionId);
 	void CheckAndResend();
 	void Broadcast(const ByteBuffer &message);
-	void AnnounceStateUpdate(class GameClient* clFrom,msgBaseClassPtr theMsg);
+	void AnnounceStateUpdate(class GameClient* clFrom,msgBaseClassPtr theMsg, bool immediateOnly=false);
 	void AnnounceCommand(class GameClient* clFrom,msgBaseClassPtr theCmd);
 	ObjectMgr &getObjMgr() { return m_objMgr; }
 

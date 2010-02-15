@@ -27,6 +27,7 @@
 #include "MessageTypes.h"
 #include "Log.h"
 #include "GameClient.h"
+#include "Timer.h"
 
 PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent),m_characterUID(charUID),m_spawnedInWorld(false)
 {
@@ -34,7 +35,7 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 	{
 		scoped_ptr<QueryResult> result(sDatabase.Query(format("SELECT `handle`,\
 													 `firstName`, `lastName`, `background`,\
-													 `x`, `y`, `z`,\
+													 `x`, `y`, `z`, `rot`, \
 													 `healthC`, `healthM`, `innerStrC`, `innerStrM`,\
 													 `level`, `profession`, `alignment`, `pvpflag`, `exp`, `cash`, `district`\
 													 FROM `characters` WHERE `charId` = '%1%' LIMIT 1") % m_characterUID) );
@@ -52,17 +53,19 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 		m_pos.ChangeCoords(	field[4].GetDouble(),
 			field[5].GetDouble(),
 			field[6].GetDouble());
-		m_healthC = field[7].GetUInt16();
-		m_healthM = field[8].GetUInt16();
-		m_innerStrC = field[9].GetUInt16();
-		m_innerStrM = field[10].GetUInt16();
-		m_lvl = field[11].GetUInt8();
-		m_prof = field[12].GetUInt8();
-		m_alignment = field[13].GetUInt8();
-		m_pvpflag = field[14].GetBool();
-		m_exp = field[15].GetUInt64();
-		m_cash = field[16].GetUInt64();
-		m_district = field[17].GetUInt8();
+		m_pos.rot = field[7].GetDouble();
+		m_savedPos = m_pos;
+		m_healthC = field[8].GetUInt16();
+		m_healthM = field[9].GetUInt16();
+		m_innerStrC = field[10].GetUInt16();
+		m_innerStrM = field[11].GetUInt16();
+		m_lvl = field[12].GetUInt8();
+		m_prof = field[13].GetUInt8();
+		m_alignment = field[14].GetUInt8();
+		m_pvpflag = field[15].GetBool();
+		m_exp = field[16].GetUInt64();
+		m_cash = field[17].GetUInt64();
+		m_district = field[18].GetUInt8();
 	}
 	//grab data from rsi table
 	{
@@ -124,6 +127,7 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 	m_goId=0;
 	INFO_LOG(format("Player object for %1% constructed") % m_handle);
 	testCount=0;
+	m_lastStore = getTime();
 }
 
 void PlayerObject::initGoId(uint32 theGoId)
@@ -138,8 +142,10 @@ PlayerObject::~PlayerObject()
 	{
 		INFO_LOG(format("Player object for %1%:%2% deconstructing") % m_handle % m_goId);
 		sGame.AnnounceStateUpdate(&m_parent,make_shared<DeletePlayerMsg>(m_goId));
-
 		m_spawnedInWorld=false;
+
+		//commit position changes
+		saveDataToDB();
 	}
 }
 
@@ -149,6 +155,36 @@ uint8 PlayerObject::getRsiData( byte* outputBuf,uint32 maxBufLen ) const
 		return 0;
 
 	return m_rsi->ToBytes(outputBuf,maxBufLen);
+}
+
+void PlayerObject::checkAndStore()
+{
+	if (getTime() - m_lastStore > 60) //every 60 seconds
+	{
+		saveDataToDB();
+		m_lastStore = getTime();
+	}
+}
+
+void PlayerObject::saveDataToDB()
+{
+	if (m_savedPos == m_pos)
+		return;
+
+	bool storeSuccess = sDatabase.Execute(format("UPDATE `characters` SET `x` = '%1%', `y` = '%2%', `z` = '%3%', `rot` = '%4%' WHERE `charId` = '%5%'")
+		% m_pos.x
+		% m_pos.y
+		% m_pos.z
+		% m_pos.rot
+		% m_characterUID );
+
+	if (!storeSuccess)
+		WARNING_LOG(format("%1%:%2% failed to save data to database") % m_handle % m_goId );
+	else
+	{
+		m_savedPos = m_pos;
+		m_parent.QueueCommand(boost::make_shared<SystemChatMsg>( (format("Character data for %1% has been written to the database.") % m_handle).str() ));
+	}
 }
 
 void PlayerObject::InitializeWorld()
@@ -219,8 +255,8 @@ void PlayerObject::PopulateWorld()
 
 void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
 {
-	srcData.rpos(0);
-	DEBUG_LOG(format("(%1%) 03 data: %2%") % m_parent.Address() % Bin2Hex(srcData) );
+	checkAndStore();
+
 	uint8 zeroThree;
 	if (srcData.remaining() < sizeof(zeroThree))
 		return;
@@ -236,14 +272,108 @@ void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
 		WARNING_LOG(format("Client %1% Player %2%:%3% trying to update someone else's object view %4%") % m_parent.Address() % m_handle % m_goId % viewIdToUpdate);
 		return;
 	}
-	//otherwise just propagate update to all other players
-	ByteBuffer theStateData;
-	theStateData.append(&srcData.contents()[srcData.rpos()],srcData.remaining());
-	sGame.AnnounceStateUpdate(&m_parent,make_shared<StateUpdateMsg>(m_goId,theStateData));
+	size_t restOfDataPos = srcData.rpos();
+	uint8 shouldBeOne;
+	if (srcData.remaining() < sizeof(shouldBeOne))
+		return;
+	srcData >> shouldBeOne;
+	if (shouldBeOne != 1)
+	{
+		WARNING_LOG(format("Client %1% Player %2%:%3% 03 doesn't have number 1 after viewId") % m_parent.Address() % m_handle % m_goId);
+		return;
+	}
+	uint8 updateType;
+	if (srcData.remaining() < sizeof(updateType))
+		return;
+	srcData >> updateType;
+	bool validUpdate=false;
+	switch (updateType)
+	{
+	//change angle
+	case 0x04:
+		{
+			uint8 theRotByte;
+			if (srcData.remaining() < sizeof(theRotByte))
+				return;
+			srcData >> theRotByte;
+
+			m_pos.setMxoRot(theRotByte);
+			validUpdate=true;
+			break;
+		}
+	//change angle with extra param
+	case 0x06:
+		{
+			uint8 theAnimation;
+			if (srcData.remaining() < sizeof(theAnimation))
+				return;
+			srcData >> theAnimation;
+			//we will just ignore the animation for now
+			uint8 theRotByte;
+			if (srcData.remaining() < sizeof(theRotByte))
+				return;
+			srcData >> theRotByte;
+
+			m_pos.setMxoRot(theRotByte);
+			validUpdate=true;
+			break;
+		}
+	//update xyz
+	case 0x08:
+		{
+			validUpdate = m_pos.fromFloatBuf(srcData);
+			break;
+		}
+	//update xyz, extra byte before xyz
+	case 0x0A:
+	case 0x0C:
+		{
+			uint8 extraByte;
+			if (srcData.remaining() < sizeof(extraByte))
+				return;
+			srcData >> extraByte;
+			
+			validUpdate = m_pos.fromFloatBuf(srcData);
+			break;
+		}
+	//update xyz, extra 2 bytes before xyz
+	case 0x0E:
+		{
+			uint8 extraByte1,extraByte2;
+			if (srcData.remaining() < sizeof(uint8)*2)
+				return;
+			srcData >> extraByte1;
+			srcData >> extraByte2;
+
+			validUpdate = m_pos.fromFloatBuf(srcData);
+			break;
+		}
+	//sometimes happens, no info inside
+	case 0x02:
+		{
+			validUpdate = true;
+			break;
+		}
+	}
+	if (validUpdate)
+	{
+		//propagate state to all other players
+		srcData.rpos(restOfDataPos);
+		ByteBuffer theStateData;
+		theStateData.append(&srcData.contents()[srcData.rpos()],srcData.remaining());
+		sGame.AnnounceStateUpdate(&m_parent,make_shared<StateUpdateMsg>(m_goId,theStateData),true);
+	}
+	else
+	{
+		srcData.rpos(0);
+		DEBUG_LOG(format("(%1%) %2%:%3% 03 data: %4%") % m_parent.Address() % m_handle % m_goId % Bin2Hex(srcData) );
+	}
 }
 
 void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 {
+	checkAndStore();
+
 	uint8 firstByte;
 	if (srcCmd.remaining() < sizeof(firstByte) )
 		return;

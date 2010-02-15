@@ -26,12 +26,33 @@
 #include "Common.h"
 #include <cmath>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338327
+#endif
+
 class LocationVector
 {
 public:
-	LocationVector(double X, double Y, double Z) : x(X), y(Y), z(Z) {}
-	LocationVector() : x(0), y(0), z(0) {}
-
+	LocationVector(double X, double Y, double Z, uint8 O) : x(x), y(Y), z(Z), rot(MxoToDoubleRot(O)) {}
+	LocationVector(double X, double Y, double Z) : x(X), y(Y), z(Z), rot(0) {}
+	LocationVector() : x(0), y(0), z(0), rot(0) {}
+private:
+	inline double MxoToDoubleRot(uint8 mxoRot)
+	{
+		double normalizedRot = (double(mxoRot)/double(256)); //range from 0 to 1
+		normalizedRot-=0.5f; //range from -0.5 to 0.5
+		normalizedRot*=2*M_PI; //range from -pi to +pi
+		return normalizedRot;
+	}
+	inline uint8 DoubleToMxoRot(double rot)
+	{
+		//start range in -pi to +pi
+		double normalizedRot = rot/(2*M_PI); //range from -0.5 to 0.5
+		normalizedRot+=0.5f; //range from 0 to 1
+		normalizedRot*=255; //range from 0 to 255
+		return uint8(normalizedRot);
+	}
+public:
 	// (dx * dx + dy * dy + dz * dz)
 	double DistanceSq(const LocationVector & comp)
 	{
@@ -97,12 +118,45 @@ public:
 		double delta_y = Y - y;
 		return sqrt(delta_x*delta_x + delta_y*delta_y);
 	}
-
+	// atan2(dx / dy)
+	double CalcAngTo(const LocationVector & dest)
+	{
+		double dx = dest.x - x;
+		double dy = dest.y - y;
+		if(dy != 0.0f)
+			return atan2(dy, dx);
+		else 
+			return 0.0f;
+	}
+	inline uint8 CalcAngToMxo(const LocationVector & dest)
+	{
+		return DoubleToMxoRot(CalcAngTo(dest));
+	}
+	double CalcAngFrom(const LocationVector & src)
+	{
+		double dx = x - src.x;
+		double dy = y - src.y;
+		if(dy != 0.0f)
+			return atan2(dy, dx);
+		else
+			return 0.0f;
+	}
+	inline uint8 CalcAngFromMxo(const LocationVector & dest)
+	{
+		return DoubleToMxoRot(CalcAngFrom(dest));
+	}
 	void ChangeCoords(double X, double Y, double Z)
 	{
 		x = X;
 		y = Y;
 		z = Z;
+	}
+	void ChangeCoords(double X, double Y, double Z, uint8 O)
+	{
+		x = X;
+		y = Y;
+		z = Z;
+		rot = O;
 	}
 
 	// add/subtract/equality vectors
@@ -111,6 +165,7 @@ public:
 		x += add.x;
 		y += add.y;
 		z += add.z;
+		rot += add.rot;
 		return *this;
 	}
 
@@ -119,6 +174,7 @@ public:
 		x -= sub.x;
 		y -= sub.y;
 		z -= sub.z;
+		rot -= sub.rot;
 		return *this;
 	}
 
@@ -127,6 +183,7 @@ public:
 		x = eq.x;
 		y = eq.y;
 		z = eq.z;
+		rot = eq.rot;
 		return *this;
 	}
 
@@ -137,7 +194,14 @@ public:
 		else
 			return false;
 	}
-
+	uint8 getMxoRot()
+	{
+		return DoubleToMxoRot(rot);
+	}
+	void setMxoRot(uint8 theRot)
+	{
+		rot=MxoToDoubleRot(theRot);
+	}
 	bool fromDoubleBuf(ByteBuffer &sourceBuf)
 	{
 		if (sourceBuf.remaining() < sizeof(double)*3)
@@ -198,6 +262,7 @@ public:
 	double x;
 	double y;
 	double z;
+	double rot;
 };
 
 #endif

@@ -19,12 +19,12 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -59,7 +59,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;libmysql.lib;cryptlib.lib;Sockets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Dbghelp.lib;ws2_32.lib;libmysql.lib;cryptlib.lib;Sockets.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>..\Binaries\RealityD.exe</OutputFile>
       <AdditionalLibraryDirectories>..\..\Dependencies10\CryptoPP\Win32\Output\Debug;..\..\Dependencies10\MySQL\lib\32;..\..\Dependencies10\Sockets\Project.net\lib\D;..\..\Dependencies10\ZThread\lib\D;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -83,7 +83,7 @@
       </DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;libmysql.lib;cryptlib.lib;Sockets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Dbghelp.lib;ws2_32.lib;libmysql.lib;cryptlib.lib;Sockets.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>..\Binaries\Reality.exe</OutputFile>
       <AdditionalLibraryDirectories>..\..\Dependencies10\CryptoPP\Win32\Output\Release;..\..\Dependencies10\MySQL\lib\32;..\..\Dependencies10\Sockets\Project.net\lib\R;..\..\Dependencies10\ZThread\lib\R;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -98,9 +98,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CrashHandler.h" />
     <ClInclude Include="CryptoTest.h" />
     <ClInclude Include="Master.h" />
     <ClInclude Include="seqchecktest.h" />
+    <ClInclude Include="StackWalker.h" />
     <ClInclude Include="SubPacketsTest.h" />
     <ClInclude Include="DotConfPP\dotconfpp.h" />
     <ClInclude Include="DotConfPP\mempool.h" />
@@ -154,6 +156,7 @@
     <ClInclude Include="ConsoleThread.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CrashHandler.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Master.cpp" />
     <ClCompile Include="DotConfPP\dotconfpp.cpp" />
@@ -162,6 +165,7 @@
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="MersenneTwister.cpp" />
+    <ClCompile Include="StackWalker.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="Database\Database.cpp" />
     <ClCompile Include="GameClient.cpp" />

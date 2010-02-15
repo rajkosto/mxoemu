@@ -29,33 +29,27 @@
 #include "PlayerObject.h"
 #include "MessageTypes.h"
 #include "Log.h"
+#include <Sockets/SocketAddress.h>
 
 class GameClient
 {
 public:		
-	GameClient(sockaddr_in address, SOCKET *sock);
+	GameClient(shared_ptr<SocketAddress> address, class GameSocket *sock);
 	~GameClient();
 
 	inline uint32 LastActive() { return m_lastActivity; }
 	inline bool IsValid() { return m_validClient; }
-	void Invalidate() 
-	{
-		m_validClient=false; 
-	}
-	string Address() 
-	{
-		stringstream addressStr;
-		addressStr << inet_ntoa(m_address.sin_addr) << ":" << ntohs(m_address.sin_port);
-		return addressStr.str();
-	}
+	void Invalidate() { m_validClient=false;}
+	string Address() { return m_address->Convert(true); }
 	uint32 GetSessionId() 
 	{
 		if (m_encryptionInitialized == true)
 			return m_sessionId; 
-		return 0;
+		else
+			return 0;
 	}
 
-	void HandlePacket(char *pData, uint16 Length);
+	void HandlePacket(const char *pData, uint16 nLength);
 	void HandleEncrypted(ByteBuffer &srcData);
 	void HandleOther(ByteBuffer &otherData);
 	void HandleOrdered(ByteBuffer &orderedData);
@@ -80,12 +74,49 @@ public:
 	void FlushQueue();
 	void CheckAndResend();
 private:
-	SequencedPacket Decrypt(char *pData, uint16 nLength);
+	SequencedPacket Decrypt(const char *pData, uint16 nLength);
 	void PSSChanged(uint8 oldPSS,uint8 newPSS);
 	bool PacketReceived(uint16 clientSeq)
 	{
+		bool wraparound=false;
+
 		if (isSequenceMoreRecent(clientSeq,m_lastClientSequence) == true)
+		{
+			if ( (m_lastClientSequence > 4096/2) && clientSeq < 4096/2 )
+				wraparound=true;
+
 			m_lastClientSequence = clientSeq;
+		}
+
+		if (wraparound == true)
+		{
+			size_t removedPacketsToAck = 0;
+			for (deque<uint16>::iterator it=m_packetsToAck.begin();it!=m_packetsToAck.end();)
+			{
+				if (*it < 4096/2)
+				{
+					it = m_packetsToAck.erase(it);
+					removedPacketsToAck++;
+				}
+				else
+				{
+					++it;
+				}
+			}
+
+			size_t flaggedActualPackets = 0;
+			for (sendQueueList::iterator it=m_sendQueue.begin();it!=m_sendQueue.end();++it)
+			{
+				if (it->client_sequence < 4096/2)
+				{
+					it->client_sequence = m_lastClientSequence;
+					it->ack = false;
+					flaggedActualPackets++;
+				}
+			}
+
+			INFO_LOG(format("(%1) Purged %2% potential and %3% real acks due to client wraparound") % Address() % removedPacketsToAck % flaggedActualPackets);
+		}
 
 		if (find(m_packetsToAck.begin(),m_packetsToAck.end(),clientSeq) != m_packetsToAck.end())
 			return false;
@@ -196,14 +227,14 @@ private:
 		increaseServerSequence();
 		uint16 theServerSeq = m_serverSequence;
 		ByteBuffer outputData = dataToSend->toBuf();
-		if (outputData.size() > 0)
+/*		if (outputData.size() > 0)
 		{
 			DEBUG_LOG(format("(%s) Queue SSeq: %d CSeq: %d Ack: %d Data: |%s|") % Address() % theServerSeq % clientSeq % ackPacket % Bin2Hex(outputData));
 		}
 		else
 		{
 			DEBUG_LOG(format("(%s) Queue SSeq: %d CSeq: %d Ack: %d No Data") % Address() % theServerSeq % clientSeq % ackPacket);
-		}
+		}*/
 		m_sendQueue.push_back(PacketInQueue(m_clientPSS,theServerSeq,clientSeq,ackPacket,dataToSend,immediateOnly));
 	}
 	void AddPacketToQueue(msgBaseClassPtr dataToSend, bool immediateOnly=false)
@@ -228,8 +259,8 @@ private:
 	bool m_characterSpawned;
 
 	// Master Sock handle, client's address structure, last received packet
-	SOCKET *m_sock;
-	struct sockaddr_in m_address;
+	class GameSocket *m_sock;
+	shared_ptr<SocketAddress> m_address;
 	uint32 m_lastActivity;
 	uint32 m_lastPacketReceivedMS;
 	uint32 m_lastOrderedFlush;
@@ -247,7 +278,9 @@ private:
 	{
 		m_serverSequence++;
 		if (m_serverSequence == 4096)
+		{
 			m_serverSequence=0;
+		}
 	}
 	uint16 m_lastClientSequence;
 	inline bool isSequenceMoreRecent( uint16 biggerSequence, uint16 smallerSequence, uint32 max_sequence=4096 )

@@ -25,11 +25,9 @@
 #include "Common.h"
 #include "ByteBuffer.h"
 #include "Singleton.h"
-#include "Sockets.h"
 #include "ObjectMgr.h"
+#include <Sockets/SocketHandler.h>
 #include "MessageTypes.h"
-
-#define RECV_BUFFER_SIZE 2048
 
 class GameServer : public Singleton <GameServer>
 {
@@ -39,30 +37,15 @@ public:
 	bool Start();
 	void Stop();
 	void Loop();
-	int Clients_Connected(void) { return (int)m_clients.size(); }
-	void Handle_Incoming();
+	ObjectMgr &getObjMgr() { return m_objMgr; }
 	class GameClient *GetClientWithSessionId(uint32 sessionId);
-	void CheckAndResend();
 	void Broadcast(const ByteBuffer &message);
 	void AnnounceStateUpdate(class GameClient* clFrom,msgBaseClassPtr theMsg, bool immediateOnly=false);
 	void AnnounceCommand(class GameClient* clFrom,msgBaseClassPtr theCmd);
-	ObjectMgr &getObjMgr() { return m_objMgr; }
-
 private:	
-	// Client List
-	typedef std::map<std::string, class GameClient*> GClientList;
-	GClientList m_clients;
-	struct sockaddr_in listen_addr, inc_addr;
-
-	// Socket stuff
-	SOCKET m_socket;
-	fd_set m_readable;
-
-	struct timeval m_timeout;
-	uint32 m_lastCleanupTime;
-	uint32 m_currTime;
-
 	ObjectMgr m_objMgr;
+	SocketHandler m_udpHandler;
+	shared_ptr<class GameSocket> m_mainSocket;
 };
 
 

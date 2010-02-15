@@ -33,10 +33,11 @@
 #include "Database/Database.h"
 #include "Log.h"
 #include "GameServer.h"
+#include "GameSocket.h"
 
 #pragma pack(1)
 
-GameClient::GameClient(struct sockaddr_in address, SOCKET *sock)
+GameClient::GameClient(shared_ptr<SocketAddress> address, GameSocket *sock)
 {
 	m_sock = sock;
 	m_address = address;
@@ -70,7 +71,7 @@ GameClient::~GameClient()
 	}
 }
 
-void GameClient::HandlePacket(char *pData, uint16 nLength)
+void GameClient::HandlePacket( const char *pData, uint16 nLength )
 {
 	if (nLength < 1 || m_validClient == false)
 		return;
@@ -160,8 +161,7 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 			}
 			beatPacket << uint16(swap16(numberOfBeats));
 
-			int clientlen=sizeof(m_address);
-			sendto(*m_sock, beatPacket.contents(), beatPacket.size(), 0, (struct sockaddr*)&m_address, clientlen);
+			m_sock->SendToBuf(*m_address, beatPacket.contents(), beatPacket.size(), 0);
 		}
 
 		//notify margin that udp session is established
@@ -179,8 +179,7 @@ void GameClient::HandlePacket(char *pData, uint16 nLength)
 
 	if (m_worldLoaded == true && pData[0] != 0x01) // Ping...just reply with the same thing
 	{
-		int clientlen=sizeof(m_address);
-		sendto(*m_sock, pData, nLength, 0, (struct sockaddr*)&m_address,clientlen );
+		m_sock->SendToBuf(*m_address, pData, nLength, 0);
 	}
 	else
 	{
@@ -347,7 +346,7 @@ void GameClient::HandleOrdered( ByteBuffer &orderedData )
 	}
 }
 
-SequencedPacket GameClient::Decrypt(char *pData, uint16 nLength)
+SequencedPacket GameClient::Decrypt(const char *pData, uint16 nLength)
 {
 	EncryptedPacket decryptedData(ByteBuffer(pData,nLength),m_TFDecrypt.get());
 	return SequencedPacket(decryptedData);
@@ -363,8 +362,7 @@ void GameClient::SendEncrypted(SequencedPacket withSequences)
 	sendMe << uint8(1);
 	sendMe.append(withEncryption.toCipherText(m_TFEncrypt.get()));
 
-	int clientlen=sizeof(m_address);
-    sendto(*m_sock, sendMe.contents(), (int)sendMe.size(), 0, (struct sockaddr*)&m_address,clientlen);
+	m_sock->SendToBuf(*m_address, sendMe.contents(), sendMe.size(), 0);
 }
 
 void GameClient::PSSChanged( uint8 oldPSS,uint8 newPSS )
@@ -575,10 +573,10 @@ void GameClient::CheckAndResend()
 		bool deleted = false;
 
 		uint32 currTime = getMSTime();
-		if (currTime - it->msTimeSent > 500) //500 is timeout for resend
+		if (currTime - it->msTimeSent > 200) //200 is timeout for resend
 		{
 			//client obviously doesnt want to ack this packet
-			if (it->resentCounter > 2)
+			if (it->resentCounter > 10)
 			{
 				ByteBuffer resentPacketDumpedData;
 				try
@@ -661,6 +659,7 @@ void GameClient::CheckAndResend()
 						//reverse iterator because push_front inserts into reverse anyway
 						for (list<MsgBlock>::reverse_iterator hurr=newPacket->msgBlocks.rbegin();hurr!=newPacket->msgBlocks.rend();++hurr)
 						{
+							uint16 oldSeqz = m_serverSequence;
 							increaseServerSequence();
 							m_sendQueue.push_front( PacketInQueue(oldClientPSS,m_serverSequence,oldClientSeq,oldAck,shared_ptr<OrderedPacket>(new OrderedPacket(*hurr))) );
 						}

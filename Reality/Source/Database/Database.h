@@ -62,7 +62,7 @@ public:
 
 class QueryBuffer
 {
-	vector<char*> queries;
+	deque<string> queries;
 public:
 	friend class Database;
 	void AddQuery(string fmt);
@@ -139,7 +139,7 @@ protected:
 	FQueue<QueryBuffer*> query_buffer;
 
 	////////////////////////////////
-	FQueue<char*> queries_queue;
+	FQueue<string*> queries_queue;
 	DatabaseConnection *m_connections;
 
 	uint32 _counter;

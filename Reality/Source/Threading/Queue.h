@@ -41,7 +41,7 @@ public:
 		return ret;
 	}
 
-	void push(T &item)
+	void push(T item)
 	{
 		h*p=new h;
 		p->value=item;

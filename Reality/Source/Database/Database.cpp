@@ -144,11 +144,7 @@ void Database::FWaitExecute( string QueryString, DatabaseConnection * con)
 
 void QueryBuffer::AddQuery(string fmt)
 {
-	size_t len = fmt.length();
-	char * pBuffer = new char[len+1];
-	memcpy(pBuffer, fmt.c_str(), len + 1);
-
-	queries.push_back(pBuffer);
+	queries.push_back(fmt);
 }
 
 void Database::PerformQueryBuffer(QueryBuffer * b, DatabaseConnection * ccon)
@@ -160,10 +156,11 @@ void Database::PerformQueryBuffer(QueryBuffer * b, DatabaseConnection * ccon)
 	if( ccon == NULL )
 		con = GetFreeConnection();
 
-	for(vector<char*>::iterator itr = b->queries.begin(); itr != b->queries.end(); ++itr)
+	while (b->queries.size() > 0)
 	{
-		_SendQuery(con, *itr, false);
-		delete[] (*itr);
+		string &currQuery = b->queries.front();
+		_SendQuery(con, currQuery.c_str(), false);
+		b->queries.pop_front();
 	}
 
 	if( ccon == NULL )
@@ -175,11 +172,7 @@ bool Database::Execute( string QueryString)
 	if(!ThreadRunning)
 		return WaitExecute(QueryString);
 
-	size_t len = QueryString.length();
-	char * pBuffer = new char[len+1];
-	memcpy(pBuffer, QueryString.c_str(), len + 1);
-
-	queries_queue.push(pBuffer);
+	queries_queue.push(new string(QueryString));
 	return true;
 }
 
@@ -196,12 +189,12 @@ bool Database::run()
 {
 	SetThreadName("Database Executor");
 	ThreadRunning = true;
-	char * query = queries_queue.pop();
+	string *query = queries_queue.pop();
 	DatabaseConnection * con = GetFreeConnection();
 	while(query)
 	{
-		_SendQuery( con, query, false );
-		delete[] query;
+		_SendQuery( con, query->c_str(), false );
+		delete query;
 		if(!m_threadRunning)
 			break;
 
@@ -217,9 +210,9 @@ bool Database::run()
 		while(query)
 		{
 			DatabaseConnection * con = GetFreeConnection();
-			_SendQuery( con, query, false );
+			_SendQuery( con, query->c_str(), false );
 			con->Busy.Release();
-			delete[] query;
+			delete query;
 			query=queries_queue.pop_nowait();
 		}
 	}

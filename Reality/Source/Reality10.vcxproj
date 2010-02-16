@@ -114,6 +114,7 @@
     <ClInclude Include="Log.h" />
     <ClInclude Include="MersenneTwister.h" />
     <ClInclude Include="Singleton.h" />
+    <ClInclude Include="SymmetricCrypto.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="Database\Database.h" />
     <ClInclude Include="Database\DatabaseEnv.h" />
@@ -178,7 +179,6 @@
     <ClCompile Include="SequencedPacket.cpp" />
     <ClCompile Include="BitStream.cpp" />
     <ClCompile Include="BitVarStream.cpp" />
-    <ClCompile Include="EncryptedPacket.cpp" />
     <ClCompile Include="MarginHandler.cpp" />
     <ClCompile Include="MarginServer.cpp" />
     <ClCompile Include="MarginSocket.cpp" />

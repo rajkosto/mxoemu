@@ -236,8 +236,7 @@ void AuthSocket::HandleAuthRequest( ByteBuffer &packet )
 	DEBUG_LOG(format("Auth TF key: |%s|") % Bin2Hex(twofishKey,sizeof(twofishKey)));
 
 	//instantiate ciphers
-	TFDecrypt.reset(new Decryptor(twofishKey,sizeof(twofishKey),blankIV));
-	TFEncrypt.reset(new Encryptor(twofishKey,sizeof(twofishKey),blankIV));
+	m_tfEngine.Initialize(twofishKey,sizeof(twofishKey));
 
 	//should check this time to be the same as the one we sent it in previous packet
 	uint32 theTime;
@@ -299,18 +298,11 @@ void AuthSocket::HandleAuthRequest( ByteBuffer &packet )
 
 	//to create challenge, we encrypt the random bytes			
 	//encrypt our random bytes using twofish and 0 IV
-	TFEncrypt->Resynchronize(blankIV); // just in case
-	string ourChallenge;
-
-	CryptoPP::StringSource(string((const char*)decryptedChallenge,sizeof(decryptedChallenge)), true, 
-		new CryptoPP::StreamTransformationFilter(
-		*TFEncrypt, new CryptoPP::StringSink(ourChallenge),
-		CryptoPP::BlockPaddingSchemeDef::NO_PADDING));
-
+	m_tfEngine.SetEncryptionIV(); // just in case
+	ByteBuffer ourChallenge = m_tfEngine.Encrypt(decryptedChallenge,sizeof(decryptedChallenge),false);
 	DEBUG_LOG(format("TF Encrypted Challenge (as sent) |%1%|") % Bin2Hex(ourChallenge));
-
 	//copy to variable
-	memcpy(challenge,(const byte*)ourChallenge.data(),sizeof(challenge));
+	memcpy(challenge,ourChallenge.contents(),sizeof(challenge));
 
 	DEBUG_LOG(format("Decrypted Challenge (feed to md5) |%1%|") % Bin2Hex(decryptedChallenge,sizeof(decryptedChallenge)) );
 
@@ -329,7 +321,7 @@ void AuthSocket::HandleAuthRequest( ByteBuffer &packet )
 	TCPVariableLengthPacket reply;
 	reply << byte(AS_AuthChallenge);
 	//send encrypted tf bytes, client will decrypt then md5 to generate IV
-	reply.append(ourChallenge);
+	reply.append(ourChallenge.contents(),ourChallenge.size());
 
 	SendPacket(reply);
 
@@ -351,18 +343,11 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 
 	//now we have the ciphertext, lets decrypt
 	//challenge response from client is encrypted with IV set to 0
-	TFDecrypt->Resynchronize(blankIV);
-	string cipherInput((const char*)&cipherText[0],cipherText.size());
-	string plainOutput;
-	CryptoPP::StringSource(cipherInput, true, 
-		new CryptoPP::StreamTransformationFilter(
-		*TFDecrypt, new CryptoPP::StringSink(plainOutput),
-		CryptoPP::BlockPaddingSchemeDef::NO_PADDING));
-
-	DEBUG_LOG(format("Challenge response decrypted: |%1%|") % Bin2Hex(plainOutput) );
+	m_tfEngine.SetDecryptionIV();
+	ByteBuffer chRspPlain = m_tfEngine.Decrypt(&cipherText[0],cipherText.size(),false);
+	DEBUG_LOG(format("Challenge response decrypted: |%1%|") % Bin2Hex(chRspPlain) );
 
 	size_t packetSize = 0;
-	ByteBuffer chRspPlain(plainOutput);
 
 	uint8 someByte;
 	chRspPlain >> someByte;
@@ -492,14 +477,9 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 	ByteBuffer signature = sAuth.SignWith1024Bit(signMePlease,sizeof(signMePlease));
 
 	//the encrypted data is the private exponent of user's RSA key
-	//to encrypt 96 byte exponent, use auth_key as key and challenge as IV		
-	TFEncrypt->Resynchronize(challenge);
-	string encryptedPrivateExponent;
-
-	CryptoPP::StringSource( m_privateExponent , true, 
-		new CryptoPP::StreamTransformationFilter(
-		*TFEncrypt, new CryptoPP::StringSink(encryptedPrivateExponent),
-		CryptoPP::BlockPaddingSchemeDef::NO_PADDING));
+	//to encrypt 96 byte exponent, use auth_key as key and challenge as IV
+	m_tfEngine.SetEncryptionIV(challenge,sizeof(challenge));
+	ByteBuffer encryptedPrivateExponent=m_tfEngine.Encrypt((const byte*)m_privateExponent.data(),m_privateExponent.size(),false);
 
 	if (encryptedPrivateExponent.size() != 96)
 	{
@@ -663,7 +643,7 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 	//then the size of the encrypted blob
 	worldPacket << uint16(encryptedPrivateExponent.size());
 	//then the encrypted blob itself
-	worldPacket.append(encryptedPrivateExponent);
+	worldPacket.append(encryptedPrivateExponent.contents(),encryptedPrivateExponent.size());
 
 	//key data ended, now starts username data
 	packetHeader.offsetUsername = worldPacket.wpos();

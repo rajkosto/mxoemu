@@ -25,6 +25,7 @@
 #include "TCPVarLenSocket.h"
 #include "Common.h"
 #include "Crypto.h"
+#include "SymmetricCrypto.h"
 
 class AuthSocket : public TCPVarLenSocket
 {
@@ -43,10 +44,7 @@ private:
 	string username;
 
 	typedef CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption Decryptor;
-	typedef CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption Encryptor;
-
-	shared_ptr<Decryptor> TFDecrypt;
-	shared_ptr<Encryptor> TFEncrypt;
+	TwofishCryptEngine m_tfEngine;
 
 	uint32 matrixVersion;
 	static const byte blankIV[16];

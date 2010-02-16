@@ -23,6 +23,7 @@
 #define MXOSIM_GAMECLIENT_H
 
 #include "Crypto.h"
+#include "SymmetricCrypto.h"
 #include "SequencedPacket.h"
 #include "Sockets.h"
 #include "MessageTypes.h"
@@ -292,12 +293,7 @@ private:
 
 	class MarginSocket *m_marginConn;
 
-	typedef CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption TFDecryption;
-	typedef CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption TFEncryption;
-	typedef shared_ptr<TFDecryption> TFDecryptionPtr;
-	typedef shared_ptr<TFEncryption> TFEncryptionPtr;
-	TFDecryptionPtr m_TFDecrypt;
-	TFEncryptionPtr m_TFEncrypt;	
+	TwofishCryptEngine m_tfEngine;
 };
 
 #endif

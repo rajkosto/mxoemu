@@ -24,7 +24,6 @@
 #include "Log.h"
 #include "MarginSocket.h"
 #include "TCPVariableLengthPacket.h"
-#include "EncryptedPacket.h"
 #include "AuthServer.h"
 #include "SignedDataStruct.h"
 #include "Timer.h"
@@ -35,6 +34,7 @@
 #include "Database/Database.h"
 #include "GameClient.h"
 #include "GameServer.h"
+#include "EncryptedPacket.h"
 
 #pragma pack(1)
 
@@ -64,11 +64,11 @@ void MarginSocket::OnDisconnect( short info, int code )
 	INFO_LOG(format("Margin socket with %1% disconnected") % GetRemoteSocketAddress()->Convert(true));
 }
 
-void MarginSocket::SendCrypted( EncryptedPacket &cryptedPacket )
+void MarginSocket::SendCrypted( TwofishEncryptedPacket &cryptedPacket )
 {
-	if (TFEncrypt != NULL)
+	if (m_tfEngine.IsValid())
 	{
-		SendPacket(TCPVariableLengthPacket(cryptedPacket.toCipherText(TFEncrypt.get())));
+		SendPacket(TCPVariableLengthPacket(cryptedPacket.toCipherText(m_tfEngine)));
 	}
 }
 
@@ -131,9 +131,9 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 
 	ByteBuffer packetData;
 
-	if (encrypted == true && TFDecrypt != NULL)
+	if (encrypted == true && m_tfEngine.IsValid())
 	{
-		EncryptedPacket packetTodecrypt(packetContents,TFDecrypt.get());
+		TwofishEncryptedPacket packetTodecrypt(packetContents,m_tfEngine);
 		packetData = packetTodecrypt;
 
 		DEBUG_LOG(format("Margin Decrypted |%1%|") % Bin2Hex(packetData) );
@@ -249,8 +249,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			randPool.GenerateBlock(challenge,sizeof(challenge));
 
 			//since we now have key, lets initialize our encryptor/decryptor
-			TFEncrypt.reset(new Encryptor(twofishKey,sizeof(twofishKey),blankIV));
-			TFDecrypt.reset(new Decryptor(twofishKey,sizeof(twofishKey),blankIV));
+			m_tfEngine.Initialize(twofishKey,sizeof(twofishKey));
 
 			//the rsa encrypted packet is 00 then twofish key then challenge, so its 31 bytes
 			ByteBuffer tobeRSAd;
@@ -306,7 +305,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 				return;
 			}
 
-			EncryptedPacket response; // 04 00 00 00 00 response from real server
+			TwofishEncryptedPacket response; // 04 00 00 00 00 response from real server
 			response << uint8(CERT_ConnectReply)
 				<< uint32(0); // error code possibly ?
 
@@ -352,7 +351,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 				% Bin2Hex(&packetData.contents()[packetData.rpos()],packetData.remaining()));
 
 			//real server response with MS_ConnectChallenge which has 16 bytes some data, then 00 00 01 00
-			EncryptedPacket response;
+			TwofishEncryptedPacket response;
 			response << uint8(MS_ConnectChallenge);
 			//lets use a buffer full of FFs
 			byte md5Buf[16];
@@ -377,7 +376,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			//always accept
 			//we need to send something like 09 00 00 00 00 00 00 00 00 29 A6 34 E9 0F 00 03 00 0C 00 07 00 A9 00
 			//                                                          ?? ?? ?? ?? <- this part changes, its margin/world session id
-			EncryptedPacket response;
+			TwofishEncryptedPacket response;
 			response << uint8(MS_ConnectReply);
 			response << uint32(0);
 			response << uint32(0);
@@ -917,7 +916,7 @@ void MarginSocket::SendCharacterReply( uint16 shortAfterId,bool lastPacket,uint8
 {
 	numCharacterReplies++;
 
-	EncryptedPacket derp;
+	TwofishEncryptedPacket derp;
 	derp << uint8(MS_LoadCharacterReply)
 		 << uint32(0)
 		 << uint32(worldCharId)
@@ -935,7 +934,7 @@ bool MarginSocket::UdpReady(GameClient *theClient)
 	if (!readyForUdp)
 		return false;
 
-	EncryptedPacket response;
+	TwofishEncryptedPacket response;
 	response << uint8(MS_EstablishUDPSessionReply)
 		     << uint32(0);
 

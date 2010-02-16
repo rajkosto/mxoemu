@@ -26,6 +26,8 @@
 
 #include "Common.h"
 #include "Crypto.h"
+#include "SymmetricCrypto.h"
+#include "EncryptedPacket.h"
 
 class MarginSocket : public TCPVarLenSocket
 {
@@ -51,7 +53,7 @@ public:
 	bool UdpReady(class GameClient *theClient);
 private:
 	void ProcessData(const byte *buf,size_t len);
-	void SendCrypted(class EncryptedPacket &cryptedPacket);
+	void SendCrypted(TwofishEncryptedPacket &cryptedPacket);
 
 	void NewCharacterReply()
 	{
@@ -66,11 +68,7 @@ private:
 
 	byte twofishKey[16];
 
-	typedef CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption Decryptor;
-	typedef CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption Encryptor;
-
-	shared_ptr<Decryptor> TFDecrypt;
-	shared_ptr<Encryptor> TFEncrypt;
+	TwofishCryptEngine m_tfEngine;
 
 	uint32 sessionId;
 	uint64 charId;

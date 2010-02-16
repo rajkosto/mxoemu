@@ -25,7 +25,6 @@
 #include "Timer.h"
 #include "Util.h"
 #include "MersenneTwister.h"
-#include "EncryptedPacket.h"
 #include "SequencedPacket.h"
 #include "RsiData.h"
 #include "MarginSocket.h"
@@ -34,6 +33,7 @@
 #include "Log.h"
 #include "GameServer.h"
 #include "GameSocket.h"
+#include "EncryptedPacket.h"
 
 #pragma pack(1)
 
@@ -114,14 +114,11 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 
 		//initialize encryptors with key from margin
 		vector<byte> twofishKey = marginConn->GetTwofishKey();
-		vector<byte> twofishIV(CryptoPP::Twofish::BLOCKSIZE,0);
-
-		m_TFDecrypt.reset(new CryptoPP::CBC_Mode<CryptoPP::Twofish>::Decryption(&twofishKey[0], twofishKey.size(), &twofishIV[0]));
-		m_TFEncrypt.reset(new CryptoPP::CBC_Mode<CryptoPP::Twofish>::Encryption(&twofishKey[0], twofishKey.size(), &twofishIV[0]));
+		m_tfEngine.Initialize(&twofishKey[0], twofishKey.size());
 
 		//now we can verify if session key in this packet is correct
-		packetData.rpos(packetData.size()-CryptoPP::Twofish::BLOCKSIZE);
-		if (packetData.remaining() < CryptoPP::Twofish::BLOCKSIZE)
+		packetData.rpos(packetData.size()-TwofishCryptMethod::BLOCKSIZE);
+		if (packetData.remaining() < TwofishCryptMethod::BLOCKSIZE)
 		{
 			//wat
 			m_validClient=false;
@@ -130,13 +127,7 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 		}
 		vector<byte> encryptedSessionId(packetData.remaining());
 		packetData.read(&encryptedSessionId[0],encryptedSessionId.size());
-		string decryptedOutput;
-		CryptoPP::StringSource(string( (const char*)&encryptedSessionId[0],encryptedSessionId.size() ), true, 
-			new CryptoPP::StreamTransformationFilter(
-			*m_TFDecrypt, new CryptoPP::StringSink(decryptedOutput),
-			CryptoPP::BlockPaddingSchemeDef::NO_PADDING));
-		ByteBuffer decryptedData;
-		decryptedData.append(decryptedOutput.data(),decryptedOutput.size());
+		ByteBuffer decryptedData = m_tfEngine.Decrypt(&encryptedSessionId[0],encryptedSessionId.size(),false);
 		uint32 recoveredSessionId=0;
 		decryptedData >> recoveredSessionId;
 
@@ -348,19 +339,19 @@ void GameClient::HandleOrdered( ByteBuffer &orderedData )
 
 SequencedPacket GameClient::Decrypt(const char *pData, uint16 nLength)
 {
-	EncryptedPacket decryptedData(ByteBuffer(pData,nLength),m_TFDecrypt.get());
+	TwofishEncryptedPacket decryptedData(ByteBuffer(pData,nLength),m_tfEngine);
 	return SequencedPacket(decryptedData);
 }
 
 void GameClient::SendEncrypted(SequencedPacket withSequences)
 {
-	if (!m_TFEncrypt)
+	if (!m_tfEngine.IsValid())
 		return;
 
-	EncryptedPacket withEncryption(withSequences.getDataWithHeader());
+	TwofishEncryptedPacket withEncryption(withSequences.getDataWithHeader());
 	ByteBuffer sendMe;
 	sendMe << uint8(1);
-	sendMe.append(withEncryption.toCipherText(m_TFEncrypt.get()));
+	sendMe.append(withEncryption.toCipherText(m_tfEngine));
 
 	m_sock->SendToBuf(*m_address, sendMe.contents(), sendMe.size(), 0);
 }

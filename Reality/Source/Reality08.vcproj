@@ -424,6 +424,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SymmetricCrypto.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Timer.h"
 				>
 			</File>
@@ -431,10 +435,6 @@
 		<Filter
 			Name="Margin Server"
 			>
-			<File
-				RelativePath=".\EncryptedPacket.cpp"
-				>
-			</File>
 			<File
 				RelativePath=".\EncryptedPacket.h"
 				>

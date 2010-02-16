@@ -50,7 +50,22 @@ void MarginServer::Start()
 		delete listenSocketInst;
 	}
 	listenSocketInst = new MarginListenSocket(marginSocketHandler);
-	listenSocketInst->Bind(Port);
+
+	bool bindFailed=false;
+	try
+	{
+		if (listenSocketInst->Bind(Port)!=0)
+			bindFailed=true;
+	}
+	catch (Exception)
+	{
+		bindFailed=true;
+	}
+	if (bindFailed)
+	{
+		ERROR_LOG(format("Error binding MarginServer to port %1%") % Port);
+		return;
+	}
 	marginSocketHandler.Add(listenSocketInst);
 }
 

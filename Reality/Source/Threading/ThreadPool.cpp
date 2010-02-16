@@ -118,11 +118,17 @@ void CThreadPool::ExecuteTask(ThreadContext * ExecutionTarget)
 	}
 
 	// add the thread to the active set
-#if PLATFORM == PLATFORM_WIN32
-	DEBUG_LOG(format("Thread %u is now executing task at 0x%p.") % t->ControlInterface.GetId() % ExecutionTarget);
+	stringstream outMsg;
+	using namespace std;
+
+#ifdef __LP64__
+#define ptrIntType uint64
 #else
-	DEBUG_LOG(format("Thread %u is now executing task at %p.") % t->ControlInterface.GetId() % ExecutionTarget);
+#define ptrIntType uint32
 #endif
+
+	outMsg << "Thread " << t->ControlInterface.GetId() << " is now executing task at 0x" << setw(sizeof(ExecutionTarget)*2) << setfill('0') << hex << ptrIntType(ExecutionTarget) << dec << ".";
+	DEBUG_LOG(outMsg.str());
 	m_activeThreads.insert(t);
 	_mutex.Release();
 }
@@ -322,7 +328,9 @@ static void * thread_proc(void * param)
 {
 	ThreadStruct * t = (ThreadStruct*)param;
 	t->SetupMutex.Acquire();
-	DEBUG_LOG(format("ThreadPool::Thread %1% started.") % t->ControlInterface.GetId());
+	stringstream strBuf;
+	strBuf << "ThreadPool::Thread " << t->ControlInterface.GetId() << " started.";
+	DEBUG_LOG(strBuf.str());
 	t->SetupMutex.Release();
 
 	for(;;)

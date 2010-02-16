@@ -417,7 +417,21 @@ void AuthServer::Start()
 		delete listenSocketInst;
 	}
 	listenSocketInst = new AuthListenSocket(authSocketHandler);
-	listenSocketInst->Bind(Port);
+	bool bindFailed=false;
+	try
+	{
+		if (listenSocketInst->Bind(Port)!=0)
+			bindFailed=true;
+	}
+	catch (Exception)
+	{
+		bindFailed=true;
+	}
+	if (bindFailed)
+	{
+		ERROR_LOG(format("Error binding AuthServer to port %1%") % Port);
+		return;
+	}
 	authSocketHandler.Add(listenSocketInst);
 }
 

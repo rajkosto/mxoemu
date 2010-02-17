@@ -339,7 +339,8 @@ void GameClient::HandleOrdered( ByteBuffer &orderedData )
 
 SequencedPacket GameClient::Decrypt(const char *pData, uint16 nLength)
 {
-	TwofishEncryptedPacket decryptedData(ByteBuffer(pData,nLength),m_tfEngine);
+	ByteBuffer tempBuf(pData,nLength);
+	TwofishEncryptedPacket decryptedData(tempBuf,m_tfEngine);
 	return SequencedPacket(decryptedData);
 }
 

@@ -33,20 +33,12 @@ SQLCallbackBase::~SQLCallbackBase()
 Database::Database() : ThreadContext()
 {
 	_counter=0;
-	m_connections = NULL;
-	mConnectionCount = -1;   // Not connected.
 	ThreadRunning = true;
 }
 
 Database::~Database()
 {
-	for(int32 i = 0; i < mConnectionCount; ++i)
-	{
-		if( m_connections[i].conn != NULL )
-			mysql_close(m_connections[i].conn);
-	}
-
-	delete [] m_connections;
+	Shutdown();
 }
 
 bool Database::Initialize(const char* Hostname, unsigned int port, const char* Username, const char* Password, const char* DatabaseName, uint32 ConnectionCount, uint32 BufferSize)
@@ -56,14 +48,12 @@ bool Database::Initialize(const char* Hostname, unsigned int port, const char* U
 	my_bool my_true = true;
 
 	mHostname = string(Hostname);
-	mConnectionCount = ConnectionCount;
 	mUsername = string(Username);
 	mPassword = string(Password);
 	mDatabaseName = string(DatabaseName);
 
 	INFO_LOG(format("MySQLDatabase Connecting to `%1%`, database `%2%`...") % Hostname % DatabaseName);
 
-	m_connections = new DatabaseConnection[ConnectionCount];
 	for( i = 0; i < ConnectionCount; ++i )
 	{
 		temp = mysql_init( NULL );
@@ -80,7 +70,7 @@ bool Database::Initialize(const char* Hostname, unsigned int port, const char* U
 			return false;
 		}
 
-		m_connections[i].conn = temp2;
+		m_connections.push_back(DatabaseConnection(temp2));
 	}
 
 	// Spawn Database thread
@@ -93,13 +83,13 @@ bool Database::Initialize(const char* Hostname, unsigned int port, const char* U
 	return true;
 }
 
-DatabaseConnection * Database::GetFreeConnection()
+DatabaseConnection &Database::GetFreeConnection()
 {
 	uint32 i = 0;
 	for(;;)
 	{
-		DatabaseConnection * con = &m_connections[ ((i++) % mConnectionCount) ];
-		if(con->Busy.AttemptAcquire())
+		DatabaseConnection &con = m_connections[ ((i++) % m_connections.size()) ];
+		if(con.Busy.AttemptAcquire())
 			return con;
 
 		// sleep every 20 iterations, otherwise this can cause 100% cpu if the db link goes dead
@@ -110,23 +100,23 @@ DatabaseConnection * Database::GetFreeConnection()
 	}
 
 	// shouldn't be reached
-	return NULL;
+	throw(exception());
 }
 
 QueryResult *Database::Query( string QueryString )
 {	
 	// Send the query
 	QueryResult * qResult = NULL;
-	DatabaseConnection * con = GetFreeConnection();
+	DatabaseConnection &con = GetFreeConnection();
 
 	if( _SendQuery( con, QueryString.c_str(), false ) )
 		qResult = _StoreQueryResult( con );
 
-	con->Busy.Release();
+	con.Busy.Release();
 	return qResult;
 }
 
-QueryResult * Database::FQuery( string QueryString, DatabaseConnection * con)
+QueryResult * Database::FQuery( string QueryString, DatabaseConnection &con)
 {	
 	// Send the query
 	QueryResult * qResult = NULL;
@@ -136,7 +126,7 @@ QueryResult * Database::FQuery( string QueryString, DatabaseConnection * con)
 	return qResult;
 }
 
-void Database::FWaitExecute( string QueryString, DatabaseConnection * con)
+void Database::FWaitExecute( string QueryString, DatabaseConnection &con)
 {	
 	// Send the query
 	_SendQuery( con, QueryString.c_str(), false );
@@ -147,14 +137,25 @@ void QueryBuffer::AddQuery(string fmt)
 	queries.push_back(fmt);
 }
 
-void Database::PerformQueryBuffer(QueryBuffer * b, DatabaseConnection * ccon)
+void Database::PerformQueryBuffer(QueryBuffer * b, DatabaseConnection &con)
 {
 	if(!b->queries.size())
 		return;
 
-	DatabaseConnection * con = ccon;
-	if( ccon == NULL )
-		con = GetFreeConnection();
+	while (b->queries.size() > 0)
+	{
+		string &currQuery = b->queries.front();
+		_SendQuery(con, currQuery.c_str(), false);
+		b->queries.pop_front();
+	}
+}
+
+void Database::PerformQueryBuffer(QueryBuffer * b)
+{
+	if(!b->queries.size())
+		return;
+
+	DatabaseConnection &con = GetFreeConnection();
 
 	while (b->queries.size() > 0)
 	{
@@ -163,9 +164,9 @@ void Database::PerformQueryBuffer(QueryBuffer * b, DatabaseConnection * ccon)
 		b->queries.pop_front();
 	}
 
-	if( ccon == NULL )
-		con->Busy.Release();
+	con.Busy.Release();
 }
+
 
 bool Database::Execute( string QueryString)
 {
@@ -179,9 +180,9 @@ bool Database::Execute( string QueryString)
 //this will wait for completion
 bool Database::WaitExecute( string QueryString)
 {
-	DatabaseConnection * con = GetFreeConnection();
+	DatabaseConnection &con = GetFreeConnection();
 	bool Result = _SendQuery(con, QueryString.c_str(), false);
-	con->Busy.Release();
+	con.Busy.Release();
 	return Result;
 }
 
@@ -190,7 +191,7 @@ bool Database::run()
 	SetThreadName("Database Executor");
 	ThreadRunning = true;
 	string *query = queries_queue.pop();
-	DatabaseConnection * con = GetFreeConnection();
+	DatabaseConnection &con = GetFreeConnection();
 	while(query)
 	{
 		_SendQuery( con, query->c_str(), false );
@@ -201,7 +202,7 @@ bool Database::run()
 		query = queries_queue.pop();
 	}
 
-	con->Busy.Release();
+	con.Busy.Release();
 
 	if(queries_queue.get_size() > 0)
 	{
@@ -209,9 +210,9 @@ bool Database::run()
 		query = queries_queue.pop_nowait();
 		while(query)
 		{
-			DatabaseConnection * con = GetFreeConnection();
+			DatabaseConnection &con = GetFreeConnection();
 			_SendQuery( con, query->c_str(), false );
-			con->Busy.Release();
+			con.Busy.Release();
 			delete query;
 			query=queries_queue.pop_nowait();
 		}
@@ -238,11 +239,11 @@ void AsyncQuery::AddQuery( string fmt )
 
 void AsyncQuery::Perform()
 {
-	DatabaseConnection * conn = db->GetFreeConnection();
+	DatabaseConnection &conn = db->GetFreeConnection();
 	for(vector<AsyncQueryResult>::iterator itr = queries.begin(); itr != queries.end(); ++itr)
 		itr->result = db->FQuery(itr->query, conn);
 
-	conn->Busy.Release();
+	conn.Busy.Release();
 	func->run(queries);
 
 	delete this;
@@ -295,7 +296,7 @@ QueryThread::~QueryThread()
 void Database::thread_proc_query()
 {
 	QueryBuffer * q;
-	DatabaseConnection * con = GetFreeConnection();
+	DatabaseConnection &con = GetFreeConnection();
 
 	q = query_buffer.pop( );
 	while( q != NULL )
@@ -309,13 +310,13 @@ void Database::thread_proc_query()
 		q = query_buffer.pop( );
 	}
 
-	con->Busy.Release();
+	con.Busy.Release();
 
 	// kill any queries
 	q = query_buffer.pop_nowait( );
 	while( q != NULL )
 	{
-		PerformQueryBuffer( q, NULL );
+		PerformQueryBuffer( q );
 		delete q;
 
 		q = query_buffer.pop_nowait( );
@@ -341,7 +342,7 @@ void Database::AddQueryBuffer(QueryBuffer * b)
 		query_buffer.push( b );
 	else
 	{
-		PerformQueryBuffer( b, NULL );
+		PerformQueryBuffer( b );
 		delete b;
 	}
 }
@@ -355,14 +356,14 @@ string Database::EscapeString(std::string Escape)
 {
 	char a2[16384] = {0};
 
-	DatabaseConnection * con = GetFreeConnection();
+	DatabaseConnection &con = GetFreeConnection();
 	const char * ret;
-	if(mysql_real_escape_string(con->conn, a2, Escape.c_str(), (unsigned long)Escape.length()) == 0)
+	if(mysql_real_escape_string(con.conn, a2, Escape.c_str(), (unsigned long)Escape.length()) == 0)
 		ret = Escape.c_str();
 	else
 		ret = a2;
 
-	con->Busy.Release();
+	con.Busy.Release();
 	return string(ret);
 }
 
@@ -370,15 +371,15 @@ void Database::EscapeLongString(const char * str, uint32 len, stringstream& out)
 {
 	char a2[65536*3] = {0};
 
-	DatabaseConnection * con = GetFreeConnection();
+	DatabaseConnection &con = GetFreeConnection();
 	const char * ret;
-	if(mysql_real_escape_string(con->conn, a2, str, (unsigned long)len) == 0)
+	if(mysql_real_escape_string(con.conn, a2, str, (unsigned long)len) == 0)
 		ret = str;
 	else
 		ret = a2;
 
 	out.write(a2, (std::streamsize)strlen(a2));
-	con->Busy.Release();
+	con.Busy.Release();
 }
 
 string Database::EscapeString(const char * esc, DatabaseConnection * con)
@@ -393,13 +394,13 @@ string Database::EscapeString(const char * esc, DatabaseConnection * con)
 	return string(ret);
 }
 
-bool Database::_SendQuery(DatabaseConnection *con, const char* Sql, bool Self)
+bool Database::_SendQuery(DatabaseConnection &con, const char* Sql, bool Self)
 {
 	//dunno what it does ...leaving untouched 
-	int result = mysql_query(con->conn, Sql);
+	int result = mysql_query(con.conn, Sql);
 	if(result > 0)
 	{
-		if( Self == false && _HandleError(con, mysql_errno( con->conn ) ) )
+		if( Self == false && _HandleError(con, mysql_errno( con.conn ) ) )
 		{
 			// Re-send the query, the connection was successful.
 			// The true on the end will prevent an endless loop here, as it will
@@ -407,13 +408,13 @@ bool Database::_SendQuery(DatabaseConnection *con, const char* Sql, bool Self)
 			result = _SendQuery(con, Sql, true);
 		}
 		else
-			ERROR_LOG(format("Sql query failed due to [%1%], Query: [%2%]\n") % mysql_error( con->conn ) % Sql);
+			ERROR_LOG(format("Sql query failed due to [%1%], Query: [%2%]\n") % mysql_error( con.conn ) % Sql);
 	}
 
 	return (result == 0 ? true : false);
 }
 
-bool Database::_HandleError(DatabaseConnection * con, uint32 ErrorNumber)
+bool Database::_HandleError(DatabaseConnection &con, uint32 ErrorNumber)
 {
 	// Handle errors that should cause a reconnect to the Database.
 	switch(ErrorNumber)
@@ -454,12 +455,12 @@ bool QueryResult::NextRow()
 	return true;
 }
 
-QueryResult * Database::_StoreQueryResult(DatabaseConnection * con)
+QueryResult * Database::_StoreQueryResult(DatabaseConnection &con)
 {
 	QueryResult *res;
-	MYSQL_RES * pRes = mysql_store_result( con->conn );
-	uint32 uRows = (uint32)mysql_affected_rows( con->conn );
-	uint32 uFields = (uint32)mysql_field_count( con->conn );
+	MYSQL_RES * pRes = mysql_store_result( con.conn );
+	uint32 uRows = (uint32)mysql_affected_rows( con.conn );
+	uint32 uFields = (uint32)mysql_field_count( con.conn );
 
 	if( uRows == 0 || uFields == 0 || pRes == 0 )
 	{
@@ -475,7 +476,7 @@ QueryResult * Database::_StoreQueryResult(DatabaseConnection * con)
 	return res;
 }
 
-bool Database::_Reconnect(DatabaseConnection * conn)
+bool Database::_Reconnect(DatabaseConnection &conn)
 {
 	MYSQL * temp, *temp2;
 
@@ -488,10 +489,10 @@ bool Database::_Reconnect(DatabaseConnection * conn)
 		return false;
 	}
 
-	if( conn->conn != NULL )
-		mysql_close( conn->conn );
+	if( conn.conn != NULL )
+		mysql_close( conn.conn );
 
-	conn->conn = temp;
+	conn.conn = temp;
 	return true;
 }
 
@@ -507,12 +508,13 @@ Database *Database::Create()
 
 void Database::Shutdown()
 {
-	for(int32 i = 0; i < mConnectionCount; ++i)
+	for(connectionsList::iterator it=m_connections.begin();it!=m_connections.end();++it)
 	{
-		if( m_connections[i].conn != NULL )
+		if( it->conn != NULL )
 		{
-			mysql_close(m_connections[i].conn);
-			m_connections[i].conn = NULL;
+			mysql_close(it->conn);
+			it->conn = NULL;
 		}
 	}
+	m_connections.clear();
 }

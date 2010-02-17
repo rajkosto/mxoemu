@@ -35,6 +35,8 @@ class Database;
 
 struct DatabaseConnection
 {
+	DatabaseConnection(MYSQL *rawPtr):conn(rawPtr) {}
+	~DatabaseConnection() {}
 	FastMutex Busy;
 	MYSQL *conn;
 };
@@ -95,8 +97,8 @@ public:
 
 	QueryResult* Query(string QueryString);
 	QueryResult* Query(format &fmt) { return Query(fmt.str()); }
-	QueryResult * FQuery( string QueryString, DatabaseConnection *con);
-	void FWaitExecute( string QueryString, DatabaseConnection *con);
+	QueryResult * FQuery( string QueryString, DatabaseConnection &con);
+	void FWaitExecute( string QueryString, DatabaseConnection &con);
 	bool WaitExecute( string QueryString);//Wait For Request Completion
 	bool WaitExecute(format &fmt) { return WaitExecute(fmt.str()); }
 	bool Execute( string QueryString);
@@ -116,9 +118,10 @@ public:
 	void thread_proc_query();
 	void FreeQueryResult(QueryResult * p);
 
-	DatabaseConnection *GetFreeConnection();
+	DatabaseConnection &GetFreeConnection();
 
-	void PerformQueryBuffer(QueryBuffer * b, DatabaseConnection *ccon);
+	void PerformQueryBuffer(QueryBuffer * b);
+	void PerformQueryBuffer(QueryBuffer * b, DatabaseConnection &ccon);
 	void AddQueryBuffer(QueryBuffer * b);
 
 	static void CleanupLibs();
@@ -130,22 +133,21 @@ public:
 protected:
 
 	// actual query function
-	bool _SendQuery(DatabaseConnection *con, const char* Sql, bool Self);
-	QueryResult * _StoreQueryResult(DatabaseConnection * con);
-	bool _HandleError(DatabaseConnection *conn, uint32 ErrorNumber);
-	bool _Reconnect(DatabaseConnection *conn);
+	bool _SendQuery(DatabaseConnection &con, const char* Sql, bool Self);
+	QueryResult * _StoreQueryResult(DatabaseConnection &con);
+	bool _HandleError(DatabaseConnection &conn, uint32 ErrorNumber);
+	bool _Reconnect(DatabaseConnection &conn);
 
 	////////////////////////////////
 	FQueue<QueryBuffer*> query_buffer;
 
 	////////////////////////////////
 	FQueue<string*> queries_queue;
-	DatabaseConnection *m_connections;
+	typedef vector<DatabaseConnection> connectionsList;
+	connectionsList m_connections;
 
 	uint32 _counter;
 	///////////////////////////////
-
-	int32 mConnectionCount;
 
 	// For reconnecting a broken connection
 	string mHostname;

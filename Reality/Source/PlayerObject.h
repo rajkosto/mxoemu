@@ -59,6 +59,9 @@ public:
 	uint8 getAlignment() const {return m_alignment;}
 	bool getPvpFlag() const {return m_pvpflag;}
 
+	uint8 getCurrentAnimation() const {return m_currAnimation;}
+	uint8 getCurrentMood() const {return m_currMood;}
+
 	void checkAndStore();
 	void saveDataToDB();
 
@@ -85,6 +88,11 @@ private:
 
 	bool m_spawnedInWorld;
 	uint32 m_lastStore;
+
+	uint8 m_currAnimation;
+	uint8 m_currMood;
+
+	uint8 m_emoteCounter;
 };
 
 #endif

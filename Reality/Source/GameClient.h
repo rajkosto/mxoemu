@@ -30,7 +30,7 @@
 #include "PlayerObject.h"
 #include "MessageTypes.h"
 #include "Log.h"
-#include <Sockets/IpV4Address.h>
+#include <Sockets/Ipv4Address.h>
 
 class GameClient
 {
@@ -225,9 +225,17 @@ private:
 				}
 			}
 		}
+		ByteBuffer outputData;
+		try
+		{
+			outputData = dataToSend->toBuf();
+		}
+		catch (MsgBaseClass::PacketNoLongerValid)
+		{
+			return;
+		}
 		increaseServerSequence();
 		uint16 theServerSeq = m_serverSequence;
-		ByteBuffer outputData = dataToSend->toBuf();
 /*		if (outputData.size() > 0)
 		{
 			DEBUG_LOG(format("(%s) Queue SSeq: %d CSeq: %d Ack: %d Data: |%s|") % Address() % theServerSeq % clientSeq % ackPacket % Bin2Hex(outputData));

@@ -128,6 +128,9 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 	INFO_LOG(format("Player object for %1% constructed") % m_handle);
 	testCount=0;
 	m_lastStore = getTime();
+	m_currAnimation=0;
+	m_currMood=0;
+	m_emoteCounter=0;
 }
 
 void PlayerObject::initGoId(uint32 theGoId)
@@ -414,18 +417,71 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 			INFO_LOG(format("%1% says %2%") % m_handle % theMessage);
 			m_parent.QueueCommand(make_shared<SystemChatMsg>((format("You said %1%") % theMessage).str()));
 			sGame.AnnounceCommand(&m_parent,make_shared<PlayerChatMsg>(m_handle,theMessage));
-
-			return;
 		}
 	}
+	else if (firstByte == 0x33) //stop animation
+	{
+		m_currAnimation = 0;
+		m_parent.QueueState(make_shared<AnimationStateMsg>(m_goId));
+		sGame.AnnounceStateUpdate(&m_parent,make_shared<AnimationStateMsg>(m_goId));
+	}
+	else if (firstByte == 0x34) //start animation
+	{
+		uint8 newAnimation;
+		if (srcCmd.size() < sizeof(newAnimation))
+			return;
+		srcCmd >> newAnimation;
+		m_currAnimation = newAnimation;
+		m_parent.QueueState(make_shared<AnimationStateMsg>(m_goId));
+		sGame.AnnounceStateUpdate(&m_parent,make_shared<AnimationStateMsg>(m_goId));
+	}
+	else if (firstByte == 0x35) //change mood
+	{
+		uint8 newMood;
+		if (srcCmd.size() < sizeof(newMood))
+			return;
+		srcCmd >> newMood;
+		m_currMood = newMood;	
+		m_parent.QueueState(make_shared<AnimationStateMsg>(m_goId));
+		sGame.AnnounceStateUpdate(&m_parent,make_shared<AnimationStateMsg>(m_goId));
+	}
+	else if (firstByte == 0x30) //perform emote
+	{
+		uint32 emoteId;
+		uint32 emoteTarget;
+		if (srcCmd.size() < sizeof(emoteId))
+			return;
+		srcCmd >> emoteId;
+		if (srcCmd.size() < sizeof(emoteTarget))
+			return;
+		srcCmd >> emoteTarget;
 
-	srcCmd.rpos(0);
-	DEBUG_LOG(format("(%1%) unknown 04 command: %2%") % m_parent.Address() % Bin2Hex(srcCmd) );
+		m_emoteCounter++;
+		m_parent.QueueState(make_shared<EmoteMsg>(m_goId,emoteId,m_emoteCounter));
+		sGame.AnnounceStateUpdate(&m_parent,make_shared<EmoteMsg>(m_goId,emoteId,m_emoteCounter));
+
+		DEBUG_LOG(format("(%1%) %2%:%3% doing emote %4% on target %5% at coords %6%,%7%,%8%")
+			% m_parent.Address()
+			% m_handle
+			% m_goId
+			% Bin2Hex((const byte*)&emoteId,sizeof(emoteId),0)
+			% Bin2Hex((const byte*)&emoteTarget,sizeof(emoteTarget),0)
+			% m_pos.x % m_pos.y % m_pos.z );
+	}
+	else
+	{
+		srcCmd.rpos(0);
+		DEBUG_LOG(format("(%1%) unknown 04 command: %2%") % m_parent.Address() % Bin2Hex(srcCmd) );
+	}
 }
 
 vector<msgBaseClassPtr> PlayerObject::getCurrentStatePackets()
 {
 	vector<msgBaseClassPtr> tempVect;
 	tempVect.push_back(make_shared<PlayerSpawnMsg>(m_goId));
+	if (m_currAnimation != 0 || m_currMood != 0)
+	{
+		tempVect.push_back(make_shared<AnimationStateMsg>(m_goId));
+	}
 	return tempVect;
 }

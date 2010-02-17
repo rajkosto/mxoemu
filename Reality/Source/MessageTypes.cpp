@@ -236,3 +236,187 @@ const ByteBuffer& StateUpdateMsg::toBuf()
 	m_buf.append(restOfData.contents(),restOfData.size());
 	return m_buf;
 }
+
+map<uint32,uint8> EmoteMsg::m_emotesMap;
+
+EmoteMsg::EmoteMsg(uint32 objectId, uint32 emoteId, uint8 emoteCount):ObjectUpdateMsg(objectId)
+{
+	m_emoteCount=emoteCount;
+	if (m_emotesMap.empty())
+	{
+		m_emotesMap[swap32(0xE6020058)]=0x1;
+		m_emotesMap[swap32(0xE7020058)]=0x3;
+		m_emotesMap[swap32(0x810D0058)]=0x33;
+		m_emotesMap[swap32(0x7C0D0058)]=0x30;
+		m_emotesMap[swap32(0x7B0D0058)]=0x2f;
+		m_emotesMap[swap32(0x7D0D0058)]=0x31;
+		m_emotesMap[swap32(0x0E00003A)]=0x10;
+		m_emotesMap[swap32(0x0C00003A)]=0x16;
+		m_emotesMap[swap32(0x9B010058)]=0x2;
+		m_emotesMap[swap32(0x970D0058)]=0x5c;
+		m_emotesMap[swap32(0x9C0D0058)]=0x65;
+		m_emotesMap[swap32(0xBF0200B4)]=0x76;
+		m_emotesMap[swap32(0xCC0200B4)]=0x77;
+		m_emotesMap[swap32(0x9D0D0058)]=0x68;
+		m_emotesMap[swap32(0x590D0058)]=0x8;
+		m_emotesMap[swap32(0x570D0058)]=0x7;
+		m_emotesMap[swap32(0x1100003A)]=0x6;
+		m_emotesMap[swap32(0x940D0058)]=0x58;
+		m_emotesMap[swap32(0x5A0D0058)]=0x13;
+		m_emotesMap[swap32(0x580D0058)]=0x12;
+		m_emotesMap[swap32(0x1200003A)]=0x66;
+		m_emotesMap[swap32(0x150E0058)]=0x72;
+		m_emotesMap[swap32(0xEF0C0058)]=0x17;
+		m_emotesMap[swap32(0x170E0058)]=0x1b;
+		m_emotesMap[swap32(0xF00C0058)]=0x19;
+		m_emotesMap[swap32(0xF30C0058)]=0x1f;
+		m_emotesMap[swap32(0x1F0E0058)]=0x79;
+		m_emotesMap[swap32(0x190E0058)]=0x7d;
+		m_emotesMap[swap32(0x110E0058)]=0x7e;
+		m_emotesMap[swap32(0xF60C0058)]=0x1d;
+		m_emotesMap[swap32(0x0400003A)]=0xa;
+		m_emotesMap[swap32(0x1300003A)]=0xc;
+		m_emotesMap[swap32(0x1400003A)]=0xd;
+		m_emotesMap[swap32(0xD1020058)]=0xb;
+		m_emotesMap[swap32(0xF50C0058)]=0xe;
+		m_emotesMap[swap32(0xFA0C0058)]=0xf;
+		m_emotesMap[swap32(0x0D00003A)]=0x4;
+		m_emotesMap[swap32(0xFB0C0058)]=0x21;
+		m_emotesMap[swap32(0x920D0058)]=0x54;
+		m_emotesMap[swap32(0x270D0058)]=0x2b;
+		m_emotesMap[swap32(0x1F0D0058)]=0x2a;
+		m_emotesMap[swap32(0x0D0E0058)]=0x7f;
+		m_emotesMap[swap32(0x960D0058)]=0x5a;
+		m_emotesMap[swap32(0x130D0058)]=0x29;
+		m_emotesMap[swap32(0xE9020058)]=0x14;
+		m_emotesMap[swap32(0x7A0D0058)]=0x2e;
+		m_emotesMap[swap32(0x880200B4)]=0x73;
+		m_emotesMap[swap32(0x7E0D0058)]=0x34;
+		m_emotesMap[swap32(0xA40D0058)]=0x56;
+		m_emotesMap[swap32(0x770D0058)]=0x5b;
+		m_emotesMap[swap32(0xA50D0058)]=0x6f;
+		m_emotesMap[swap32(0x250E0058)]=0x78;
+		m_emotesMap[swap32(0xA9150058)]=0x35;
+		m_emotesMap[swap32(0x1000003A)]=0x5;
+		m_emotesMap[swap32(0x0F00003A)]=0x15;
+		m_emotesMap[swap32(0xF40C0058)]=0x22;
+		m_emotesMap[swap32(0x650D0058)]=0x2d;
+		m_emotesMap[swap32(0xB70D0058)]=0x71;
+		m_emotesMap[swap32(0x990D0058)]=0x60;
+		m_emotesMap[swap32(0xFD0D0058)]=0xca;
+		m_emotesMap[swap32(0xF50D0058)]=0xd6;
+		m_emotesMap[swap32(0xE4020058)]=0xc1;
+		m_emotesMap[swap32(0xFB0D0058)]=0xd3;
+		m_emotesMap[swap32(0x050E0058)]=0xd9;
+		m_emotesMap[swap32(0xFF0D0058)]=0xd0;
+		m_emotesMap[swap32(0x010E0058)]=0xdf;
+		m_emotesMap[swap32(0xFF0D0058)]=0xd0;
+		m_emotesMap[swap32(0x030E0058)]=0xdc;
+		m_emotesMap[swap32(0xCA0D0058)]=0xcd;
+		m_emotesMap[swap32(0x05160058)]=0xe8;
+	}
+	if (m_emotesMap.find(emoteId) != m_emotesMap.end() )
+		m_emoteAnimation=m_emotesMap[emoteId];
+	else
+		m_emoteAnimation=0;
+}
+
+EmoteMsg::~EmoteMsg()
+{
+
+}
+
+const ByteBuffer& EmoteMsg::toBuf()
+{
+	byte sampleEmoteMsg[] =
+	{
+		0x03, 0x02, 0x00, 0x01, 0x28, 0xAA, 0x40, 0x00, 0x25, 0x01, 0x00, 0x00, 0x10, 0xBB, 0xBB, 0xBB, 
+		0xBB, 0xCC, 0xCC, 0xCC, 0xCC, 0xDD, 0xDD, 0xDD, 0xDD, 0x2A, 0x9F, 0x1E, 0x20, 0x00, 0x00, 
+	} ;
+
+	sampleEmoteMsg[5] = m_emoteCount;
+
+	if (m_emoteAnimation>0)
+	{
+		sampleEmoteMsg[9]=m_emoteAnimation;
+	}
+	else
+	{
+		m_buf.clear();
+		throw PacketNoLongerValid();
+	}
+
+	PlayerObject *m_player = NULL;
+	try
+	{
+		m_player = sObjMgr.getGOPtr(m_objectId);
+	}
+	catch (ObjectMgr::ObjectNotAvailable)
+	{
+		m_buf.clear();
+		throw PacketNoLongerValid();
+	}
+	m_player->getPosition().toFloatBuf(&sampleEmoteMsg[0x0D],sizeof(float)*3);
+	uint16 viewId = 0;
+	try
+	{
+		viewId = sObjMgr.getViewForGO(m_toWho,m_objectId);
+	}
+	catch (ObjectMgr::ClientNotAvailable)
+	{
+		m_buf.clear();
+		throw PacketNoLongerValid();		
+	}
+	memcpy(&sampleEmoteMsg[1],&viewId,sizeof(viewId));
+
+	m_buf.clear();
+	m_buf.append(sampleEmoteMsg,sizeof(sampleEmoteMsg));
+	return m_buf;
+}
+
+AnimationStateMsg::AnimationStateMsg( uint32 objectId ):ObjectUpdateMsg(objectId)
+{
+	
+}
+
+AnimationStateMsg::~AnimationStateMsg()
+{
+
+}
+
+const ByteBuffer& AnimationStateMsg::toBuf()
+{
+	byte sampleAnimationBuf[9] =
+	{
+		0x03, 0x02, 0x00, 0x01, 0x01, 0xAA, 0xBB, 0x00, 0x00, 
+	} ;
+
+	PlayerObject *m_player = NULL;
+	try
+	{
+		m_player = sObjMgr.getGOPtr(m_objectId);
+	}
+	catch (ObjectMgr::ObjectNotAvailable)
+	{
+		m_buf.clear();
+		throw PacketNoLongerValid();
+	}
+	sampleAnimationBuf[5] = m_player->getCurrentAnimation();
+	sampleAnimationBuf[6] = m_player->getCurrentMood();
+
+	uint16 viewId = 0;
+	try
+	{
+		viewId = sObjMgr.getViewForGO(m_toWho,m_objectId);
+	}
+	catch (ObjectMgr::ClientNotAvailable)
+	{
+		m_buf.clear();
+		throw PacketNoLongerValid();		
+	}
+	memcpy(&sampleAnimationBuf[1],&viewId,sizeof(viewId));
+
+	m_buf.clear();
+	m_buf.append(sampleAnimationBuf,sizeof(sampleAnimationBuf));
+	return m_buf;
+}

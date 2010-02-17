@@ -70,6 +70,26 @@ public:
 	const ByteBuffer& toBuf();
 };
 
+class EmoteMsg : public ObjectUpdateMsg
+{
+public:
+	EmoteMsg(uint32 objectId, uint32 emoteId, uint8 emoteCount);
+	~EmoteMsg();
+	const ByteBuffer& toBuf();
+private:
+	uint8 m_emoteCount;
+	static map<uint32,uint8> m_emotesMap;
+	uint8 m_emoteAnimation;
+};
+
+class AnimationStateMsg : public ObjectUpdateMsg
+{
+public:
+	AnimationStateMsg(uint32 objectId);
+	~AnimationStateMsg();
+	const ByteBuffer& toBuf();
+};
+
 class StateUpdateMsg : public ObjectUpdateMsg
 {
 public:

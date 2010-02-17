@@ -17,15 +17,14 @@ GameSocket::~GameSocket()
 
 void GameSocket::OnRawData( const char *pData,size_t len,struct sockaddr *sa_from,socklen_t sa_len )
 {
-	stringstream IP;
 	struct sockaddr_in inc_addr;
 	memcpy(&inc_addr,sa_from,sa_len);
-	shared_ptr<SocketAddress> theAddr(new Ipv4Address(inc_addr));
+	Ipv4Address theAddr(inc_addr);
 
-	if (theAddr->IsValid() == false)
+	if (theAddr.IsValid() == false)
 		return;
 
-	string IPStr = theAddr->Convert(true);
+	string IPStr = theAddr.Convert(true);
 	GClientList::iterator it = m_clients.find(IPStr);
 	if (it != m_clients.end())
 	{
@@ -43,7 +42,7 @@ void GameSocket::OnRawData( const char *pData,size_t len,struct sockaddr *sa_fro
 	}
 	else
 	{
-		m_clients[IPStr] = new GameClient(theAddr, this);
+		m_clients[IPStr] = new GameClient(inc_addr, this);
 		DEBUG_LOG(format ("Client connected [%1%], now have [%2%] clients")
 			% IPStr % Clients_Connected());
 

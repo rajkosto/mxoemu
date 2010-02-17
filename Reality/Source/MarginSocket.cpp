@@ -36,10 +36,6 @@
 #include "GameServer.h"
 #include "EncryptedPacket.h"
 
-#pragma pack(1)
-
-const byte MarginSocket::blankIV[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-
 MarginSocket::MarginSocket(ISocketHandler& h) : TCPVarLenSocket(h)
 {
 	memset(challenge,0,sizeof(challenge));

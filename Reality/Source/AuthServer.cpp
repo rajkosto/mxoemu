@@ -90,11 +90,8 @@ void AuthServer::LoadSignKeys()
 		CryptoPP::StringSource pkeySource(signPrivStr,true);
 		params.BERDecodePrivateKey(pkeySource,false,pkeySource.MaxRetrievable());
 
-		CryptoPP::RSA::PrivateKey privateKey( params );
-		CryptoPP::RSA::PublicKey publicKey( params );
-
-		signer2048bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer(privateKey));
-		verifier2048bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier(publicKey));
+		signer2048bit.AccessKey() = CryptoPP::RSA::PrivateKey(params);
+		verifier2048bit.AccessKey() = CryptoPP::RSA::PublicKey(params);
 	}
 	else
 	{
@@ -108,10 +105,8 @@ void AuthServer::LoadSignKeys()
 			CryptoPP::InvertibleRSAFunction params;
 			CryptoPP::StringSource pkeySource(outPrivate,true);
 			params.BERDecodePrivateKey(pkeySource,false,pkeySource.MaxRetrievable());
-			CryptoPP::RSA::PrivateKey privateKey( params );
-			CryptoPP::RSA::PublicKey publicKey( params );
-			signer2048bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer(privateKey));
-			verifier2048bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier(publicKey));	
+			signer2048bit.AccessKey() = CryptoPP::RSA::PrivateKey(params);
+			verifier2048bit.AccessKey() = CryptoPP::RSA::PublicKey(params);	
 
 			//write to file
 			fileStream.open("signPriv.dat",ios::binary | ios::trunc);
@@ -167,8 +162,8 @@ void AuthServer::GenerateCryptoKeys( string &privKeyOut, string &pubKeyOut )
 	//generate signature
 	ByteBuffer signMe = MessageFromPublicKey(publicKey);
 	vector<byte> signature;
-	signature.resize(signer2048bit->MaxSignatureLength());
-	size_t actualSignatureSize = signer2048bit->SignMessage(randPool,(byte*)signMe.contents(),signMe.size(),&signature[0]);
+	signature.resize(signer2048bit.MaxSignatureLength());
+	size_t actualSignatureSize = signer2048bit.SignMessage(randPool,(byte*)signMe.contents(),signMe.size(),&signature[0]);
 	signature.resize(actualSignatureSize);
 
 	//cache for later retrieval
@@ -184,11 +179,6 @@ void AuthServer::GenerateCryptoKeys( string &privKeyOut, string &pubKeyOut )
 
 void AuthServer::LoadCryptoKeys()
 {
-	if (signer2048bit == NULL || verifier2048bit == NULL)
-	{
-		LoadSignKeys();
-	}
-
 	bool invalidKeys = false;
 
 	ifstream f_privateKey;
@@ -237,7 +227,7 @@ void AuthServer::LoadCryptoKeys()
 			else
 			{
 				vector <byte> derEncodedPubKey;
-				derEncodedPubKey.resize( pubKeyBuf.size() - pubKeyBuf.rpos() - sizeof(uint8) - verifier2048bit->MaxSignatureLength() );
+				derEncodedPubKey.resize( pubKeyBuf.size() - pubKeyBuf.rpos() - sizeof(uint8) - verifier2048bit.MaxSignatureLength() );
 				pubKeyBuf.read(&derEncodedPubKey[0],derEncodedPubKey.size());
 				uint8 zeroSeparator;
 				pubKeyBuf >> zeroSeparator;
@@ -249,7 +239,7 @@ void AuthServer::LoadCryptoKeys()
 				else
 				{
 					vector<byte> signature;
-					signature.resize(verifier2048bit->MaxSignatureLength());
+					signature.resize(verifier2048bit.MaxSignatureLength());
 					pubKeyBuf.read(&signature[0],signature.size());
 
 					string pubKeyString = string((const char*)&derEncodedPubKey[0],derEncodedPubKey.size());
@@ -268,7 +258,7 @@ void AuthServer::LoadCryptoKeys()
 					{
 						ByteBuffer verifyMe = MessageFromPublicKey(publicKey);
 
-						bool messageCorrect = verifier2048bit->VerifyMessage(
+						bool messageCorrect = verifier2048bit.VerifyMessage(
 							(byte*)verifyMe.contents(),
 							verifyMe.size(),
 							&signature[0],
@@ -296,10 +286,10 @@ void AuthServer::LoadCryptoKeys()
 
 		if (invalidKeys == false)
 		{
-			rsaDecryptor.reset(new CryptoPP::RSAES_OAEP_SHA_Decryptor(privateKey));
-			rsaEncryptor.reset(new CryptoPP::RSAES_OAEP_SHA_Encryptor(publicKey));
-			signer1024bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer(privateKey));
-			verifier1024bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier(publicKey));
+			rsaDecryptor.AccessKey() = privateKey;
+			rsaEncryptor.AccessKey() = publicKey;
+			signer1024bit.AccessKey() = privateKey;
+			verifier1024bit.AccessKey() = publicKey;
 			pubKeyModulus = publicKey.GetModulus();
 		}
 	}
@@ -323,10 +313,10 @@ void AuthServer::LoadCryptoKeys()
 			CryptoPP::RSA::PrivateKey privateKey( params );
 			CryptoPP::RSA::PublicKey publicKey( params );
 
-			rsaDecryptor.reset(new CryptoPP::RSAES_OAEP_SHA_Decryptor(privateKey));
-			rsaEncryptor.reset(new CryptoPP::RSAES_OAEP_SHA_Encryptor(publicKey));
-			signer1024bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Signer(privateKey));
-			verifier1024bit.reset(new CryptoPP::Weak::RSASSA_PKCS1v15_MD5_Verifier(publicKey));
+			rsaDecryptor.AccessKey() = privateKey;
+			rsaEncryptor.AccessKey() = publicKey;
+			signer1024bit.AccessKey() = privateKey;
+			verifier1024bit.AccessKey() = publicKey;
 			pubKeyModulus = publicKey.GetModulus();
 
 			//write to file
@@ -347,14 +337,14 @@ void AuthServer::LoadCryptoKeys()
 string AuthServer::Encrypt(string input)
 {
 	string output;
-	CryptoPP::StringSource(input,true, new CryptoPP::PK_EncryptorFilter(randPool, *rsaEncryptor, new CryptoPP::StringSink(output)));
+	CryptoPP::StringSource(input,true, new CryptoPP::PK_EncryptorFilter(randPool, rsaEncryptor, new CryptoPP::StringSink(output)));
 	return output;
 }
 
 string AuthServer::Decrypt(string input)
 {
 	string output;
-	CryptoPP::StringSource(input,true, new CryptoPP::PK_DecryptorFilter(randPool, *rsaDecryptor, new CryptoPP::StringSink(output)));
+	CryptoPP::StringSource(input,true, new CryptoPP::PK_DecryptorFilter(randPool, rsaDecryptor, new CryptoPP::StringSink(output)));
 	return output;
 }
 
@@ -363,8 +353,8 @@ ByteBuffer AuthServer::SignWith1024Bit( byte *message,size_t messageLen )
 	//generate signature
 	ByteBuffer signMe(message,messageLen);
 	vector<byte> signature;
-	signature.resize(signer1024bit->MaxSignatureLength());
-	size_t actualSignatureSize = signer1024bit->SignMessage(randPool,(byte*)signMe.contents(),signMe.size(),&signature[0]);
+	signature.resize(signer1024bit.MaxSignatureLength());
+	size_t actualSignatureSize = signer1024bit.SignMessage(randPool,(byte*)signMe.contents(),signMe.size(),&signature[0]);
 	signature.resize(actualSignatureSize);
 
 	return ByteBuffer(signature);
@@ -372,7 +362,7 @@ ByteBuffer AuthServer::SignWith1024Bit( byte *message,size_t messageLen )
 
 bool AuthServer::VerifyWith1024Bit( byte *message,size_t messageLen,byte *signature,size_t signatureLen )
 {
-	return verifier1024bit->VerifyMessage(message,messageLen,signature,signatureLen);
+	return verifier1024bit.VerifyMessage(message,messageLen,signature,signatureLen);
 }
 
 ByteBuffer AuthServer::GetPubKeyData()
@@ -407,6 +397,7 @@ AuthServer::~AuthServer()
 
 void AuthServer::Start()
 {
+	LoadSignKeys();
 	LoadCryptoKeys();
 
 	int Port = sConfig.GetIntDefault("AuthServer.Port",11000);

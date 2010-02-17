@@ -183,7 +183,7 @@ void PlayerObject::saveDataToDB()
 	else
 	{
 		m_savedPos = m_pos;
-		m_parent.QueueCommand(boost::make_shared<SystemChatMsg>( (format("Character data for %1% has been written to the database.") % m_handle).str() ));
+		m_parent.QueueCommand(make_shared<SystemChatMsg>( (format("Character data for %1% has been written to the database.") % m_handle).str() ));
 	}
 }
 
@@ -412,8 +412,8 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 			string theMessage((const char*)&messageBuf[0],messageBuf.size()-1);
 
 			INFO_LOG(format("%1% says %2%") % m_handle % theMessage);
-			m_parent.QueueCommand(boost::make_shared<SystemChatMsg>((format("You said %1%") % theMessage).str()));
-			sGame.AnnounceCommand(&m_parent,boost::make_shared<PlayerChatMsg>(m_handle,theMessage));
+			m_parent.QueueCommand(make_shared<SystemChatMsg>((format("You said %1%") % theMessage).str()));
+			sGame.AnnounceCommand(&m_parent,make_shared<PlayerChatMsg>(m_handle,theMessage));
 
 			return;
 		}

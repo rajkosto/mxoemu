@@ -73,7 +73,6 @@ private:
 	uint32 sessionId;
 	uint64 charId;
 
-	static const byte blankIV[16];
 	byte challenge[16];
 	byte weirdSequenceOfBytes[16];
 	string soeChatString;

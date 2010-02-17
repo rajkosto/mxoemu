@@ -30,18 +30,18 @@
 #include "PlayerObject.h"
 #include "MessageTypes.h"
 #include "Log.h"
-#include <Sockets/SocketAddress.h>
+#include <Sockets/IpV4Address.h>
 
 class GameClient
 {
 public:		
-	GameClient(shared_ptr<SocketAddress> address, class GameSocket *sock);
+	GameClient(sockaddr_in inc_addr, class GameSocket *sock);
 	~GameClient();
 
 	inline uint32 LastActive() { return m_lastActivity; }
 	inline bool IsValid() { return m_validClient; }
 	void Invalidate() { m_validClient=false;}
-	string Address() { return m_address->Convert(true); }
+	string Address() { return m_address.Convert(true); }
 	uint32 GetSessionId() 
 	{
 		if (m_encryptionInitialized == true)
@@ -261,7 +261,7 @@ private:
 
 	// Master Sock handle, client's address structure, last received packet
 	class GameSocket *m_sock;
-	shared_ptr<SocketAddress> m_address;
+	Ipv4Address m_address;
 	uint32 m_lastActivity;
 	uint32 m_lastPacketReceivedMS;
 	uint32 m_lastOrderedFlush;

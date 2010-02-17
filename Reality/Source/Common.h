@@ -178,18 +178,6 @@ static inline void xchg32 (void *a, void *b)
 #define BITS_TO_BYTES(x) (((x)+7)>>3)
 #define BYTES_TO_BITS(x) ((x)<<3)
 
-#include <boost/shared_ptr.hpp>
-using boost::shared_ptr;
-using boost::dynamic_pointer_cast;
-#include <boost/make_shared.hpp>
-using boost::make_shared;
-#include <boost/scoped_ptr.hpp>
-using boost::scoped_ptr;
-#include <boost/lexical_cast.hpp>
-using boost::lexical_cast;
-#include <boost/format.hpp>
-using boost::format;
-
 #include <string>
 #include <list>
 #include <map>
@@ -231,8 +219,25 @@ using std::list;
 using std::map;
 using std::string;
 
-#undef FD_SETSIZE
-#define FD_SETSIZE 200  // 200 per thread should be plenty :p
+#if COMPILER == COMPILER_MICROSOFT && _MSC_VER >= 1600 && _HAS_TR1
+#include <memory>
+using std::tr1::shared_ptr;
+using std::tr1::make_shared;
+using std::tr1::dynamic_pointer_cast;
+#else
+#include <boost/shared_ptr.hpp>
+using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
+#include <boost/make_shared.hpp>
+using boost::make_shared;
+#endif
+
+#include <boost/scoped_ptr.hpp>
+using boost::scoped_ptr;
+#include <boost/lexical_cast.hpp>
+using boost::lexical_cast;
+#include <boost/format.hpp>
+using boost::format;
 
 #if PLATFORM == PLATFORM_WIN32
 #include <winsock2.h>

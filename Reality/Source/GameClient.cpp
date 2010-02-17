@@ -35,12 +35,8 @@
 #include "GameSocket.h"
 #include "EncryptedPacket.h"
 
-#pragma pack(1)
-
-GameClient::GameClient(shared_ptr<SocketAddress> address, GameSocket *sock)
+GameClient::GameClient(sockaddr_in inc_addr, GameSocket *sock):m_address(inc_addr),m_sock(sock)
 {
-	m_sock = sock;
-	m_address = address;
 	m_serverSequence = 0;
 	m_serverCommandsSent = 0;
 	m_clientCommandsReceived = 0;
@@ -152,7 +148,7 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 			}
 			beatPacket << uint16(swap16(numberOfBeats));
 
-			m_sock->SendToBuf(*m_address, beatPacket.contents(), beatPacket.size(), 0);
+			m_sock->SendToBuf(m_address, beatPacket.contents(), beatPacket.size(), 0);
 		}
 
 		//notify margin that udp session is established
@@ -170,7 +166,7 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 
 	if (m_worldLoaded == true && pData[0] != 0x01) // Ping...just reply with the same thing
 	{
-		m_sock->SendToBuf(*m_address, pData, nLength, 0);
+		m_sock->SendToBuf(m_address, pData, nLength, 0);
 	}
 	else
 	{
@@ -354,7 +350,7 @@ void GameClient::SendEncrypted(SequencedPacket withSequences)
 	sendMe << uint8(1);
 	sendMe.append(withEncryption.toCipherText(m_tfEngine));
 
-	m_sock->SendToBuf(*m_address, sendMe.contents(), sendMe.size(), 0);
+	m_sock->SendToBuf(m_address, sendMe.contents(), sendMe.size(), 0);
 }
 
 void GameClient::PSSChanged( uint8 oldPSS,uint8 newPSS )

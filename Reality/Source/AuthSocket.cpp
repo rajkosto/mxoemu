@@ -30,8 +30,6 @@
 #include "Database/DatabaseEnv.h"
 #include "SignedDataStruct.h"
 
-const byte AuthSocket::blankIV[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-
 AuthSocket::AuthSocket(ISocketHandler& h) : TCPVarLenSocket(h)
 {
 	matrixVersion = 0;

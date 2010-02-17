@@ -47,7 +47,6 @@ private:
 	TwofishCryptEngine m_tfEngine;
 
 	uint32 matrixVersion;
-	static const byte blankIV[16];
 	byte challenge[16];
 	byte finalChallenge[16];
 

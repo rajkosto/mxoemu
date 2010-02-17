@@ -45,7 +45,13 @@ public:
 	ByteBuffer GetPubKeyData();
 	string HashPassword(const string& salt, const string& password);
 	bool CreateAccount(const string& username,const string& password);
+	bool ChangePassword(const string& username,const string& newPass);
+	bool CreateWorld(const string& worldName);
+	bool CreateCharacter(const string& worldName, const string& userName, const string& charHandle, const string& firstName, const string& lastName);
 private:
+	uint32 getAccountIdForUsername(const string &username);
+	uint16 getWorldIdForName(const string &worldName);
+	uint64 getCharIdForHandle(const string &handle);
 	void GenerateRSAKeys(unsigned int keyLen,CryptoPP::RSA::PublicKey &publicOutput, CryptoPP::RSA::PrivateKey &privateOutput);
 	void GenerateSignKeys(string &privKeyOut, string &pubKeyOut);
 	void LoadSignKeys();

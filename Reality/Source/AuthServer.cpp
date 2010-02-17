@@ -467,10 +467,19 @@ string AuthServer::GenerateSalt(uint32 length)
 	return theSalt;
 }
 
-bool AuthServer::CreateAccount( const string& username,const string& password )
+uint32 AuthServer::getAccountIdForUsername( const string &username )
 {
 	scoped_ptr<QueryResult> query(sDatabase.Query(format("SELECT `userId` FROM `users` WHERE `username` = '%1%'") % sDatabase.EscapeString(username)));
-	if (query == NULL)
+	if (query == NULL || query->GetRowCount() == 0)
+		return 0;
+
+	Field *field = query->Fetch();
+	return field[0].GetUInt32();
+}
+
+bool AuthServer::CreateAccount( const string& username,const string& password )
+{	
+	if (getAccountIdForUsername(username) == 0)
 	{
 		string salt = GenerateSalt(8);
 		string passwordHash = HashPassword(salt,password);
@@ -481,4 +490,64 @@ bool AuthServer::CreateAccount( const string& username,const string& password )
 			% sDatabase.EscapeString(passwordHash) );
 	}
 	return false;
+}
+
+bool AuthServer::ChangePassword( const string& username,const string& newPass )
+{
+	uint32 accountId = getAccountIdForUsername(username);
+	if (accountId==0)
+		return false;
+
+	string salt = GenerateSalt(8);
+	string passwordHash = HashPassword(salt,newPass);
+
+	return sDatabase.Execute(format("UPDATE `users` SET `passwordSalt`='%1%', `passwordHash`='%2%' WHERE `userId`='%3%' LIMIT 1")
+		% sDatabase.EscapeString(salt)
+		% sDatabase.EscapeString(passwordHash)
+		% accountId );
+}
+
+uint16 AuthServer::getWorldIdForName( const string &worldName )
+{
+	scoped_ptr<QueryResult> query(sDatabase.Query(format("SELECT `worldId` FROM `worlds` WHERE `name` = '%1%'") % sDatabase.EscapeString(worldName)));
+	if (query == NULL || query->GetRowCount() == 0)
+		return 0;
+
+	Field *field = query->Fetch();
+	return field[0].GetUInt16();
+}
+
+bool AuthServer::CreateWorld( const string& worldName )
+{
+	if (getWorldIdForName(worldName) == 0)
+		return sDatabase.Execute(format("INSERT INTO `worlds` SET `name`='%1%'") % sDatabase.EscapeString(worldName) );
+
+	return false;
+}
+
+uint64 AuthServer::getCharIdForHandle( const string &handle )
+{
+	scoped_ptr<QueryResult> query(sDatabase.Query(format("SELECT `charId` FROM `characters` WHERE `handle` = '%1%'") % sDatabase.EscapeString(handle)));
+	if (query == NULL || query->GetRowCount() == 0)
+		return 0;
+
+	Field *field = query->Fetch();
+	return field[0].GetUInt64();	
+}
+
+bool AuthServer::CreateCharacter( const string& worldName, const string& userName, const string& charHandle, const string& firstName, const string& lastName )
+{
+	uint32 worldId = getWorldIdForName(worldName);
+	uint32 userId = getAccountIdForUsername(userName);
+	if (worldId == 0 || userId == 0)
+		return false;
+
+	if (getCharIdForHandle(charHandle) != 0)
+		return false;
+
+	return sDatabase.Execute(format("INSERT INTO `characters` SET `userId`='%1%', `worldId`='%2%', `handle`='%3%', `firstName`='%4%', `lastName`='%5%'") 
+		% userId % worldId
+		% sDatabase.EscapeString(charHandle)
+		% sDatabase.EscapeString(firstName)
+		% sDatabase.EscapeString(lastName) );
 }

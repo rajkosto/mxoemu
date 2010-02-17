@@ -28,6 +28,9 @@
 #include "GameServer.h"
 #include "AuthServer.h"
 
+#include <boost/algorithm/string.hpp>
+using boost::iequals;
+
 bool ConsoleThread::run()
 {
 	SetThreadName("Console Thread");
@@ -37,13 +40,13 @@ bool ConsoleThread::run()
 		string command;
 		cin >> command;
 
-		if (strcmp(command.c_str(), "exit") == 0)
+		if (iequals(command, "exit"))
 		{
 			Master::m_stopEvent = true;
 			INFO_LOG("Got exit command. Shutting down...");
 			break;
 		}
-		else if (strcmp(command.c_str(),"register") == 0)
+		else if (iequals(command,"register"))
 		{
 			string theLine;
 			getline(cin,theLine);
@@ -64,7 +67,53 @@ bool ConsoleThread::run()
 					INFO_LOG(format("Created account with username %1% password %2%") % username % password );
 			}
 		}
-		else if (strcmp(command.c_str(), "send") == 0)
+		else if (iequals(command,"changePassword"))
+		{
+			string theLine;
+			getline(cin,theLine);
+			stringstream lineParser;
+			lineParser.str(theLine);
+			string username,newPassword;
+			lineParser >> username;
+			lineParser >> newPassword;
+
+			bool passwordChanged = sAuth.ChangePassword(username,newPassword);
+			if (passwordChanged)
+				INFO_LOG(format("Account %1% now has password %2%") % username % newPassword );
+		}
+		else if (iequals(command,"createWorld"))
+		{
+			string theLine;
+			getline(cin,theLine);
+			stringstream lineParser;
+			lineParser.str(theLine);
+			string worldName;
+			lineParser >> worldName;
+
+			bool worldCreated = sAuth.CreateWorld(worldName);
+			if (worldCreated)
+				INFO_LOG(format("Created world named %1%") % worldName );
+		}
+		else if (iequals(command,"createCharacter"))
+		{
+			string theLine;
+			getline(cin,theLine);
+			stringstream lineParser;
+			lineParser.str(theLine);
+			string worldName,userName,charHandle,firstName,lastName;
+			lineParser >> worldName;
+			lineParser >> userName;
+			lineParser >> charHandle;
+			lineParser >> firstName;
+			lineParser >> lastName;
+
+			bool characterCreated = sAuth.CreateCharacter(worldName,userName,charHandle,firstName,lastName);
+			if (characterCreated)
+				INFO_LOG(format("Inserted character %1% into world %2% for user %3% with name %4% %5%")
+				% charHandle % worldName % userName % firstName % lastName );
+
+		}
+		else if (iequals(command, "send"))
 		{
 			stringstream hexStream;
 			for (;;)

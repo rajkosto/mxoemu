@@ -113,6 +113,26 @@ bool ConsoleThread::run()
 				% charHandle % worldName % userName % firstName % lastName );
 
 		}
+		else if (iequals(command, "announce"))
+		{
+			string theAnnouncement;
+			getline(cin,theAnnouncement);
+			while (theAnnouncement.c_str()[0] == ' ' || theAnnouncement.c_str()[0] == '\n')
+			{
+				theAnnouncement = theAnnouncement.substr(1);
+			}
+
+			if (theAnnouncement.size() > 0)
+			{
+				theAnnouncement = string("{c:ff0000}") + theAnnouncement + string("{/c}");
+				sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(theAnnouncement));
+				cout << "OK" << std::endl;
+			}
+			else
+			{
+				cout << "EMPTY MESSAGE" << std::endl;
+			}
+		}
 		else if (iequals(command, "send"))
 		{
 			stringstream hexStream;

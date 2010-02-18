@@ -50,6 +50,8 @@ GameClient::GameClient(sockaddr_in inc_addr, GameSocket *sock):m_address(inc_add
 	m_lastSimTimeMS = 0;
 	m_lastOrderedFlush = 0;
 	m_playerGoId=0;
+	m_calculatedInitialLatency = false;
+	m_latency = 200;
 }
 
 GameClient::~GameClient()
@@ -78,6 +80,8 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 
 	if (m_encryptionInitialized == false && pData[0] == 0 && nLength == 43)
 	{
+		m_lastServerMS = getMSTime();
+
 		ByteBuffer packetData;
 		packetData.append(pData,nLength);
 		packetData.rpos(0x0B);
@@ -165,7 +169,13 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 	}
 
 	if (m_worldLoaded == true && pData[0] != 0x01) // Ping...just reply with the same thing
-	{
+	{		
+		const byte pingHeader[8] =	{0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x04, 0x08};
+		if ( (nLength != sizeof(pingHeader)+sizeof(uint32)) || 
+			memcmp(pingHeader,pData,sizeof(pingHeader)) != 0)
+		{
+			WARNING_LOG(format("UNENCRYPTED (BUT NOT PING): %1%") % Bin2Hex(pData,nLength,0));
+		}
 		m_sock->SendToBuf(m_address, pData, nLength, 0);
 	}
 	else
@@ -174,6 +184,15 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 		{
 			SequencedPacket packetData=Decrypt(&pData[1],nLength-1);
 			ByteBuffer dataToParse;
+
+			if (m_calculatedInitialLatency == false)
+			{
+				int32 clientLatency = int64(getMSTime())-int64(m_lastServerMS);
+				DEBUG_LOG(format("CLIENT LATENCY: %1%")%clientLatency);
+				m_calculatedInitialLatency=true;
+				m_latency = abs(clientLatency);
+				this->QueueCommand(make_shared<SystemChatMsg>( (format("Your latency to the server is %1%ms")%m_latency).str() ));
+			}
 
 			uint32 pktsAcked = AcknowledgePacket(packetData.getRemoteSeq());
 			assert(pktsAcked <= 1);
@@ -359,12 +378,12 @@ void GameClient::PSSChanged( uint8 oldPSS,uint8 newPSS )
 	if (m_clientPSS == 0x01)
 	{
 		//skip straight to 0x07
-		m_clientPSS=0x07;	
+/*		m_clientPSS=0x07;	
 		if (m_worldLoaded==false)
 		{
 			sObjMgr.getGOPtr(m_playerGoId)->SpawnSelf();
 			m_worldLoaded = true;
-		}
+		}*/
 	}
 	else if (m_clientPSS == 0x07)
 	{
@@ -531,7 +550,7 @@ void GameClient::FlushQueue()
 		}
 
 		//prepend sequences
-		SequencedPacket prepended(it->server_sequence,it->client_sequence,it->clientPSS,outputData);
+		SequencedPacket prepended(it->serverSequences.back(),it->client_sequence,it->clientPSS,outputData);
 		SendEncrypted(prepended);
 
 //		DEBUG_LOG(format("(%s) Flush PSS: %x SSeq: %d CSeq: %d |%s|") % Address() % uint32(prepended.getPSS()) % prepended.getLocalSeq() % prepended.getRemoteSeq() % Bin2Hex(prepended));
@@ -539,6 +558,7 @@ void GameClient::FlushQueue()
 		//mark packet as sent
 		it->sent=true;
 		it->msTimeSent=getMSTime();
+
 		//if packet is non resendable, remove it
 		if (it->noResends==true)
 			it=m_sendQueue.erase(it);
@@ -561,7 +581,7 @@ void GameClient::CheckAndResend()
 		bool deleted = false;
 
 		uint32 currTime = getMSTime();
-		if (currTime - it->msTimeSent > 200) //200 is timeout for resend
+		if (currTime - it->msTimeSent > /*std::min<uint32>(200,m_latency)*/ 300 ) //dynamic resend timeout, never smaller than 200
 		{
 			//client obviously doesnt want to ack this packet
 			if (it->resentCounter > 10)
@@ -573,10 +593,10 @@ void GameClient::CheckAndResend()
 				}
 				catch (MsgBaseClass::PacketNoLongerValid)
 				{
-					INFO_LOG(format("(%1%) Resent packet %2%'s data is no longer valid") % Address() % it->server_sequence);
+					INFO_LOG(format("(%1%) Resent packet %2%'s data is no longer valid") % Address() % it->serverSequences.back());
 				}
 
-//				INFO_LOG(format("(%1%) Doesn't want packet %2% of size %3%") % Address() % it->server_sequence % resentPacketDumpedData.size());
+				INFO_LOG(format("(%1%) Doesn't want packet %2% of size %3%") % Address() % it->serverSequences.back() % resentPacketDumpedData.size());
 
 				if (resentPacketDumpedData.size() > 1000)
 				{
@@ -593,7 +613,7 @@ void GameClient::CheckAndResend()
 				shared_ptr<OrderedPacket> daPacket = dynamic_pointer_cast<OrderedPacket>(it->theData);
 				if (daPacket != NULL && daPacket->msgBlocks.size() == 1)
 				{
-					DEBUG_LOG(format("(%1%) Packet %2% is a 04 packet, with %3% msgblocks %4% msgs(1)") % Address() % it->server_sequence % daPacket->msgBlocks.size() % daPacket->msgBlocks.front().subPackets.size());
+					DEBUG_LOG(format("(%1%) Packet %2% is a 04 packet, with %3% msgblocks %4% msgs(1)") % Address() % it->serverSequences.back() % daPacket->msgBlocks.size() % daPacket->msgBlocks.front().subPackets.size());
 					shared_ptr<OrderedPacket> newPacket(new OrderedPacket());
 					for (list<MsgBlock>::iterator blockPtr=daPacket->msgBlocks.begin();blockPtr!=daPacket->msgBlocks.end();++blockPtr)
 					{
@@ -635,7 +655,7 @@ void GameClient::CheckAndResend()
 					}
 					if (newPacket->msgBlocks.size() > 1)
 					{
-						uint16 oldServerSeq = it->server_sequence;
+						uint16 oldServerSeq = it->serverSequences.back();
 						uint16 oldClientSeq = it->client_sequence;
 						uint8 oldClientPSS = it->clientPSS;
 						bool oldAck = it->ack;
@@ -660,12 +680,12 @@ void GameClient::CheckAndResend()
 					it->resentCounter++;
 					it->sent = false;
 					it->msTimeSent=0;
-					uint16 oldSeq = it->server_sequence;
+					uint16 oldSeq = it->serverSequences.back();
 					increaseServerSequence();
-					it->server_sequence = m_serverSequence;
+					it->serverSequences.push_back(m_serverSequence);
 				}
 
-				//DEBUG_LOG(format("(%1%) Resending packet sseq %2% under new sseq %3%") % Address() % oldSeq % it->server_sequence);
+				//DEBUG_LOG(format("(%1%) Resending packet sseq %2% under new sseq %3%") % Address() % oldSeq % it->serverSequences.back());
 				modified = true;
 			}
 		}

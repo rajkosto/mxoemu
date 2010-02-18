@@ -24,7 +24,7 @@
 
 #include "Common.h"
 
-const uint32 OBJECTMANAGER_STARTINGOBJECTID = 1000000; //we have plenty of uint32s
+const uint32 OBJECTMANAGER_STARTINGOBJECTID = 0x8000; //we have plenty of uint32s
 
 class ObjectMgr
 {

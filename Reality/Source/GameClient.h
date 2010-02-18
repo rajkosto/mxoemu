@@ -30,6 +30,7 @@
 #include "PlayerObject.h"
 #include "MessageTypes.h"
 #include "Log.h"
+#include "Timer.h"
 #include <Sockets/Ipv4Address.h>
 
 class GameClient
@@ -116,7 +117,7 @@ private:
 				}
 			}
 
-			INFO_LOG(format("(%1) Purged %2% potential and %3% real acks due to client wraparound") % Address() % removedPacketsToAck % flaggedActualPackets);
+			INFO_LOG(format("(%1%) Purged %2% potential and %3% real acks due to client wraparound") % Address() % removedPacketsToAck % flaggedActualPackets);
 		}
 
 		if (find(m_packetsToAck.begin(),m_packetsToAck.end(),clientSeq) != m_packetsToAck.end())
@@ -131,9 +132,12 @@ private:
 		uint32 eraseCounter=0;
 		for (sendQueueList::iterator it=m_sendQueue.begin();it!=m_sendQueue.end();)
 		{
-			if (it->sent==true && it->server_sequence==serverSeq)
+			if (it->sent==true && find(it->serverSequences.begin(),it->serverSequences.end(),serverSeq)!=it->serverSequences.end())
 			{
-				zeAckedPacketz.push_back(it->server_sequence);
+				for (int i=0;i<it->serverSequences.size();i++)
+				{
+					zeAckedPacketz.push_back(it->serverSequences[i]);
+				}
 				it=m_sendQueue.erase(it);
 				eraseCounter++;
 			}
@@ -142,8 +146,8 @@ private:
 				++it;
 			}
 		}
-	/*	stringstream derp;
-		derp << "Acked " << eraseCounter << " packets ( ";
+/*		stringstream derp;
+		derp << "Acked " << eraseCounter << " packets latency " << m_latency << "ms ( ";
 		for (int i=0;i<zeAckedPacketz.size();i++)
 		{
 			derp << zeAckedPacketz[i] << " ";
@@ -153,10 +157,13 @@ private:
 		{
 			if (it->sent==true)
 			{
-				zePacketsLeft.push_back(it->server_sequence);
+				for (int i=0;i<it->serverSequences.size();i++)
+				{
+					zePacketsLeft.push_back(it->serverSequences[i]);
+				}
 			}
 		}
-		derp << ") " << zePacketsLeft.size() << "left ( ";
+		derp << ") " << zePacketsLeft.size() << " left ( ";
 		for (int i=0;i<zePacketsLeft.size();i++)
 		{
 			derp << zePacketsLeft[i] << " ";
@@ -187,7 +194,7 @@ private:
 		PacketInQueue(uint8 thePSS, uint16 serverSeq, uint16 clientSeq, bool ackPacket, msgBaseClassPtr dataToSend, bool immediateOnly=false)
 		{
 			clientPSS = thePSS;
-			server_sequence = serverSeq;
+			serverSequences.push_back(serverSeq);
 			client_sequence = clientSeq;
 			ack=ackPacket;
 			theData = dataToSend;
@@ -199,7 +206,8 @@ private:
 		~PacketInQueue() {}
 
 		uint8 clientPSS;
-		uint16 server_sequence;
+		typedef vector<uint16> sequencesType;
+		sequencesType serverSequences;
 		uint16 client_sequence;
 		bool ack;
 		msgBaseClassPtr theData;
@@ -273,6 +281,9 @@ private:
 	uint32 m_lastActivity;
 	uint32 m_lastPacketReceivedMS;
 	uint32 m_lastOrderedFlush;
+	uint32 m_latency;
+	bool m_calculatedInitialLatency;
+	uint32 m_lastServerMS;
 
 	//Number of packets received
 	uint32 m_numPackets;

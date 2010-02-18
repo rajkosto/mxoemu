@@ -107,7 +107,7 @@ uint16 ObjectMgr::getViewForGO( GameClient* requester, uint32 goId )
 	if (m_objects.find(goId)==m_objects.end())
 		throw ObjectNotAvailable();
 
-	//first time client asked for this
+/*	//first time client asked for this
 	if (m_views.find(requester)==m_views.end())
 		m_views[requester] = viewIdsMap();
 
@@ -120,9 +120,9 @@ uint16 ObjectMgr::getViewForGO( GameClient* requester, uint32 goId )
 
 	//otherwise allocate new viewID, put that in the views list with the goId, and return it
 	uint16 newViewId = allocateViewId(requester);
-	viewsOfClient[newViewId] = goId;
-
-	return newViewId;
+	viewsOfClient[newViewId] = goId;*/
+//had to revert to this simpler mechanism, the more complex one didnt want to work :(
+	return (uint16)goId;
 }
 
 void ObjectMgr::clientSigningOff( GameClient *requester )

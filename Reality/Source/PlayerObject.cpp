@@ -46,10 +46,26 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 		}
 
 		Field *field = result->Fetch();
-		m_handle = field[0].GetString();
-		m_firstName = field[1].GetString();
-		m_lastName = field[2].GetString();
-		m_background = field[3].GetString();
+		if (field[0].GetString() != NULL)
+			m_handle = field[0].GetString();
+		else
+			throw CharacterNotFound();
+
+		if (field[1].GetString() != NULL)
+			m_firstName = field[1].GetString();
+		else
+			m_firstName = "NOFIRST";
+
+		if (field[2].GetString() != NULL)
+			m_lastName = field[2].GetString();
+		else
+			m_lastName = "NOLAST";
+
+		if (field[3].GetString() != NULL)
+			m_background = field[3].GetString();
+		else
+			m_background = "";
+
 		m_pos.ChangeCoords(	field[4].GetDouble(),
 			field[5].GetDouble(),
 			field[6].GetDouble());
@@ -397,7 +413,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 			stringLenPos=swap16(stringLenPos);
 			if (stringLenPos != 8)
 			{
-				WARNING_LOG(format("(%1) Chat packet stringLenPos not 8 but %2%, packet %3%") % m_parent.Address() % stringLenPos % Bin2Hex(srcCmd));
+				WARNING_LOG(format("(%1%) Chat packet stringLenPos not 8 but %2%, packet %3%") % m_parent.Address() % stringLenPos % Bin2Hex(srcCmd));
 				return;
 			}
 			if (srcCmd.size() < stringLenPos)

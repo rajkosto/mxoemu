@@ -1,8 +1,8 @@
 GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelId;ColorId
-46568;0xe8b50000;0x0000b5e8;FEMALE COAT;01areaKTrenchF;Area K Trenchcoat;-1;-1
-47245;0x8db80000;0x0000b88d;FEMALE COAT;Archive5MachFSuit;System Suit;-1;-1
-47241;0x89b80000;0x0000b889;FEMALE COAT;Archive5MervFTrench;Blood Noble Trench;-1;-1
-46406;0x46b50000;0x0000b546;FEMALE COAT;ArchiveMervFTrench;Demon Army Trench;-1;-1
+46568;0xe8b50000;0x0000b5e8;FEMALE COAT;01areaKTrenchF;Area K Trenchcoat;15;1
+47245;0x8db80000;0x0000b88d;FEMALE COAT;Archive5MachFSuit;System Suit;18;0
+47241;0x89b80000;0x0000b889;FEMALE COAT;Archive5MervFTrench;Blood Noble Trench;17;0
+46406;0x46b50000;0x0000b546;FEMALE COAT;ArchiveMervFTrench;Demon Army Trench;14;1
 39222;0x36990000;0x00009936;FEMALE COAT;DungeonHammervilleFCoat1;Ravenswing;-1;-1
 42928;0xb0a70000;0x0000a7b0;FEMALE COAT;DungeonHammervilleFCoat1R1;Ravenswing;-1;-1
 38307;0xa3950000;0x000095a3;FEMALE COAT;DungeonHammervilleFCoat2;Ravenstail;-1;-1
@@ -22,56 +22,56 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 38324;0xb4950000;0x000095b4;FEMALE COAT;DungeonSouthVauxtonFCoat2;Greywolf Coat;-1;-1
 39235;0x43990000;0x00009943;FEMALE COAT;DungeonSouthVauxtonFCoat3;Direwolf Skin;-1;-1
 38115;0xe3940000;0x000094e3;FEMALE COAT;EggFCoat;Egg's Shell;-1;-1
-47138;0x22b80000;0x0000b822;FEMALE COAT;EliteCommFCoat;Elite Commando Jacket;-1;-1
+47138;0x22b80000;0x0000b822;FEMALE COAT;EliteCommFCoat;Elite Commando Jacket;16;0
 38145;0x01950000;0x00009501;FEMALE COAT;EthanFCoat;Mother Coat;-1;-1
 42900;0x94a70000;0x0000a794;FEMALE COAT;EthanFCoatR1;Mother Coat;-1;-1
-38142;0xfe940000;0x000094fe;FEMALE COAT;GregoreFCoat;Vampire Coat;-1;-1
-42908;0x9ca70000;0x0000a79c;FEMALE COAT;GregoreFCoatR1;Vampire Coat;-1;-1
-48041;0xa9bb0000;0x0000bba9;FEMALE COAT;HamptonFCoat;Hampton Jacket;-1;-1
+38142;0xfe940000;0x000094fe;FEMALE COAT;GregoreFCoat;Vampire Coat;14;1
+42908;0x9ca70000;0x0000a79c;FEMALE COAT;GregoreFCoatR1;Vampire Coat;14;1
+48041;0xa9bb0000;0x0000bba9;FEMALE COAT;HamptonFCoat;Hampton Jacket;19;0
 47097;0xf9b70000;0x0000b7f9;FEMALE COAT;IndustrialFCoat;Industrial Jacket;-1;-1
 38204;0x3c950000;0x0000953c;FEMALE COAT;KatScratchFCoat;Kat Skin;-1;-1
 42884;0x84a70000;0x0000a784;FEMALE COAT;KatScratchFCoatR1;Kat Skin;-1;-1
 38090;0xca940000;0x000094ca;FEMALE COAT;LoriporFCoat;Loripor's Jacket;-1;-1
 42879;0x7fa70000;0x0000a77f;FEMALE COAT;LoriporFCoatR1;Loripor's Jacket;-1;-1
-48179;0x33bc0000;0x0000bc33;FEMALE COAT;OmegaFCoat;Omega Trenchcoat;-1;-1
+48179;0x33bc0000;0x0000bc33;FEMALE COAT;OmegaFCoat;Omega Trenchcoat;15;0
 42691;0xc3a60000;0x0000a6c3;FEMALE COAT;Pandora2_1FCoat;Tiger Acolyte's Coat;-1;-1
 42692;0xc4a60000;0x0000a6c4;FEMALE COAT;Pandora2_2FCoat;Tiger Warrior's Coat;-1;-1
 42693;0xc5a60000;0x0000a6c5;FEMALE COAT;Pandora2_3FCoat;Tiger Master's Coat;-1;-1
 38161;0x11950000;0x00009511;FEMALE COAT;SergeantWynnFCoat;Winner's Coat;-1;-1
-42745;0xf9a60000;0x0000a6f9;FEMALE COAT;TransitionFCoat;Awakening Jacket;-1;-1
-47943;0x47bb0000;0x0000bb47;FEMALE COAT;ValkFSuit;Valshamr;-1;-1
+42745;0xf9a60000;0x0000a6f9;FEMALE COAT;TransitionFCoat;Awakening Jacket;13;0
+47943;0x47bb0000;0x0000bb47;FEMALE COAT;ValkFSuit;Valshamr;18;1
 39516;0x5c9a0000;0x00009a5c;FEMALE COAT;WidowsMoorFCoat;Widow's Moor Wool;-1;-1
-46407;0x47b50000;0x0000b547;FEMALE GLASSES;ArchiveMachFGlasses;System Sunglasses;-1;-1
+46407;0x47b50000;0x0000b547;FEMALE GLASSES;ArchiveMachFGlasses;System Sunglasses;12;0
 39508;0x549a0000;0x00009a54;FEMALE GLASSES;AshencourteFGlasses;Ashencourte Shades;-1;-1
 38104;0xd8940000;0x000094d8;FEMALE GLASSES;CaspianFGlasses;Caspian's Sunglasses;-1;-1
 42770;0x12a70000;0x0000a712;FEMALE GLASSES;CaspianFGlasses2;Caspian's Sunglasses;-1;-1
 42886;0x86a70000;0x0000a786;FEMALE GLASSES;CaspianFGlassesR1;Caspian's Sunglasses;-1;-1
-48053;0xb5bb0000;0x0000bbb5;FEMALE GLASSES;CloudedFGlasses;Clouded Spectacles;-1;-1
+48053;0xb5bb0000;0x0000bbb5;FEMALE GLASSES;CloudedFGlasses;Clouded Spectacles;11;0
 38318;0xae950000;0x000095ae;FEMALE GLASSES;DungeonStanoFGlasses1;Detection Shades;-1;-1
 42946;0xc2a70000;0x0000a7c2;FEMALE GLASSES;DungeonStanoFGlasses1R1;Detection Shades;-1;-1
 39237;0x45990000;0x00009945;FEMALE GLASSES;DungeonStanoFGlasses2;Perception Shades;-1;-1
 42947;0xc3a70000;0x0000a7c3;FEMALE GLASSES;DungeonStanoFGlasses2R1;Perception Shades;-1;-1
 38320;0xb0950000;0x000095b0;FEMALE GLASSES;DungeonStanoFGlasses3;Watcher's Shades;-1;-1
 42948;0xc4a70000;0x0000a7c4;FEMALE GLASSES;DungeonStanoFGlasses3R1;Watcher's Shades;-1;-1
-47142;0x26b80000;0x0000b826;FEMALE GLASSES;EliteCommFGlasses;Elite Commando Goggles;-1;-1
-47126;0x16b80000;0x0000b816;FEMALE GLASSES;HeadlessFGlasses;Headless Glasses;-1;-1
+47142;0x26b80000;0x0000b826;FEMALE GLASSES;EliteCommFGlasses;Elite Commando Goggles;10;0
+47126;0x16b80000;0x0000b816;FEMALE GLASSES;HeadlessFGlasses;Headless Glasses;1;9
 38131;0xf3940000;0x000094f3;FEMALE GLASSES;LieutenantChangFGlasses;Viral Shades;-1;-1
 38153;0x09950000;0x00009509;FEMALE GLASSES;MikahFGlasses;Hacker Glasses;-1;-1
 38123;0xeb940000;0x000094eb;FEMALE GLASSES;OptixFGlasses;Optix Optics;-1;-1
 42904;0x98a70000;0x0000a798;FEMALE GLASSES;OptixFGlassesR1;Optix Optics;-1;-1
 38092;0xcc940000;0x000094cc;FEMALE GLASSES;ReactorFGlasses;Reaction Sunglasses;-1;-1
 42890;0x8aa70000;0x0000a78a;FEMALE GLASSES;ReactorFGlassesR1;Reaction Sunglasses;-1;-1
-38133;0xf5940000;0x000094f5;FEMALE GLASSES;ShockKiddFGlasses;Security Glasses;-1;-1
-47901;0x1dbb0000;0x0000bb1d;FEMALE GLASSES;SleepFGlasses1;Blurred Sleepwalker Shades;-1;-1
-47902;0x1ebb0000;0x0000bb1e;FEMALE GLASSES;SleepFGlasses2;Fogged Sleepwalker Shades;-1;-1
-47903;0x1fbb0000;0x0000bb1f;FEMALE GLASSES;SleepFGlasses3;Opaque Sleepwalker Shades;-1;-1
-47370;0x0ab90000;0x0000b90a;FEMALE GLASSES;SSRFGlasses;SSR Glasses;-1;-1
-42743;0xf7a60000;0x0000a6f7;FEMALE GLASSES;TransitionFGlasses;Awakening Glasses;-1;-1
-47937;0x41bb0000;0x0000bb41;FEMALE GLASSES;ValkFGlassesRose;Rose-colored Glasses;-1;-1
-47941;0x45bb0000;0x0000bb45;FEMALE GLASSES;ValkFGlassesValf;Valfreyja's Shield;-1;-1
-47939;0x43bb0000;0x0000bb43;FEMALE GLASSES;ValkFGlassesValk;Valkyrja Glasses;-1;-1
+38133;0xf5940000;0x000094f5;FEMALE GLASSES;ShockKiddFGlasses;Security Glasses;13;5
+47901;0x1dbb0000;0x0000bb1d;FEMALE GLASSES;SleepFGlasses1;Blurred Sleepwalker Shades;5;8
+47902;0x1ebb0000;0x0000bb1e;FEMALE GLASSES;SleepFGlasses2;Fogged Sleepwalker Shades;5;9
+47903;0x1fbb0000;0x0000bb1f;FEMALE GLASSES;SleepFGlasses3;Opaque Sleepwalker Shades;5;10
+47370;0x0ab90000;0x0000b90a;FEMALE GLASSES;SSRFGlasses;SSR Glasses;13;0
+42743;0xf7a60000;0x0000a6f7;FEMALE GLASSES;TransitionFGlasses;Awakening Glasses;9;0
+47937;0x41bb0000;0x0000bb41;FEMALE GLASSES;ValkFGlassesRose;Rose-colored Glasses;13;1
+47941;0x45bb0000;0x0000bb45;FEMALE GLASSES;ValkFGlassesValf;Valfreyja's Shield;13;3
+47939;0x43bb0000;0x0000bb43;FEMALE GLASSES;ValkFGlassesValk;Valkyrja Glasses;13;2
 39520;0x609a0000;0x00009a60;FEMALE GLASSES;WidowsMoorFGlasses;Widow's Moor Lenses;-1;-1
-48047;0xafbb0000;0x0000bbaf;FEMALE GLASSES;WireFGlasses;Wireframe Glasses;-1;-1
+48047;0xafbb0000;0x0000bbaf;FEMALE GLASSES;WireFGlasses;Wireframe Glasses;13;4
 38140;0xfc940000;0x000094fc;FEMALE GLOVES;CormanFGloves;Tiger Claws;-1;-1
 38299;0x9b950000;0x0000959b;FEMALE GLOVES;DungeonUriahFGloves1;Corrupt Hands;-1;-1
 42916;0xa4a70000;0x0000a7a4;FEMALE GLOVES;DungeonUriahFGloves1R1;Corrupt Hands;-1;-1
@@ -79,22 +79,22 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 42917;0xa5a70000;0x0000a7a5;FEMALE GLOVES;DungeonUriahFGloves2R1;Defiled Gloves;-1;-1
 38301;0x9d950000;0x0000959d;FEMALE GLOVES;DungeonUriahFGloves3;Fighter's Gloves;-1;-1
 42918;0xa6a70000;0x0000a7a6;FEMALE GLOVES;DungeonUriahFGloves3R1;Fighter's Gloves;-1;-1
-47146;0x2ab80000;0x0000b82a;FEMALE GLOVES;EliteCommFGloves;Elite Commando Gloves;-1;-1
+47146;0x2ab80000;0x0000b82a;FEMALE GLOVES;EliteCommFGloves;Elite Commando Gloves;11;0
 48008;0x88bb0000;0x0000bb88;FEMALE GLOVES;IndustrialFGloves;Industrial Gloves;-1;-1
 38094;0xce940000;0x000094ce;FEMALE GLOVES;JackFGloves;Jack's Gloves;-1;-1
 42898;0x92a70000;0x0000a792;FEMALE GLOVES;JackFGlovesR1;Jack's Gloves;-1;-1
 38202;0x3a950000;0x0000953a;FEMALE GLOVES;KertonFGloves;Sublime Gloves;-1;-1
 42881;0x81a70000;0x0000a781;FEMALE GLOVES;KertonFGlovesR1;Sublime Gloves;-1;-1
-47783;0xa7ba0000;0x0000baa7;FEMALE GLOVES;KunoFGlovesGranB;Black Kunoichi Grandmaster Tebukuro;-1;-1
-47782;0xa6ba0000;0x0000baa6;FEMALE GLOVES;KunoFGlovesGranG;Gray Kunoichi Grandmaster Tebukuro;-1;-1
-47781;0xa5ba0000;0x0000baa5;FEMALE GLOVES;KunoFGlovesGranW;White Kunoichi Grandmaster Tebukuro;-1;-1
-47789;0xadba0000;0x0000baad;FEMALE GLOVES;KunoFGlovesInitB;Black Kunoichi Initiate Tebukuro;-1;-1
-47788;0xacba0000;0x0000baac;FEMALE GLOVES;KunoFGlovesInitG;Gray Kunoichi Initiate Tebukuro;-1;-1
-47787;0xabba0000;0x0000baab;FEMALE GLOVES;KunoFGlovesInitW;White Kunoichi Initiate Tebukuro;-1;-1
-47786;0xaaba0000;0x0000baaa;FEMALE GLOVES;KunoFGlovesMastB;Black Kunoichi Master Tebukuro;-1;-1
-47785;0xa9ba0000;0x0000baa9;FEMALE GLOVES;KunoFGlovesMastG;Gray Kunoichi Master Tebukuro;-1;-1
-47784;0xa8ba0000;0x0000baa8;FEMALE GLOVES;KunoFGlovesMastW;White Kunoichi Master Tebukuro;-1;-1
-47379;0x13b90000;0x0000b913;FEMALE GLOVES;OneZeroFRobotHands;10 Fingers;-1;-1
+47783;0xa7ba0000;0x0000baa7;FEMALE GLOVES;KunoFGlovesGranB;Black Kunoichi Grandmaster Tebukuro;15;0
+47782;0xa6ba0000;0x0000baa6;FEMALE GLOVES;KunoFGlovesGranG;Gray Kunoichi Grandmaster Tebukuro;14;0
+47781;0xa5ba0000;0x0000baa5;FEMALE GLOVES;KunoFGlovesGranW;White Kunoichi Grandmaster Tebukuro;13;0
+47789;0xadba0000;0x0000baad;FEMALE GLOVES;KunoFGlovesInitB;Black Kunoichi Initiate Tebukuro;15;0
+47788;0xacba0000;0x0000baac;FEMALE GLOVES;KunoFGlovesInitG;Gray Kunoichi Initiate Tebukuro;14;0
+47787;0xabba0000;0x0000baab;FEMALE GLOVES;KunoFGlovesInitW;White Kunoichi Initiate Tebukuro;13;0
+47786;0xaaba0000;0x0000baaa;FEMALE GLOVES;KunoFGlovesMastB;Black Kunoichi Master Tebukuro;15;0
+47785;0xa9ba0000;0x0000baa9;FEMALE GLOVES;KunoFGlovesMastG;Gray Kunoichi Master Tebukuro;14;0
+47784;0xa8ba0000;0x0000baa8;FEMALE GLOVES;KunoFGlovesMastW;White Kunoichi Master Tebukuro;13;0
+47379;0x13b90000;0x0000b913;FEMALE GLOVES;OneZeroFRobotHands;10 Fingers;12;0
 42690;0xc2a60000;0x0000a6c2;FEMALE GLOVES;Pandora1_1FGloves;Doctor's Gloves;-1;-1
 42689;0xc1a60000;0x0000a6c1;FEMALE GLOVES;Pandora1_2FGloves;Surgeon's Gloves;-1;-1
 42688;0xc0a60000;0x0000a6c0;FEMALE GLOVES;Pandora1_3FGloves;Torturer's Gloves;-1;-1
@@ -105,59 +105,59 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 46436;0x64b50000;0x0000b564;FEMALE GLOVES;StraightEdgeJohnFGlovesR2;Pugilist's Gloves;-1;-1
 38163;0x13950000;0x00009513;FEMALE GLOVES;WinstonFGloves;Reactive Gloves;-1;-1
 39498;0x4a9a0000;0x00009a4a;FEMALE GLOVES;YukiFGloves;Yuki Ninja Gloves;-1;-1
-48172;0x2cbc0000;0x0000bc2c;FEMALE HAT;AccCapFHat;Accelerated Captain's Beret;-1;-1
-46405;0x45b50000;0x0000b545;FEMALE HAT;ArchiveZionFBeret;Red Eye Beret;-1;-1
-38125;0xed940000;0x000094ed;FEMALE HAT;ClarkeFHat;Sparkling Fedora;-1;-1
-42906;0x9aa70000;0x0000a79a;FEMALE HAT;ClarkeFHatR1;Sparkling Fedora;-1;-1
-47006;0x9eb70000;0x0000b79e;FEMALE HAT;CorruptPatchersBandF;Patcher's Bandana;-1;-1
-47004;0x9cb70000;0x0000b79c;FEMALE HAT;CorruptPatchersHatF;Patcher's Hat;-1;-1
-47008;0xa0b70000;0x0000b7a0;FEMALE HAT;CorruptPatchersHeadF;Patcher's Headgear;-1;-1
+48172;0x2cbc0000;0x0000bc2c;FEMALE HAT;AccCapFHat;Accelerated Captain's Beret;45;0
+46405;0x45b50000;0x0000b545;FEMALE HAT;ArchiveZionFBeret;Red Eye Beret;28;0
+38125;0xed940000;0x000094ed;FEMALE HAT;ClarkeFHat;Sparkling Fedora;6;0
+42906;0x9aa70000;0x0000a79a;FEMALE HAT;ClarkeFHatR1;Sparkling Fedora;6;0
+47006;0x9eb70000;0x0000b79e;FEMALE HAT;CorruptPatchersBandF;Patcher's Bandana;32;0
+47004;0x9cb70000;0x0000b79c;FEMALE HAT;CorruptPatchersHatF;Patcher's Hat;31;0
+47008;0xa0b70000;0x0000b7a0;FEMALE HAT;CorruptPatchersHeadF;Patcher's Headgear;33;0
 38308;0xa4950000;0x000095a4;FEMALE HAT;DungeonGracyHeightsFHat1;Euphoricap;-1;-1
 42934;0xb6a70000;0x0000a7b6;FEMALE HAT;DungeonGracyHeightsFHat1R1;Euphoricap;-1;-1
 39219;0x33990000;0x00009933;FEMALE HAT;DungeonGracyHeightsFHat2;Hygenicap;-1;-1
 42935;0xb7a70000;0x0000a7b7;FEMALE HAT;DungeonGracyHeightsFHat2R1;Hygenicap;-1;-1
 38310;0xa6950000;0x000095a6;FEMALE HAT;DungeonGracyHeightsFHat3;Asepticap;-1;-1
 42936;0xb8a70000;0x0000a7b8;FEMALE HAT;DungeonGracyHeightsFHat3R1;Asepticap;-1;-1
-47144;0x28b80000;0x0000b828;FEMALE HAT;EliteCommFHat;Elite Commando Helmet;-1;-1
-48164;0x24bc0000;0x0000bc24;FEMALE HAT;ExecFCap;Executable Skullcap;-1;-1
-48168;0x28bc0000;0x0000bc28;FEMALE HAT;ExecFHeader;Executable Header;-1;-1
-48166;0x26bc0000;0x0000bc26;FEMALE HAT;ExecFMask;Executable Mask;-1;-1
-48045;0xadbb0000;0x0000bbad;FEMALE HAT;GasFHat;Gas Mask;-1;-1
-48049;0xb1bb0000;0x0000bbb1;FEMALE HAT;GrayBandanaFHat;Gray Bandana;-1;-1
-47128;0x18b80000;0x0000b818;FEMALE HAT;IndustrialFHat;Industrial Fedora;-1;-1
+47144;0x28b80000;0x0000b828;FEMALE HAT;EliteCommFHat;Elite Commando Helmet;35;0
+48164;0x24bc0000;0x0000bc24;FEMALE HAT;ExecFCap;Executable Skullcap;46;0
+48168;0x28bc0000;0x0000bc28;FEMALE HAT;ExecFHeader;Executable Header;48;0
+48166;0x26bc0000;0x0000bc26;FEMALE HAT;ExecFMask;Executable Mask;47;0
+48045;0xadbb0000;0x0000bbad;FEMALE HAT;GasFHat;Gas Mask;42;0
+48049;0xb1bb0000;0x0000bbb1;FEMALE HAT;GrayBandanaFHat;Gray Bandana;43;0
+47128;0x18b80000;0x0000b818;FEMALE HAT;IndustrialFHat;Industrial Fedora;34;0
 38151;0x07950000;0x00009507;FEMALE HAT;JokahFHat;Jokah's Hat;-1;-1
-48177;0x31bc0000;0x0000bc31;FEMALE HAT;OmegaFHat;Omega Headgear;-1;-1
+48177;0x31bc0000;0x0000bc31;FEMALE HAT;OmegaFHat;Omega Headgear;49;0
 47114;0x0ab80000;0x0000b80a;FEMALE HAT;OverdriveFHat;Overdrive Bandana;-1;-1
 39512;0x589a0000;0x00009a58;FEMALE HAT;SakuraFHat;Sakura Ninja Mask;-1;-1
-48162;0x22bc0000;0x0000bc22;FEMALE HAT;ScrapperFHat;Scrapper Earring;-1;-1
-45934;0x6eb30000;0x0000b36e;FEMALE HAT;SecurityFHat;Security Cap;-1;-1
-47895;0x17bb0000;0x0000bb17;FEMALE HAT;SleepFHat1;Faded Sleepwalker Bandana;-1;-1
-47896;0x18bb0000;0x0000bb18;FEMALE HAT;SleepFHat2;Worn Sleepwalker Bandana;-1;-1
-47897;0x19bb0000;0x0000bb19;FEMALE HAT;SleepFHat3;Threadbare Sleepwalker Bandana;-1;-1
-47374;0x0eb90000;0x0000b90e;FEMALE HAT;SSRFEarpiece40;Captain Dernick's Earpiece;-1;-1
-47375;0x0fb90000;0x0000b90f;FEMALE HAT;SSRFEarpiece50;Captain Raeder's Earpiece;-1;-1
-47362;0x02b90000;0x0000b902;FEMALE HAT;SSRFHat;SSR Helmet;-1;-1
+48162;0x22bc0000;0x0000bc22;FEMALE HAT;ScrapperFHat;Scrapper Earring;44;0
+45934;0x6eb30000;0x0000b36e;FEMALE HAT;SecurityFHat;Security Cap;22;0
+47895;0x17bb0000;0x0000bb17;FEMALE HAT;SleepFHat1;Faded Sleepwalker Bandana;38;0
+47896;0x18bb0000;0x0000bb18;FEMALE HAT;SleepFHat2;Worn Sleepwalker Bandana;39;0
+47897;0x19bb0000;0x0000bb19;FEMALE HAT;SleepFHat3;Threadbare Sleepwalker Bandana;40;0
+47374;0x0eb90000;0x0000b90e;FEMALE HAT;SSRFEarpiece40;Captain Dernick's Earpiece;37;0
+47375;0x0fb90000;0x0000b90f;FEMALE HAT;SSRFEarpiece50;Captain Raeder's Earpiece;37;0
+47362;0x02b90000;0x0000b902;FEMALE HAT;SSRFHat;SSR Helmet;36;0
 38293;0x95950000;0x00009595;FEMALE HAT;TaskmasterFHat;Taskmaster Beret;-1;-1
 46565;0xe5b50000;0x0000b5e5;FEMALE HAT;TaskmasterFHat2;Taskmaster Beret Zero;-1;-1
 38135;0xf7940000;0x000094f7;FEMALE HAT;TinCanFHat;Tin Can's Headgear;-1;-1
 39518;0x5e9a0000;0x00009a5e;FEMALE HAT;WidowsMoorFHat;Widow's Moor Cap;-1;-1
-48043;0xabbb0000;0x0000bbab;FEMALE HAT;WireFEarpiece;Wireframe Earpiece;-1;-1
+48043;0xabbb0000;0x0000bbab;FEMALE HAT;WireFEarpiece;Wireframe Earpiece;41;0
 39502;0x4e9a0000;0x00009a4e;FEMALE HAT;YukiFHat;Yuki Ninja Mask;-1;-1
 47243;0x8bb80000;0x0000b88b;FEMALE PANTS;Archive5ZionFPants;Rave Pants;-1;-1
-47140;0x24b80000;0x0000b824;FEMALE PANTS;EliteCommFPants;Elite Commando Leggings;-1;-1
-47878;0x06bb0000;0x0000bb06;FEMALE PANTS;FanFaire08PantsF;Deep Blue Jeans;-1;-1
-48039;0xa7bb0000;0x0000bba7;FEMALE PANTS;HamptonFPants;Hampton Pants;-1;-1
+47140;0x24b80000;0x0000b824;FEMALE PANTS;EliteCommFPants;Elite Commando Leggings;8;0
+47878;0x06bb0000;0x0000bb06;FEMALE PANTS;FanFaire08PantsF;Deep Blue Jeans;7;2
+48039;0xa7bb0000;0x0000bba7;FEMALE PANTS;HamptonFPants;Hampton Pants;10;0
 42868;0x74a70000;0x0000a774;FEMALE PANTS;IndustrialFPants;Industrial Pants;-1;-1
 38203;0x3b950000;0x0000953b;FEMALE PANTS;JacobFPants;Coward's Pants;-1;-1
 38127;0xef940000;0x000094ef;FEMALE PANTS;PetalFPants;Petal Pants;-1;-1
-47889;0x11bb0000;0x0000bb11;FEMALE PANTS;SleepFPants1;Faded Sleepwalker Jeans;-1;-1
-47890;0x12bb0000;0x0000bb12;FEMALE PANTS;SleepFPants2;Worn Sleepwalker Jeans;-1;-1
-47891;0x13bb0000;0x0000bb13;FEMALE PANTS;SleepFPants3;Threadbare Sleepwalker Jeans;-1;-1
+47889;0x11bb0000;0x0000bb11;FEMALE PANTS;SleepFPants1;Faded Sleepwalker Jeans;7;3
+47890;0x12bb0000;0x0000bb12;FEMALE PANTS;SleepFPants2;Worn Sleepwalker Jeans;7;4
+47891;0x13bb0000;0x0000bb13;FEMALE PANTS;SleepFPants3;Threadbare Sleepwalker Jeans;7;5
 38149;0x05950000;0x00009505;FEMALE PANTS;YorkieFPants;Action Pants;-1;-1
 40475;0x1b9e0000;0x00009e1b;FEMALE PANTS;AshencourteFPants;Ashencourte Leggings;-1;-1
 39506;0x529a0000;0x00009a52;FEMALE PANTS;AshencourteFPants_Old;Ashencourte Leggings;-1;-1
-45928;0x68b30000;0x0000b368;FEMALE SHIRT;BlueSkyFShirt;Blue Sky T-Shirt;-1;-1
-47946;0x4abb0000;0x0000bb4a;FEMALE SHIRT;ValkFShirt;Svanhild's Plumage;-1;-1
+45928;0x68b30000;0x0000b368;FEMALE SHIRT;BlueSkyFShirt;Blue Sky T-Shirt;6;33
+47946;0x4abb0000;0x0000bb4a;FEMALE SHIRT;ValkFShirt;Svanhild's Plumage;16;32
 38096;0xd0940000;0x000094d0;FEMALE SHIRT;BigJimmyZFShirt;Z Gi;-1;-1
 42767;0x0fa70000;0x0000a70f;FEMALE SHIRT;BigJimmyZFShirt2;Z Gi;-1;-1
 42895;0x8fa70000;0x0000a78f;FEMALE SHIRT;BigJimmyZFShirtR1;Z Gi;-1;-1
@@ -169,37 +169,37 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 38323;0xb3950000;0x000095b3;FEMALE SHIRT;DungeonShinjukoFShirt3_Old;The Black Widow's Dress;-1;-1
 38157;0x0d950000;0x0000950d;FEMALE SHIRT;HasadFShirt;Panacea;-1;-1
 38138;0xfa940000;0x000094fa;FEMALE SHIRT;KennyLeeFShirt;Kenny's Gi;-1;-1
-47765;0x95ba0000;0x0000ba95;FEMALE SHIRT;KunoFGiGranB;Black Kunoichi Grandmaster Gi;-1;-1
-47764;0x94ba0000;0x0000ba94;FEMALE SHIRT;KunoFGiGranG;Gray Kunoichi Grandmaster Gi;-1;-1
-47763;0x93ba0000;0x0000ba93;FEMALE SHIRT;KunoFGiGranW;White Kunoichi Grandmaster Gi;-1;-1
-47771;0x9bba0000;0x0000ba9b;FEMALE SHIRT;KunoFGiInitB;Black Kunoichi Initiate Gi;-1;-1
-47770;0x9aba0000;0x0000ba9a;FEMALE SHIRT;KunoFGiInitG;Gray Kunoichi Initiate Gi;-1;-1
-47769;0x99ba0000;0x0000ba99;FEMALE SHIRT;KunoFGiInitW;White Kunoichi Initiate Gi;-1;-1
-47768;0x98ba0000;0x0000ba98;FEMALE SHIRT;KunoFGiMastB;Black Kunoichi Master Gi;-1;-1
-47767;0x97ba0000;0x0000ba97;FEMALE SHIRT;KunoFGiMastG;Gray Kunoichi Master Gi;-1;-1
-47766;0x96ba0000;0x0000ba96;FEMALE SHIRT;KunoFGiMastW;White Kunoichi Master Gi;-1;-1
-47817;0xc9ba0000;0x0000bac9;FEMALE SHIRT;KunoFGiPink;{c:FF97CB}Pink Kunoichi Gi{/c};-1;-1
-46983;0x87b70000;0x0000b787;FEMALE SHIRT;Anniv07TShirtFBliss;"Bliss" Anniversary T-Shirt;-1;-1
-46981;0x85b70000;0x0000b785;FEMALE SHIRT;Anniv07TShirtFCausality;"Causality" Anniversary T-Shirt;-1;-1
-46979;0x83b70000;0x0000b783;FEMALE SHIRT;Anniv07TShirtFChoice;"Choice" Anniversary T-Shirt;-1;-1
-46982;0x86b70000;0x0000b786;FEMALE SHIRT;Anniv07TShirtFFreedom;"Freedom" Anniversary T-Shirt;-1;-1
-46978;0x82b70000;0x0000b782;FEMALE SHIRT;Anniv07TShirtFHate;"Hate" Anniversary T-Shirt;-1;-1
-46980;0x84b70000;0x0000b784;FEMALE SHIRT;Anniv07TShirtFInevitability;"Inevitability" Anniversary T-Shirt;-1;-1
-46977;0x81b70000;0x0000b781;FEMALE SHIRT;Anniv07TShirtFLove;"Love" Anniversary T-Shirt;-1;-1
-46975;0x7fb70000;0x0000b77f;FEMALE SHIRT;Anniv07TShirtFPeace;"Peace" Anniversary T-Shirt;-1;-1
-46996;0x94b70000;0x0000b794;FEMALE SHIRT;Anniv07TShirtFSmith;"Smith" Anniversary T-Shirt;-1;-1
-46976;0x80b70000;0x0000b780;FEMALE SHIRT;Anniv07TShirtFWar;"War" Anniversary T-Shirt;-1;-1
-47280;0xb0b80000;0x0000b8b0;FEMALE SHIRT;Anniv08TShirtFDeath;"Death" Anniversary T-Shirt;-1;-1
-47281;0xb1b80000;0x0000b8b1;FEMALE SHIRT;Anniv08TShirtFDream;"Dream" Anniversary T-Shirt;-1;-1
-47282;0xb2b80000;0x0000b8b2;FEMALE SHIRT;Anniv08TShirtFExile;"Exile" Anniversary T-Shirt;-1;-1
-47283;0xb3b80000;0x0000b8b3;FEMALE SHIRT;Anniv08TShirtFLife;"Life" Anniversary T-Shirt;-1;-1
-47284;0xb4b80000;0x0000b8b4;FEMALE SHIRT;Anniv08TShirtFMachine;"Machine" Anniversary T-Shirt;-1;-1
-47285;0xb5b80000;0x0000b8b5;FEMALE SHIRT;Anniv08TShirtFMetacortex;Metacortex T-Shirt;-1;-1
-47286;0xb6b80000;0x0000b8b6;FEMALE SHIRT;Anniv08TShirtFNightmare;"Nightmare" Anniversary T-Shirt;-1;-1
-47287;0xb7b80000;0x0000b8b7;FEMALE SHIRT;Anniv08TShirtFParadise;"Paradise" Anniversary T-Shirt;-1;-1
-47288;0xb8b80000;0x0000b8b8;FEMALE SHIRT;Anniv08TShirtFPrison;"Prison" Anniversary T-Shirt;-1;-1
-47289;0xb9b80000;0x0000b8b9;FEMALE SHIRT;Anniv08TShirtFWhite;Plain White T-Shirt;-1;-1
-47290;0xbab80000;0x0000b8ba;FEMALE SHIRT;Anniv08TShirtFWoman;"Woman" Anniversary T-Shirt;-1;-1
+47765;0x95ba0000;0x0000ba95;FEMALE SHIRT;KunoFGiGranB;Black Kunoichi Grandmaster Gi;26;2
+47764;0x94ba0000;0x0000ba94;FEMALE SHIRT;KunoFGiGranG;Gray Kunoichi Grandmaster Gi;26;1
+47763;0x93ba0000;0x0000ba93;FEMALE SHIRT;KunoFGiGranW;White Kunoichi Grandmaster Gi;26;0
+47771;0x9bba0000;0x0000ba9b;FEMALE SHIRT;KunoFGiInitB;Black Kunoichi Initiate Gi;26;2
+47770;0x9aba0000;0x0000ba9a;FEMALE SHIRT;KunoFGiInitG;Gray Kunoichi Initiate Gi;26;1
+47769;0x99ba0000;0x0000ba99;FEMALE SHIRT;KunoFGiInitW;White Kunoichi Initiate Gi;26;0
+47768;0x98ba0000;0x0000ba98;FEMALE SHIRT;KunoFGiMastB;Black Kunoichi Master Gi;26;2
+47767;0x97ba0000;0x0000ba97;FEMALE SHIRT;KunoFGiMastG;Gray Kunoichi Master Gi;26;1
+47766;0x96ba0000;0x0000ba96;FEMALE SHIRT;KunoFGiMastW;White Kunoichi Master Gi;26;0
+47817;0xc9ba0000;0x0000bac9;FEMALE SHIRT;KunoFGiPink;{c:FF97CB}Pink Kunoichi Gi{/c};26;3
+46983;0x87b70000;0x0000b787;FEMALE SHIRT;Anniv07TShirtFBliss;"Bliss" Anniversary T-Shirt;6;42
+46981;0x85b70000;0x0000b785;FEMALE SHIRT;Anniv07TShirtFCausality;"Causality" Anniversary T-Shirt;6;40
+46979;0x83b70000;0x0000b783;FEMALE SHIRT;Anniv07TShirtFChoice;"Choice" Anniversary T-Shirt;6;38
+46982;0x86b70000;0x0000b786;FEMALE SHIRT;Anniv07TShirtFFreedom;"Freedom" Anniversary T-Shirt;6;41
+46978;0x82b70000;0x0000b782;FEMALE SHIRT;Anniv07TShirtFHate;"Hate" Anniversary T-Shirt;6;37
+46980;0x84b70000;0x0000b784;FEMALE SHIRT;Anniv07TShirtFInevitability;"Inevitability" Anniversary T-Shirt;6;39
+46977;0x81b70000;0x0000b781;FEMALE SHIRT;Anniv07TShirtFLove;"Love" Anniversary T-Shirt;6;36
+46975;0x7fb70000;0x0000b77f;FEMALE SHIRT;Anniv07TShirtFPeace;"Peace" Anniversary T-Shirt;6;34
+46996;0x94b70000;0x0000b794;FEMALE SHIRT;Anniv07TShirtFSmith;"Smith" Anniversary T-Shirt;6;43
+46976;0x80b70000;0x0000b780;FEMALE SHIRT;Anniv07TShirtFWar;"War" Anniversary T-Shirt;6;35
+47280;0xb0b80000;0x0000b8b0;FEMALE SHIRT;Anniv08TShirtFDeath;"Death" Anniversary T-Shirt;6;45
+47281;0xb1b80000;0x0000b8b1;FEMALE SHIRT;Anniv08TShirtFDream;"Dream" Anniversary T-Shirt;6;46
+47282;0xb2b80000;0x0000b8b2;FEMALE SHIRT;Anniv08TShirtFExile;"Exile" Anniversary T-Shirt;6;47
+47283;0xb3b80000;0x0000b8b3;FEMALE SHIRT;Anniv08TShirtFLife;"Life" Anniversary T-Shirt;6;48
+47284;0xb4b80000;0x0000b8b4;FEMALE SHIRT;Anniv08TShirtFMachine;"Machine" Anniversary T-Shirt;6;49
+47285;0xb5b80000;0x0000b8b5;FEMALE SHIRT;Anniv08TShirtFMetacortex;Metacortex T-Shirt;6;50
+47286;0xb6b80000;0x0000b8b6;FEMALE SHIRT;Anniv08TShirtFNightmare;"Nightmare" Anniversary T-Shirt;6;51
+47287;0xb7b80000;0x0000b8b7;FEMALE SHIRT;Anniv08TShirtFParadise;"Paradise" Anniversary T-Shirt;6;52
+47288;0xb8b80000;0x0000b8b8;FEMALE SHIRT;Anniv08TShirtFPrison;"Prison" Anniversary T-Shirt;6;53
+47289;0xb9b80000;0x0000b8b9;FEMALE SHIRT;Anniv08TShirtFWhite;Plain White T-Shirt;6;54
+47290;0xbab80000;0x0000b8ba;FEMALE SHIRT;Anniv08TShirtFWoman;"Woman" Anniversary T-Shirt;6;55
 39504;0x509a0000;0x00009a50;FEMALE SHIRT;AshencourteFShirt;Ashencourte Vestment;-1;-1
 38328;0xb8950000;0x000095b8;FEMALE SHIRT;DungeonCrestonHeightsFShirt1;Helen's Raiment;-1;-1
 38329;0xb9950000;0x000095b9;FEMALE SHIRT;DungeonCrestonHeightsFShirt2;Black Widow Threads;-1;-1
@@ -217,12 +217,12 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 42699;0xcba60000;0x0000a6cb;FEMALE SHIRT;Pandora3_2FShirt;Sniper Shirt;-1;-1
 42701;0xcda60000;0x0000a6cd;FEMALE SHIRT;Pandora3_3FShirt;Squad Leader's Shirt;-1;-1
 48158;0x1ebc0000;0x0000bc1e;FEMALE SHIRT;PhoenixFShirt;Phoenix Shirt;-1;-1
-45933;0x6db30000;0x0000b36d;FEMALE SHIRT;SecurityFShirt;Security T-Shirt;-1;-1
-47883;0x0bbb0000;0x0000bb0b;FEMALE SHIRT;SleepFShirt1;Faded Sleepwalker Tee;-1;-1
-47884;0x0cbb0000;0x0000bb0c;FEMALE SHIRT;SleepFShirt2;Worn Sleepwalker Tee;-1;-1
-47885;0x0dbb0000;0x0000bb0d;FEMALE SHIRT;SleepFShirt3;Threadbare Sleepwalker Tee;-1;-1
+45933;0x6db30000;0x0000b36d;FEMALE SHIRT;SecurityFShirt;Security T-Shirt;6;32
+47883;0x0bbb0000;0x0000bb0b;FEMALE SHIRT;SleepFShirt1;Faded Sleepwalker Tee;4;32
+47884;0x0cbb0000;0x0000bb0c;FEMALE SHIRT;SleepFShirt2;Worn Sleepwalker Tee;4;33
+47885;0x0dbb0000;0x0000bb0d;FEMALE SHIRT;SleepFShirt3;Threadbare Sleepwalker Tee;4;34
 38171;0x1b950000;0x0000951b;FEMALE SHIRT;TaggertFShirt;Taggert's Pipeline;-1;-1
-48156;0x1cbc0000;0x0000bc1c;FEMALE SHIRT;WebbedBloodFShirt;Webbed Blood Noble Shirt;-1;-1
+48156;0x1cbc0000;0x0000bc1c;FEMALE SHIRT;WebbedBloodFShirt;Webbed Blood Noble Shirt;28;0
 40476;0x1c9e0000;0x00009e1c;FEMALE SHOES;DeadboyFShoes;Caution;-1;-1
 38155;0x0b950000;0x0000950b;FEMALE SHOES;DeadboyFShoes_Old;Caution;-1;-1
 42952;0xc8a70000;0x0000a7c8;FEMALE SHOES;DungeonLuceroFShoes1R1;Project Shoes;-1;-1
@@ -234,22 +234,22 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 42923;0xaba70000;0x0000a7ab;FEMALE SHOES;DungeonZiaFShoes2R1;Steady Sneakers;-1;-1
 39243;0x4b990000;0x0000994b;FEMALE SHOES;DungeonZiaFShoes3;Solid Sneakers;-1;-1
 42924;0xaca70000;0x0000a7ac;FEMALE SHOES;DungeonZiaFShoes3R1;Solid Sneakers;-1;-1
-47148;0x2cb80000;0x0000b82c;FEMALE SHOES;EliteCommFShoes;Elite Commando Boots;-1;-1
+47148;0x2cb80000;0x0000b82c;FEMALE SHOES;EliteCommFShoes;Elite Commando Boots;11;0
 38102;0xd6940000;0x000094d6;FEMALE SHOES;FastBackFShoes;Industrial Boots;-1;-1
 42773;0x15a70000;0x0000a715;FEMALE SHOES;FastBackFShoes2;Industrial Boots;-1;-1
 48051;0xb3bb0000;0x0000bbb3;FEMALE SHOES;HelBootsFShoes;Caretaker Boots;-1;-1
 40472;0x189e0000;0x00009e18;FEMALE SHOES;HoraceFShoes;Horace's Sneakers;-1;-1
 38088;0xc8940000;0x000094c8;FEMALE SHOES;HoraceFShoes_Old;Horace's Sneakers;-1;-1
 42877;0x7da70000;0x0000a77d;FEMALE SHOES;HoraceFShoesR1;Horace's Sneakers;-1;-1
-47801;0xb9ba0000;0x0000bab9;FEMALE SHOES;KunoFShoesGranB;Black Kunoichi Grandmaster Tabi;-1;-1
-47800;0xb8ba0000;0x0000bab8;FEMALE SHOES;KunoFShoesGranG;Gray Kunoichi Grandmaster Tabi;-1;-1
-47799;0xb7ba0000;0x0000bab7;FEMALE SHOES;KunoFShoesGranW;White Kunoichi Grandmaster Tabi;-1;-1
-47807;0xbfba0000;0x0000babf;FEMALE SHOES;KunoFShoesInitB;Black Kunoichi Initiate Tabi;-1;-1
-47806;0xbeba0000;0x0000babe;FEMALE SHOES;KunoFShoesInitG;Gray Kunoichi Initiate Tabi;-1;-1
-47805;0xbdba0000;0x0000babd;FEMALE SHOES;KunoFShoesInitW;White Kunoichi Initiate Tabi;-1;-1
-47804;0xbcba0000;0x0000babc;FEMALE SHOES;KunoFShoesMastB;Black Kunoichi Master Tabi;-1;-1
-47803;0xbbba0000;0x0000babb;FEMALE SHOES;KunoFShoesMastG;Gray Kunoichi Master Tabi;-1;-1
-47802;0xbaba0000;0x0000baba;FEMALE SHOES;KunoFShoesMastW;White Kunoichi Master Tabi;-1;-1
+47801;0xb9ba0000;0x0000bab9;FEMALE SHOES;KunoFShoesGranB;Black Kunoichi Grandmaster Tabi;11;3
+47800;0xb8ba0000;0x0000bab8;FEMALE SHOES;KunoFShoesGranG;Gray Kunoichi Grandmaster Tabi;11;2
+47799;0xb7ba0000;0x0000bab7;FEMALE SHOES;KunoFShoesGranW;White Kunoichi Grandmaster Tabi;11;1
+47807;0xbfba0000;0x0000babf;FEMALE SHOES;KunoFShoesInitB;Black Kunoichi Initiate Tabi;11;3
+47806;0xbeba0000;0x0000babe;FEMALE SHOES;KunoFShoesInitG;Gray Kunoichi Initiate Tabi;11;2
+47805;0xbdba0000;0x0000babd;FEMALE SHOES;KunoFShoesInitW;White Kunoichi Initiate Tabi;11;1
+47804;0xbcba0000;0x0000babc;FEMALE SHOES;KunoFShoesMastB;Black Kunoichi Master Tabi;11;3
+47803;0xbbba0000;0x0000babb;FEMALE SHOES;KunoFShoesMastG;Gray Kunoichi Master Tabi;11;2
+47802;0xbaba0000;0x0000baba;FEMALE SHOES;KunoFShoesMastW;White Kunoichi Master Tabi;11;1
 38106;0xda940000;0x000094da;FEMALE SHOES;LilQuickFShoes;LilQuick's Sneakers;-1;-1
 42888;0x88a70000;0x0000a788;FEMALE SHOES;LilQuickFShoesR1;LilQuick's Sneakers;-1;-1
 42703;0xcfa60000;0x0000a6cf;FEMALE SHOES;Pandora4_1FShoes;Heavenly Footwear;-1;-1
@@ -273,57 +273,57 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 42932;0xb4a70000;0x0000a7b4;MALE COAT;DungeonHammervilleMCoat2R1;Ravenstail;-1;-1
 38306;0xa2950000;0x000095a2;MALE COAT;DungeonHammervilleMCoat3;Ravensfeather;-1;-1
 42933;0xb5a70000;0x0000a7b5;MALE COAT;DungeonHammervilleMCoat3R1;Ravensfeather;-1;-1
-38311;0xa7950000;0x000095a7;MALE COAT;DungeonHarajukoMCoat1;Lionskin Wrap;-1;-1
-39227;0x3b990000;0x0000993b;MALE COAT;DungeonHarajukoMCoat2;Tigerskin Wrap;-1;-1
-38313;0xa9950000;0x000095a9;MALE COAT;DungeonHarajukoMCoat3;Dragonskin Wrap;-1;-1
-39229;0x3d990000;0x0000993d;MALE COAT;DungeonRidgeWayMCoat1;Dark Shadow Jacket;-1;-1
-42943;0xbfa70000;0x0000a7bf;MALE COAT;DungeonRidgeWayMCoat1R1;Dark Shadow Jacket;-1;-1
-38315;0xab950000;0x000095ab;MALE COAT;DungeonRidgeWayMCoat2;Black Shadow Jacket;-1;-1
-42944;0xc0a70000;0x0000a7c0;MALE COAT;DungeonRidgeWayMCoat2R1;Black Shadow Jacket;-1;-1
-39230;0x3e990000;0x0000993e;MALE COAT;DungeonRidgeWayMCoat3;Deep Shadow Jacket;-1;-1
-42945;0xc1a70000;0x0000a7c1;MALE COAT;DungeonRidgeWayMCoat3R1;Deep Shadow Jacket;-1;-1
+38311;0xa7950000;0x000095a7;MALE COAT;DungeonHarajukoMCoat1;Lionskin Wrap;9;16
+39227;0x3b990000;0x0000993b;MALE COAT;DungeonHarajukoMCoat2;Tigerskin Wrap;9;16
+38313;0xa9950000;0x000095a9;MALE COAT;DungeonHarajukoMCoat3;Dragonskin Wrap;9;16
+39229;0x3d990000;0x0000993d;MALE COAT;DungeonRidgeWayMCoat1;Dark Shadow Jacket;4;0
+42943;0xbfa70000;0x0000a7bf;MALE COAT;DungeonRidgeWayMCoat1R1;Dark Shadow Jacket;4;0
+38315;0xab950000;0x000095ab;MALE COAT;DungeonRidgeWayMCoat2;Black Shadow Jacket;4;0
+42944;0xc0a70000;0x0000a7c0;MALE COAT;DungeonRidgeWayMCoat2R1;Black Shadow Jacket;4;0
+39230;0x3e990000;0x0000993e;MALE COAT;DungeonRidgeWayMCoat3;Deep Shadow Jacket;4;0
+42945;0xc1a70000;0x0000a7c1;MALE COAT;DungeonRidgeWayMCoat3R1;Deep Shadow Jacket;4;0
 38325;0xb5950000;0x000095b5;MALE COAT;DungeonSouthVauxtonMCoat1;Blackwolf Coat;-1;-1
 39236;0x44990000;0x00009944;MALE COAT;DungeonSouthVauxtonMCoat2;Greywolf Coat;-1;-1
 38326;0xb6950000;0x000095b6;MALE COAT;DungeonSouthVauxtonMCoat3;Direwolf Skin;-1;-1
-38116;0xe4940000;0x000094e4;MALE COAT;EggMCoat;Egg's Shell;-1;-1
+38116;0xe4940000;0x000094e4;MALE COAT;EggMCoat;Egg's Shell;5;12
 47139;0x23b80000;0x0000b823;MALE COAT;EliteCommMCoat;Elite Commando Jacket;27;0
 38143;0xff940000;0x000094ff;MALE COAT;GregoreMCoat;Vampire Coat;-1;-1
 42909;0x9da70000;0x0000a79d;MALE COAT;GregoreMCoatR1;Vampire Coat;-1;-1
-48040;0xa8bb0000;0x0000bba8;MALE COAT;HamptonMCoat;Hampton Jacket;-1;-1
-47098;0xfab70000;0x0000b7fa;MALE COAT;IndustrialMCoat;Industrial Jacket;-1;-1
+48040;0xa8bb0000;0x0000bba8;MALE COAT;HamptonMCoat;Hampton Jacket;29;0
+47098;0xfab70000;0x0000b7fa;MALE COAT;IndustrialMCoat;Industrial Jacket;5;12
 38205;0x3d950000;0x0000953d;MALE COAT;KatScratchMCoat;Kat Skin;-1;-1
 42885;0x85a70000;0x0000a785;MALE COAT;KatScratchMCoatR1;Kat Skin;-1;-1
 38091;0xcb940000;0x000094cb;MALE COAT;LoriporMCoat;Loripor's Jacket;-1;-1
 42880;0x80a70000;0x0000a780;MALE COAT;LoriporMCoatR1;Loripor's Jacket;-1;-1
 48180;0x34bc0000;0x0000bc34;MALE COAT;OmegaMCoat;Omega Trenchcoat;26;0
 38162;0x12950000;0x00009512;MALE COAT;SergeantWynnMCoat;Winner's Coat;-1;-1
-42746;0xfaa60000;0x0000a6fa;MALE COAT;TransitionMCoat;Awakening Jacket;-1;-1
+42746;0xfaa60000;0x0000a6fa;MALE COAT;TransitionMCoat;Awakening Jacket;23;1
 39517;0x5d9a0000;0x00009a5d;MALE COAT;WidowsMoorMCoat;Widow's Moor Wool;-1;-1
-38097;0xd1940000;0x000094d1;MALE COAT;BigJimmyZMCoat;Z Gi;-1;-1
-42768;0x10a70000;0x0000a710;MALE COAT;BigJimmyZMCoat2;Z Gi;-1;-1
-42896;0x90a70000;0x0000a790;MALE COAT;BigJimmyZMCoatR1;Z Gi;-1;-1
-40481;0x219e0000;0x00009e21;MALE COAT;DungeonShinjukoMCoat1;Widow's Gi;-1;-1
-39232;0x40990000;0x00009940;MALE COAT;DungeonShinjukoMCoat1_Old;Widow's Gi;-1;-1
-40482;0x229e0000;0x00009e22;MALE COAT;DungeonShinjukoMCoat2;Spider Gi;-1;-1
-38322;0xb2950000;0x000095b2;MALE COAT;DungeonShinjukoMCoat2_Old;Spider Gi;-1;-1
+38097;0xd1940000;0x000094d1;MALE COAT;BigJimmyZMCoat;Z Gi;11;8
+42768;0x10a70000;0x0000a710;MALE COAT;BigJimmyZMCoat2;Z Gi;11;8
+42896;0x90a70000;0x0000a790;MALE COAT;BigJimmyZMCoatR1;Z Gi;11;8
+40481;0x219e0000;0x00009e21;MALE COAT;DungeonShinjukoMCoat1;Widow's Gi;11;5
+39232;0x40990000;0x00009940;MALE COAT;DungeonShinjukoMCoat1_Old;Widow's Gi;11;5
+40482;0x229e0000;0x00009e22;MALE COAT;DungeonShinjukoMCoat2;Spider Gi;11;5
+38322;0xb2950000;0x000095b2;MALE COAT;DungeonShinjukoMCoat2_Old;Spider Gi;11;5
 40483;0x239e0000;0x00009e23;MALE COAT;DungeonShinjukoMCoat3;The Black Widow's Gi;-1;-1
 39233;0x41990000;0x00009941;MALE COAT;DungeonShinjukoMCoat3_Old;The Black Widow's Gi;-1;-1
 38146;0x02950000;0x00009502;MALE COAT;EthanMCoat;Mother Coat;-1;-1
 42901;0x95a70000;0x0000a795;MALE COAT;EthanMCoatR1;Mother Coat;-1;-1
-38139;0xfb940000;0x000094fb;MALE COAT;KennyLeeMCoat;Kenny's Gi;-1;-1
-47774;0x9eba0000;0x0000ba9e;MALE COAT;KunoMGiGranB;Black Shinobi Grandmaster Gi;-1;-1
-47773;0x9dba0000;0x0000ba9d;MALE COAT;KunoMGiGranG;Gray Shinobi Grandmaster Gi;-1;-1
-47772;0x9cba0000;0x0000ba9c;MALE COAT;KunoMGiGranW;White Shinobi Grandmaster Gi;-1;-1
-47780;0xa4ba0000;0x0000baa4;MALE COAT;KunoMGiInitB;Black Shinobi Initiate Gi;-1;-1
-47779;0xa3ba0000;0x0000baa3;MALE COAT;KunoMGiInitG;Gray Shinobi Initiate Gi;-1;-1
-47778;0xa2ba0000;0x0000baa2;MALE COAT;KunoMGiInitW;White Shinobi Initiate Gi;-1;-1
-47777;0xa1ba0000;0x0000baa1;MALE COAT;KunoMGiMastB;Black Shinobi Master Gi;-1;-1
-47776;0xa0ba0000;0x0000baa0;MALE COAT;KunoMGiMastG;Gray Shinobi Master Gi;-1;-1
-47775;0x9fba0000;0x0000ba9f;MALE COAT;KunoMGiMastW;White Shinobi Master Gi;-1;-1
-47818;0xcaba0000;0x0000baca;MALE COAT;KunoMGiPink;{c:FF97CB}Pink Shinobi Gi{/c};-1;-1
-42694;0xc6a60000;0x0000a6c6;MALE COAT;Pandora2_1MCoat;Tiger Acolyte's Gi;-1;-1
-42695;0xc7a60000;0x0000a6c7;MALE COAT;Pandora2_2MCoat;Tiger Warrior's Gi;-1;-1
-42696;0xc8a60000;0x0000a6c8;MALE COAT;Pandora2_3MCoat;Tiger Master's Gi;-1;-1
+38139;0xfb940000;0x000094fb;MALE COAT;KennyLeeMCoat;Kenny's Gi;11;8
+47774;0x9eba0000;0x0000ba9e;MALE COAT;KunoMGiGranB;Black Shinobi Grandmaster Gi;28;2
+47773;0x9dba0000;0x0000ba9d;MALE COAT;KunoMGiGranG;Gray Shinobi Grandmaster Gi;28;1
+47772;0x9cba0000;0x0000ba9c;MALE COAT;KunoMGiGranW;White Shinobi Grandmaster Gi;28;0
+47780;0xa4ba0000;0x0000baa4;MALE COAT;KunoMGiInitB;Black Shinobi Initiate Gi;28;2
+47779;0xa3ba0000;0x0000baa3;MALE COAT;KunoMGiInitG;Gray Shinobi Initiate Gi;28;1
+47778;0xa2ba0000;0x0000baa2;MALE COAT;KunoMGiInitW;White Shinobi Initiate Gi;28;0
+47777;0xa1ba0000;0x0000baa1;MALE COAT;KunoMGiMastB;Black Shinobi Master Gi;28;2
+47776;0xa0ba0000;0x0000baa0;MALE COAT;KunoMGiMastG;Gray Shinobi Master Gi;28;1
+47775;0x9fba0000;0x0000ba9f;MALE COAT;KunoMGiMastW;White Shinobi Master Gi;28;0
+47818;0xcaba0000;0x0000baca;MALE COAT;KunoMGiPink;{c:FF97CB}Pink Shinobi Gi{/c};28;3
+42694;0xc6a60000;0x0000a6c6;MALE COAT;Pandora2_1MCoat;Tiger Acolyte's Gi;11;8
+42695;0xc7a60000;0x0000a6c7;MALE COAT;Pandora2_2MCoat;Tiger Warrior's Gi;11;8
+42696;0xc8a60000;0x0000a6c8;MALE COAT;Pandora2_3MCoat;Tiger Master's Gi;11;8
 45903;0x4fb30000;0x0000b34f;MALE GLASSES;Mclothing_Glasses_Twins_C1;Black Void Shades;16;0
 45912;0x58b30000;0x0000b358;MALE GLASSES;Mclothing_Glasses_Twins_C10;Brown Void Shades;-1;-1
 45913;0x59b30000;0x0000b359;MALE GLASSES;Mclothing_Glasses_Twins_C11;Orange Void Shades;-1;-1
@@ -357,10 +357,10 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 42905;0x99a70000;0x0000a799;MALE GLASSES;OptixMGlassesR1;Optix Optics;-1;-1
 38093;0xcd940000;0x000094cd;MALE GLASSES;ReactorMGlasses;Reaction Sunglasses;-1;-1
 42891;0x8ba70000;0x0000a78b;MALE GLASSES;ReactorMGlassesR1;Reaction Sunglasses;-1;-1
-38134;0xf6940000;0x000094f6;MALE GLASSES;ShockKiddMGlasses;Security Glasses;-1;-1
-47898;0x1abb0000;0x0000bb1a;MALE GLASSES;SleepMGlasses1;Blurred Sleepwalker Shades;-1;-1
-47899;0x1bbb0000;0x0000bb1b;MALE GLASSES;SleepMGlasses2;Fogged Sleepwalker Shades;-1;-1
-47900;0x1cbb0000;0x0000bb1c;MALE GLASSES;SleepMGlasses3;Opaque Sleepwalker Shades;-1;-1
+38134;0xf6940000;0x000094f6;MALE GLASSES;ShockKiddMGlasses;Security Glasses;18;5
+47898;0x1abb0000;0x0000bb1a;MALE GLASSES;SleepMGlasses1;Blurred Sleepwalker Shades;5;24
+47899;0x1bbb0000;0x0000bb1b;MALE GLASSES;SleepMGlasses2;Fogged Sleepwalker Shades;5;25
+47900;0x1cbb0000;0x0000bb1c;MALE GLASSES;SleepMGlasses3;Opaque Sleepwalker Shades;5;26
 47371;0x0bb90000;0x0000b90b;MALE GLASSES;SSRMGlasses;SSR Glasses;18;0
 42744;0xf8a60000;0x0000a6f8;MALE GLASSES;TransitionMGlasses;Awakening Glasses;13;0
 47938;0x42bb0000;0x0000bb42;MALE GLASSES;ValkMGlassesRose;Rose-colored Glasses;18;1
@@ -376,7 +376,7 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 39242;0x4a990000;0x0000994a;MALE GLOVES;DungeonUriahMGloves3;Fighter's Gloves;-1;-1
 42921;0xa9a70000;0x0000a7a9;MALE GLOVES;DungeonUriahMGloves3R1;Fighter's Gloves;-1;-1
 47147;0x2bb80000;0x0000b82b;MALE GLOVES;EliteCommMGloves;Elite Commando Gloves;11;0
-48009;0x89bb0000;0x0000bb89;MALE GLOVES;IndustrialMGloves;Industrial Gloves;-1;-1
+48009;0x89bb0000;0x0000bb89;MALE GLOVES;IndustrialMGloves;Industrial Gloves;1;0
 38095;0xcf940000;0x000094cf;MALE GLOVES;JackMGloves;Jack's Gloves;5;0
 42899;0x93a70000;0x0000a793;MALE GLOVES;JackMGlovesR1;Jack's Gloves;5;0
 38207;0x3f950000;0x0000953f;MALE GLOVES;KertonMGloves;Sublime Gloves;-1;-1
@@ -391,9 +391,9 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 47794;0xb2ba0000;0x0000bab2;MALE GLOVES;KunoMGlovesMastG;Gray Shinobi Master Tebukuro;14;0
 47793;0xb1ba0000;0x0000bab1;MALE GLOVES;KunoMGlovesMastW;White Shinobi Master Tebukuro;13;0
 47380;0x14b90000;0x0000b914;MALE GLOVES;OneZeroMRobotHands;10 Fingers;12;0
-42685;0xbda60000;0x0000a6bd;MALE GLOVES;Pandora1_1MGloves;Doctor's Gloves;-1;-1
-42686;0xbea60000;0x0000a6be;MALE GLOVES;Pandora1_2MGloves;Surgeon's Gloves;-1;-1
-42687;0xbfa60000;0x0000a6bf;MALE GLOVES;Pandora1_3MGloves;Torturer's Gloves;-1;-1
+42685;0xbda60000;0x0000a6bd;MALE GLOVES;Pandora1_1MGloves;Doctor's Gloves;6;0
+42686;0xbea60000;0x0000a6be;MALE GLOVES;Pandora1_2MGloves;Surgeon's Gloves;6;0
+42687;0xbfa60000;0x0000a6bf;MALE GLOVES;Pandora1_3MGloves;Torturer's Gloves;6;0
 47109;0x05b80000;0x0000b805;MALE GLOVES;QuicksilverMGloves;Quicksilver Gloves;1;0
 39511;0x579a0000;0x00009a57;MALE GLOVES;SakuraMGloves;Sakura Ninja Gloves;1;0
 38119;0xe7940000;0x000094e7;MALE GLOVES;StraightEdgeJohnMGloves;Pugilist's Gloves;-1;-1
@@ -428,7 +428,7 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 48044;0xacbb0000;0x0000bbac;MALE HAT;GasMHat;Gas Mask;41;0
 48048;0xb0bb0000;0x0000bbb0;MALE HAT;GrayBandanaMHat;Gray Bandana;37;0
 47129;0x19b80000;0x0000b819;MALE HAT;IndustrialMHat;Industrial Fedora;33;0
-38152;0x08950000;0x00009508;MALE HAT;JokahMHat;Jokah's Beanie;-1;-1
+38152;0x08950000;0x00009508;MALE HAT;JokahMHat;Jokah's Beanie;4;0
 48178;0x32bc0000;0x0000bc32;MALE HAT;OmegaMHat;Omega Headgear;48;0
 47115;0x0bb80000;0x0000b80b;MALE HAT;OverdriveMHat;Overdrive Bandana;12;0
 39513;0x599a0000;0x00009a59;MALE HAT;SakuraMHat;Sakura Ninja Bandana;10;0
@@ -451,9 +451,9 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 39507;0x539a0000;0x00009a53;MALE PANTS;AshencourteMPants_Old;Ashencourte Leggings;15;2
 47141;0x25b80000;0x0000b825;MALE PANTS;EliteCommMPants;Elite Commando Leggings;16;0
 47879;0x07bb0000;0x0000bb07;MALE PANTS;FanFaire08PantsM;Deep Blue Jeans;3;19
-48038;0xa6bb0000;0x0000bba6;MALE PANTS;HamptonMPants;Hampton Pants;-1;-1
-42869;0x75a70000;0x0000a775;MALE PANTS;IndustrialMPants;Industrial Pants;-1;-1
-38206;0x3e950000;0x0000953e;MALE PANTS;JacobMPants;Coward's Pants;-1;-1
+48038;0xa6bb0000;0x0000bba6;MALE PANTS;HamptonMPants;Hampton Pants;3;23
+42869;0x75a70000;0x0000a775;MALE PANTS;IndustrialMPants;Industrial Pants;3;0
+38206;0x3e950000;0x0000953e;MALE PANTS;JacobMPants;Coward's Pants;6;9
 38128;0xf0940000;0x000094f0;MALE PANTS;PetalMPants;Petal Pants;-1;-1
 47886;0x0ebb0000;0x0000bb0e;MALE PANTS;SleepMPants1;Faded Sleepwalker Jeans;3;20
 47887;0x0fbb0000;0x0000bb0f;MALE PANTS;SleepMPants2;Worn Sleepwalker Jeans;3;21
@@ -525,29 +525,29 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 40473;0x199e0000;0x00009e19;MALE SHOES;HoraceMShoes;Horace's Sneakers;-1;-1
 38089;0xc9940000;0x000094c9;MALE SHOES;HoraceMShoes_Old;Horace's Sneakers;-1;-1
 42878;0x7ea70000;0x0000a77e;MALE SHOES;HoraceMShoesR1;Horace's Sneakers;-1;-1
-47810;0xc2ba0000;0x0000bac2;MALE SHOES;KunoMShoesGranB;Black Shinobi Grandmaster Tabi;-1;-1
-47809;0xc1ba0000;0x0000bac1;MALE SHOES;KunoMShoesGranG;Gray Shinobi Grandmaster Tabi;-1;-1
-47808;0xc0ba0000;0x0000bac0;MALE SHOES;KunoMShoesGranW;White Shinobi Grandmaster Tabi;-1;-1
-47816;0xc8ba0000;0x0000bac8;MALE SHOES;KunoMShoesInitB;Black Shinobi Initiate Tabi;-1;-1
-47815;0xc7ba0000;0x0000bac7;MALE SHOES;KunoMShoesInitG;Gray Shinobi Initiate Tabi;-1;-1
-47814;0xc6ba0000;0x0000bac6;MALE SHOES;KunoMShoesInitW;White Shinobi Initiate Tabi;-1;-1
-47813;0xc5ba0000;0x0000bac5;MALE SHOES;KunoMShoesMastB;Black Shinobi Master Tabi;-1;-1
-47812;0xc4ba0000;0x0000bac4;MALE SHOES;KunoMShoesMastG;Gray Shinobi Master Tabi;-1;-1
-47811;0xc3ba0000;0x0000bac3;MALE SHOES;KunoMShoesMastW;White Shinobi Master Tabi;-1;-1
-38107;0xdb940000;0x000094db;MALE SHOES;LilQuickMShoes;LilQuick's Sneakers;-1;-1
-42889;0x89a70000;0x0000a789;MALE SHOES;LilQuickMShoesR1;LilQuick's Sneakers;-1;-1
-42704;0xd0a60000;0x0000a6d0;MALE SHOES;Pandora4_1MShoes;Heavenly Footwear;-1;-1
-42706;0xd2a60000;0x0000a6d2;MALE SHOES;Pandora4_2MShoes;Angelic Shoes;-1;-1
-42708;0xd4a60000;0x0000a6d4;MALE SHOES;Pandora4_3MShoes;Seraphim Shoes;-1;-1
-48159;0x1fbc0000;0x0000bc1f;MALE SHOES;PhoenixMShoes;Phoenix Boots;-1;-1
-39515;0x5b9a0000;0x00009a5b;MALE SHOES;SakuraMShoes;Sakura Ninja Boots;-1;-1
-48169;0x29bc0000;0x0000bc29;MALE SHOES;ScrapperMShoes;Scrapper Boots;-1;-1
-47920;0x30bb0000;0x0000bb30;MALE SHOES;SleepMShoes1;Faded Sleepwalker Boots;-1;-1
-47921;0x31bb0000;0x0000bb31;MALE SHOES;SleepMShoes2;Worn Sleepwalker Boots;-1;-1
-47922;0x32bb0000;0x0000bb32;MALE SHOES;SleepMShoes3;Threadbare Sleepwalker Boots;-1;-1
+47810;0xc2ba0000;0x0000bac2;MALE SHOES;KunoMShoesGranB;Black Shinobi Grandmaster Tabi;33;3
+47809;0xc1ba0000;0x0000bac1;MALE SHOES;KunoMShoesGranG;Gray Shinobi Grandmaster Tabi;33;2
+47808;0xc0ba0000;0x0000bac0;MALE SHOES;KunoMShoesGranW;White Shinobi Grandmaster Tabi;33;1
+47816;0xc8ba0000;0x0000bac8;MALE SHOES;KunoMShoesInitB;Black Shinobi Initiate Tabi;33;3
+47815;0xc7ba0000;0x0000bac7;MALE SHOES;KunoMShoesInitG;Gray Shinobi Initiate Tabi;33;2
+47814;0xc6ba0000;0x0000bac6;MALE SHOES;KunoMShoesInitW;White Shinobi Initiate Tabi;33;1
+47813;0xc5ba0000;0x0000bac5;MALE SHOES;KunoMShoesMastB;Black Shinobi Master Tabi;33;3
+47812;0xc4ba0000;0x0000bac4;MALE SHOES;KunoMShoesMastG;Gray Shinobi Master Tabi;33;2
+47811;0xc3ba0000;0x0000bac3;MALE SHOES;KunoMShoesMastW;White Shinobi Master Tabi;33;1
+38107;0xdb940000;0x000094db;MALE SHOES;LilQuickMShoes;LilQuick's Sneakers;1;0
+42889;0x89a70000;0x0000a789;MALE SHOES;LilQuickMShoesR1;LilQuick's Sneakers;1;0
+42704;0xd0a60000;0x0000a6d0;MALE SHOES;Pandora4_1MShoes;Heavenly Footwear;5;0
+42706;0xd2a60000;0x0000a6d2;MALE SHOES;Pandora4_2MShoes;Angelic Shoes;5;0
+42708;0xd4a60000;0x0000a6d4;MALE SHOES;Pandora4_3MShoes;Seraphim Shoes;5;0
+48159;0x1fbc0000;0x0000bc1f;MALE SHOES;PhoenixMShoes;Phoenix Boots;11;0
+39515;0x5b9a0000;0x00009a5b;MALE SHOES;SakuraMShoes;Sakura Ninja Boots;2;0
+48169;0x29bc0000;0x0000bc29;MALE SHOES;ScrapperMShoes;Scrapper Boots;10;0
+47920;0x30bb0000;0x0000bb30;MALE SHOES;SleepMShoes1;Faded Sleepwalker Boots;19;0
+47921;0x31bb0000;0x0000bb31;MALE SHOES;SleepMShoes2;Worn Sleepwalker Boots;19;1
+47922;0x32bb0000;0x0000bb32;MALE SHOES;SleepMShoes3;Threadbare Sleepwalker Boots;19;2
 47373;0x0db90000;0x0000b90d;MALE SHOES;SSRMShoes;SSR Dress Shoes;20;0
 38130;0xf2940000;0x000094f2;MALE SHOES;TantoMShoes;Kickin' Boots;-1;-1
-39501;0x4d9a0000;0x00009a4d;MALE SHOES;YukiMShoes;Yuki Ninja Boots;-1;-1
+39501;0x4d9a0000;0x00009a4d;MALE SHOES;YukiMShoes;Yuki Ninja Boots;2;0
 11278;0x0e2c0000;0x00002c0e;FEMALE COAT;Armor_F_Coat_A1_C1_1;Armored White Avera Open Trench;1;0
 12560;0x10310000;0x00003110;FEMALE COAT;Armor_F_Coat_A1_C1_2;Armored White Avera Open Trench;1;0
 13842;0x12360000;0x00003612;FEMALE COAT;Armor_F_Coat_A1_C1_3;Armored White Avera Open Trench;1;0

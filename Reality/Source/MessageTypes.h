@@ -447,6 +447,15 @@ public:
 		ToBuffer(m_buf);
 		return m_buf;
 	}
+	uint32 GetTotalSize()
+	{
+		uint32 startSize = sizeof(uint8)*2;
+		for (list<MsgBlock>::iterator it=msgBlocks.begin();it!=msgBlocks.end();++it)
+		{
+			startSize += it->GetTotalSize();
+		}		
+		return startSize;
+	}
 	list<MsgBlock> msgBlocks;
 };
 

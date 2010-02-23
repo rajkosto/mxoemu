@@ -71,11 +71,13 @@ public:
 		if (amIObjectUpdate != NULL)
 			amIObjectUpdate->setReceiver(this);
 
-		m_queuedCommands.push_back(realPtr);
+		m_queuedCommands.push_back(queuedMsg(m_serverCommandsSent,realPtr));
+		m_serverCommandsSent++;
 	}
-	void FlushQueue();
+	void FlushQueue(bool alsoResend=false);
 	void CheckAndResend();
 private:
+	bool SendSequencedPacket(msgBaseClassPtr jumboPacket, int clientSeqAck = -1);
 	SequencedPacket Decrypt(const char *pData, uint16 nLength);
 	void PSSChanged(uint8 oldPSS,uint8 newPSS);
 	bool PacketReceived(uint16 clientSeq)
@@ -93,9 +95,9 @@ private:
 		if (wraparound == true)
 		{
 			size_t removedPacketsToAck = 0;
-			for (deque<uint16>::iterator it=m_packetsToAck.begin();it!=m_packetsToAck.end();)
+			for (packetsToAckType::iterator it=m_packetsToAck.begin();it!=m_packetsToAck.end();)
 			{
-				if (*it < 4096/2)
+				if (it->seqToAck < 4096/2)
 				{
 					it = m_packetsToAck.erase(it);
 					removedPacketsToAck++;
@@ -106,39 +108,63 @@ private:
 				}
 			}
 
-			size_t flaggedActualPackets = 0;
-			for (sendQueueList::iterator it=m_sendQueue.begin();it!=m_sendQueue.end();++it)
-			{
-				if (it->client_sequence < 4096/2)
-				{
-					it->client_sequence = m_lastClientSequence;
-					it->ack = false;
-					flaggedActualPackets++;
-				}
-			}
-
-			INFO_LOG(format("(%1%) Purged %2% potential and %3% real acks due to client wraparound") % Address() % removedPacketsToAck % flaggedActualPackets);
+			INFO_LOG(format("(%1%) Purged %2% acks due to client wraparound") % Address() % removedPacketsToAck);
 		}
 
 		if (find(m_packetsToAck.begin(),m_packetsToAck.end(),clientSeq) != m_packetsToAck.end())
 			return false;
 
-		m_packetsToAck.push_back(clientSeq);
+		m_packetsToAck.push_back(packetToAck(clientSeq));
 		return true;
 	}
 	uint32 AcknowledgePacket(uint16 serverSeq)
 	{
-		vector<uint16> zeAckedPacketz;
+//		vector<uint16> zeAckedPacketz;
 		uint32 eraseCounter=0;
-		for (sendQueueList::iterator it=m_sendQueue.begin();it!=m_sendQueue.end();)
+		for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();)
 		{
-			if (it->sent==true && find(it->serverSequences.begin(),it->serverSequences.end(),serverSeq)!=it->serverSequences.end())
+			if ( (it->packetsItsIn.size() > 0) &&
+				find(it->packetsItsIn.begin(),it->packetsItsIn.end(),serverSeq)!=it->packetsItsIn.end() )
 			{
-				for (int i=0;i<it->serverSequences.size();i++)
+	/*			for (int i=0;i<it->packetsItsIn.size();i++)
 				{
-					zeAckedPacketz.push_back(it->serverSequences[i]);
-				}
-				it=m_sendQueue.erase(it);
+					zeAckedPacketz.push_back(it->packetsItsIn[i]);
+				}*/
+				it=m_queuedStates.erase(it);
+				eraseCounter++;
+			}
+			else
+			{
+				++it;
+			}
+		}
+		for (msgQueueType::iterator it=m_queuedCommands.begin();it!=m_queuedCommands.end();)
+		{
+			if ( (it->packetsItsIn.size() > 0) &&
+				find(it->packetsItsIn.begin(),it->packetsItsIn.end(),serverSeq)!=it->packetsItsIn.end() )
+			{
+		/*		for (int i=0;i<it->packetsItsIn.size();i++)
+				{
+					zeAckedPacketz.push_back(it->packetsItsIn[i]);
+				}*/
+				it=m_queuedCommands.erase(it);
+				eraseCounter++;
+			}
+			else
+			{
+				++it;
+			}
+		}
+		for (packetsToAckType::iterator it=m_packetsToAck.begin();it!=m_packetsToAck.end();)
+		{
+			if ( (it->packetsIn.size() > 0) &&
+				find(it->packetsIn.begin(),it->packetsIn.end(),serverSeq)!=it->packetsIn.end() )
+			{
+			/*	for (int i=0;i<it->packetsIn.size();i++)
+				{
+					zeAckedPacketz.push_back(it->packetsIn[i]);
+				}*/
+				it=m_packetsToAck.erase(it);
 				eraseCounter++;
 			}
 			else
@@ -147,20 +173,24 @@ private:
 			}
 		}
 /*		stringstream derp;
-		derp << "Acked " << eraseCounter << " packets latency " << m_latency << "ms ( ";
+		derp << "Acking " << serverSeq << " Acked " << eraseCounter << " packets latency " << m_latency << "ms ( ";
 		for (int i=0;i<zeAckedPacketz.size();i++)
 		{
 			derp << zeAckedPacketz[i] << " ";
 		}
 		vector<uint16> zePacketsLeft;
-		for (sendQueueList::iterator it=m_sendQueue.begin();it!=m_sendQueue.end();++it)
+		for (msgQueueType::iterator it=m_queuedCommands.begin();it!=m_queuedCommands.end();++it)
 		{
-			if (it->sent==true)
+			for (int i=0;i<it->packetsItsIn.size();i++)
 			{
-				for (int i=0;i<it->serverSequences.size();i++)
-				{
-					zePacketsLeft.push_back(it->serverSequences[i]);
-				}
+				zePacketsLeft.push_back(it->packetsItsIn[i]);
+			}
+		}
+		for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();++it)
+		{
+			for (int i=0;i<it->packetsItsIn.size();i++)
+			{
+				zePacketsLeft.push_back(it->packetsItsIn[i]);
 			}
 		}
 		derp << ") " << zePacketsLeft.size() << " left ( ";
@@ -172,9 +202,36 @@ private:
 		DEBUG_LOG(derp.str());*/
 		return eraseCounter;
 	}
+	struct queuedMsg
+	{
+		queuedMsg(uint16 newSeqId, msgBaseClassPtr dataToSend)
+		{
+			sequenceId=newSeqId;
+			theData=dataToSend;
+			msLastSent=0;
+		}
+		~queuedMsg()
+		{
+		}
+		bool operator<(const queuedMsg& rhs) const
+		{
+			if (this->msLastSent == 0 && rhs.msLastSent > 0)
+				return true;
+			if (this->msLastSent > 0 && rhs.msLastSent == 0)
+				return false;
 
-	typedef deque<msgBaseClassPtr> queueType;
-	queueType m_queuedCommands;
+			return this->sequenceId < rhs.sequenceId;
+		}
+
+		uint16 sequenceId;
+		msgBaseClassPtr theData;
+		vector<uint16> packetsItsIn;
+		uint32 msLastSent;
+	};
+	typedef deque<queuedMsg> msgQueueType;
+	msgQueueType m_queuedCommands;
+	uint16 m_serverCommandsSent;
+
 	struct queuedState
 	{
 		queuedState(msgBaseClassPtr theState, bool immediateOnly=false)
@@ -184,84 +241,13 @@ private:
 		}
 		bool noResend;
 		msgBaseClassPtr stateData;
+		vector<uint16> packetsItsIn;
+		uint32 msLastSent;
 	};
 	typedef deque<queuedState> stateQueueType;
 	stateQueueType m_queuedStates;
 
-	struct PacketInQueue
-	{
-		//the packet will own the data pointer
-		PacketInQueue(uint8 thePSS, uint16 serverSeq, uint16 clientSeq, bool ackPacket, msgBaseClassPtr dataToSend, bool immediateOnly=false)
-		{
-			clientPSS = thePSS;
-			serverSequences.push_back(serverSeq);
-			client_sequence = clientSeq;
-			ack=ackPacket;
-			theData = dataToSend;
-			sent=false;
-			msTimeSent=0;
-			resentCounter=0;
-			noResends=immediateOnly;
-		}
-		~PacketInQueue() {}
-
-		uint8 clientPSS;
-		typedef vector<uint16> sequencesType;
-		sequencesType serverSequences;
-		uint16 client_sequence;
-		bool ack;
-		msgBaseClassPtr theData;
-		bool sent;
-		uint32 msTimeSent;
-		uint32 resentCounter;
-		bool noResends;
-	};
-	typedef list<PacketInQueue> sendQueueList;
-	sendQueueList m_sendQueue;
-	void AddPacketToQueue(uint16 clientSeq, bool ackPacket, msgBaseClassPtr dataToSend, bool immediateOnly=false)
-	{
-		//if its a static packet of 0 bytes and no ack, no reason to send it
-		if (ackPacket == false)
-		{
-			shared_ptr<StaticMsg> amiStatic = dynamic_pointer_cast<StaticMsg>(dataToSend);
-			if (amiStatic != NULL)
-			{
-				uint32 packetLen = amiStatic->toBuf().size();
-				if (packetLen < 1)
-				{
-					return;
-				}
-			}
-		}
-		ByteBuffer outputData;
-		try
-		{
-			outputData = dataToSend->toBuf();
-		}
-		catch (MsgBaseClass::PacketNoLongerValid)
-		{
-			return;
-		}
-		increaseServerSequence();
-		uint16 theServerSeq = m_serverSequence;
-/*		if (outputData.size() > 0)
-		{
-			DEBUG_LOG(format("(%s) Queue SSeq: %d CSeq: %d Ack: %d Data: |%s|") % Address() % theServerSeq % clientSeq % ackPacket % Bin2Hex(outputData));
-		}
-		else
-		{
-			DEBUG_LOG(format("(%s) Queue SSeq: %d CSeq: %d Ack: %d No Data") % Address() % theServerSeq % clientSeq % ackPacket);
-		}*/
-		m_sendQueue.push_back(PacketInQueue(m_clientPSS,theServerSeq,clientSeq,ackPacket,dataToSend,immediateOnly));
-	}
-	void AddPacketToQueue(msgBaseClassPtr dataToSend, bool immediateOnly=false)
-	{
-		AddPacketToQueue(m_lastClientSequence,false,dataToSend,immediateOnly);
-	}
-
-	void MoveMsgsToQueue();
 	void SendEncrypted(SequencedPacket withSequences);
-	uint16 m_serverCommandsSent;
 
 	bool m_encryptionInitialized;
 	uint64 m_characterUID;
@@ -285,11 +271,58 @@ private:
 	bool m_calculatedInitialLatency;
 	uint32 m_lastServerMS;
 
-	//Number of packets received
-	uint32 m_numPackets;
-	deque<uint16> m_packetsToAck;
+	//sequences of packets received
+	struct packetToAck 
+	{
+		packetToAck(uint16 theClientSeq)
+		{
+			seqToAck=theClientSeq;
+			lastTimeSent=0;
+		}
+		~packetToAck() {}
+		bool operator<(const packetToAck& rhs) const
+		{
+			//sort by amount of times sent
+			if (this->packetsIn.size() != rhs.packetsIn.size())
+				return this->packetsIn.size() < rhs.packetsIn.size();
 
-	uint16 m_clientCommandsReceived;
+			//then sort by last time sent
+			return this->lastTimeSent < rhs.lastTimeSent;
+		}
+		bool operator==(const uint16 anotherSeq)
+		{
+			return this->seqToAck == anotherSeq;
+		}
+
+		uint16 seqToAck;
+		vector<uint16> packetsIn;
+		uint32 lastTimeSent;
+	};
+	typedef deque<packetToAck> packetsToAckType;
+	packetsToAckType m_packetsToAck;
+
+	uint16 GetAnAck(uint16 serverSeq)
+	{
+		if (m_packetsToAck.size() > 0)
+		{
+			for (packetsToAckType::iterator it=m_packetsToAck.begin();it!=m_packetsToAck.end();)
+			{
+				if (it->packetsIn.size() > 10)
+					it=m_packetsToAck.erase(it);
+				else
+					++it;
+			}
+			sort(m_packetsToAck.begin(),m_packetsToAck.end());
+
+			packetToAck &thePacket = m_packetsToAck.front();
+			thePacket.lastTimeSent = getMSTime();
+			thePacket.packetsIn.push_back(serverSeq);
+			return thePacket.seqToAck;
+		}
+		return m_lastClientSequence;
+	}
+	typedef map<uint16,ByteBuffer> clientCommandsType;
+	clientCommandsType m_clientCommandsReceived;
 
 	// Sequences
 	uint8 m_clientPSS;

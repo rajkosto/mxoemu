@@ -37,10 +37,8 @@
 
 GameClient::GameClient(sockaddr_in inc_addr, GameSocket *sock):m_address(inc_addr),m_sock(sock)
 {
-	m_serverSequence = 0;
+	m_serverSequence = 1;
 	m_serverCommandsSent = 0;
-	m_clientCommandsReceived = 0;
-	m_numPackets = 0;
 	m_clientPSS = 0;
 	m_lastClientSequence = 0;
 	m_validClient = true;
@@ -76,7 +74,6 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 
 	m_lastActivity = getTime();
 	m_lastPacketReceivedMS = getMSTime();
-	m_numPackets++;
 
 	if (m_encryptionInitialized == false && pData[0] == 0 && nLength == 43)
 	{
@@ -195,7 +192,6 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 			}
 
 			uint32 pktsAcked = AcknowledgePacket(packetData.getRemoteSeq());
-			assert(pktsAcked <= 1);
 
 			uint8 firstByte = packetData.contents()[0];
 			//normal packet byte
@@ -299,18 +295,6 @@ void GameClient::HandleOther( ByteBuffer &otherData )
 	}
 }
 
-bool msgblock_sequence_lessthan(MsgBlock s2, MsgBlock s1)
-{
-	return	( (s1.sequenceId > s2.sequenceId) && (s1.sequenceId-s2.sequenceId <= 65536/2) ) ||
-			( (s2.sequenceId > s1.sequenceId) && (s2.sequenceId-s1.sequenceId > 65536/2) );
-}
-
-bool msgblock_sequence_greaterthan(MsgBlock s1, MsgBlock s2)
-{
-	return	( (s1.sequenceId > s2.sequenceId) && (s1.sequenceId-s2.sequenceId <= 65536/2) ) ||
-		( (s2.sequenceId > s1.sequenceId) && (s2.sequenceId-s1.sequenceId > 65536/2) );
-}
-
 void GameClient::HandleOrdered( ByteBuffer &orderedData )
 {
 	OrderedPacket bigPacket;
@@ -326,28 +310,40 @@ void GameClient::HandleOrdered( ByteBuffer &orderedData )
 		return;
 	}
 
-	if (bigPacket.msgBlocks.size() > 1)
-	{
-		bigPacket.msgBlocks.sort(msgblock_sequence_lessthan);
-	}
-
 	for (list<MsgBlock>::iterator it1=bigPacket.msgBlocks.begin();it1!=bigPacket.msgBlocks.end();++it1)
 	{
-		DEBUG_LOG( format("(%s) 04 client order: %d, our order %d") % Address() % it1->sequenceId % m_clientCommandsReceived);
-		if ( isSequenceMoreRecent(it1->sequenceId,m_clientCommandsReceived,65536) == true || it1->sequenceId == m_clientCommandsReceived)
+		uint16 currCmdSequence = it1->sequenceId;
+		for (list<ByteBuffer>::iterator it2=it1->subPackets.begin();it2!=it1->subPackets.end();++it2)
 		{
-			for (list<ByteBuffer>::iterator it2=it1->subPackets.begin();it2!=it1->subPackets.end();++it2)
+			if (m_clientCommandsReceived.find(currCmdSequence) != m_clientCommandsReceived.end())
 			{
+				ByteBuffer &existingPacket = m_clientCommandsReceived[currCmdSequence];
+				if (it2->size() != existingPacket.size() || memcmp(it2->contents(),existingPacket.contents(),existingPacket.size()) != 0)
+				{
+					DEBUG_LOG(format("(%1%) Command %2% already exists, but with different contents, reprocessing.") % Address() % currCmdSequence);
+					m_clientCommandsReceived[currCmdSequence] = *it2;
+
+					if (m_playerGoId != 0)
+					{
+						sObjMgr.getGOPtr(m_playerGoId)->HandleCommand(*it2);
+					}
+				}
+				else
+				{
+					DEBUG_LOG(format("(%1%) Command %2% already exists, with identical contents, ignoring.") % Address() % currCmdSequence);
+				}
+			}
+			else
+			{
+				DEBUG_LOG(format("(%1%) Parsing command %2%.") % Address() % currCmdSequence);
+				m_clientCommandsReceived[currCmdSequence] = *it2;
+
 				if (m_playerGoId != 0)
 				{
 					sObjMgr.getGOPtr(m_playerGoId)->HandleCommand(*it2);
-					m_clientCommandsReceived++;
 				}
 			}
-		}
-		else
-		{
-			WARNING_LOG(format("(%1%) Client order %2% smaller than server order %3%") % Address() % it1->sequenceId % m_clientCommandsReceived);
+			currCmdSequence++;
 		}
 	}
 }
@@ -408,295 +404,184 @@ void GameClient::PSSChanged( uint8 oldPSS,uint8 newPSS )
 	}
 }
 
-void GameClient::MoveMsgsToQueue()
+bool GameClient::SendSequencedPacket( msgBaseClassPtr jumboPacket, int clientSeqAck )
 {
-	//first we send out all the 03
-	for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();++it)
+	//serialize data from dynamic packet to a static one
+	ByteBuffer serializedData;
+	try
 	{
-		//consume an ack if we can
-		if (m_packetsToAck.size() > 0)
-		{			
-			uint16 theClientSeq = m_packetsToAck.front();
-			m_packetsToAck.pop_front();
+		serializedData=jumboPacket->toBuf();
+	}
+	catch (MsgBaseClass::PacketNoLongerValid)
+	{
+		return false;
+	}
 
-			AddPacketToQueue(theClientSeq,true,it->stateData,it->noResend);
-		}
-		else
+	ByteBuffer outputData;
+	//we send simtime synchronization only in the first packet (anything else seems to break the game)
+	uint32 currTimeMS = getMSTime();
+	if ( /*(*/m_lastSimTimeMS==0 /*|| currTimeMS-m_lastSimTimeMS>1000) 
+								 && serializedData.size() > 0
+								 && dynamic_pointer_cast<OrderedPacket>(it->theData) != NULL*/)
+	{
+		m_lastSimTimeMS = getMSTime();
+		outputData << uint8(0x82);
+		//theirs ticks at 64hz, ours ticks at 1000
+		double preciseInterval = double(m_lastSimTimeMS)/double(1000/64);
+		uint32 simTimeToSend = uint32(preciseInterval);
+		outputData << uint32(simTimeToSend);
+	}
+	else
+	{
+		//nosimtime byte
+		outputData << uint8(0x02);
+	}
+
+	//append that to our simtime or nosimtime byte
+	if (serializedData.size() > 0)
+	{
+		outputData.append(serializedData.contents(),serializedData.size());
+	}
+
+	//prepend sequences
+	uint16 clientAck;
+	if (clientSeqAck == -1)
+		clientAck = GetAnAck(m_serverSequence);
+	else
+		clientAck = clientSeqAck;
+
+	SequencedPacket prepended(m_serverSequence,clientAck,m_clientPSS,outputData);
+	SendEncrypted(prepended);
+	increaseServerSequence();
+	return true;
+}
+
+void GameClient::FlushQueue( bool alsoResend )
+{
+	//reliable commands first
+	{
+		shared_ptr<OrderedPacket> jumboPacket(new OrderedPacket());
+		MsgBlock currBlock;
+		sort(m_queuedCommands.begin(),m_queuedCommands.end());
+		for (msgQueueType::iterator it=m_queuedCommands.begin();it!=m_queuedCommands.end();)
 		{
-			AddPacketToQueue(it->stateData,it->noResend);
+			if (it->packetsItsIn.size() > 0 && (currBlock.subPackets.size() == 0 || currBlock.sequenceId+currBlock.subPackets.size() != it->sequenceId))
+			{
+				if (getMSTime() - it->msLastSent < 500 || alsoResend == false) //500ms resend
+				{
+					++it;
+					continue;
+				}
+			}
+
+			ByteBuffer packetStaticBuf;
+			try
+			{
+				packetStaticBuf = it->theData->toBuf();
+			}
+			catch (MsgBaseClass::PacketNoLongerValid)
+			{
+				it=m_queuedCommands.erase(it);
+				continue;
+			}
+
+			if (jumboPacket->GetTotalSize() + packetStaticBuf.size() > 1000)
+			{
+				SendSequencedPacket(jumboPacket);
+				jumboPacket.reset(new OrderedPacket());
+				continue;
+			}
+
+			if (currBlock.subPackets.size() == 0)
+			{
+				currBlock.sequenceId = it->sequenceId;
+			}
+			else if (currBlock.sequenceId + currBlock.subPackets.size() != it->sequenceId)
+			{
+				jumboPacket->msgBlocks.push_back(currBlock);
+				currBlock = MsgBlock();
+				currBlock.sequenceId = it->sequenceId;
+			}
+
+			it->packetsItsIn.push_back(m_serverSequence);
+			it->msLastSent = getMSTime();
+			currBlock.subPackets.push_back(packetStaticBuf);
+
+			++it;
+		}
+		if (currBlock.subPackets.size() > 0)
+		{
+			jumboPacket->msgBlocks.push_back(currBlock);
+			currBlock = MsgBlock();
+		}
+		if (jumboPacket->msgBlocks.size() > 0)
+		{
+			SendSequencedPacket(jumboPacket);
+			jumboPacket.reset(new OrderedPacket());
 		}
 	}
-	//all queued 03s have been transferred to packet queue, clear the 03 queue
-	m_queuedStates.clear();
-	
-	if (/*getMSTime() - m_lastOrderedFlush > 50*/1) //we will not send 04 packets more than 20 times a second
+
+	//03 next
+	for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();)
 	{
-		//send out subpackets, as much as we got, consuming as much acks as we can
-		while (m_queuedCommands.size() > 0)
+		if ((getMSTime() - it->msLastSent < 500 || alsoResend == false) && it->packetsItsIn.size() > 0) //500ms resend
 		{
-			MsgBlock currBlock;
-			currBlock.sequenceId = m_serverCommandsSent;
-
-			while (m_queuedCommands.size() > 0)
+			++it;
+			continue;
+		}
+		//see if packet is still valid, if not, erase and carry on
+		{
+			if (it->packetsItsIn.size() > 10)
 			{
-				ByteBuffer packetStaticBuf;
-				try
-				{
-					packetStaticBuf = m_queuedCommands.front()->toBuf();
-				}
-				catch (MsgBaseClass::PacketNoLongerValid)
-				{
-					//just remove the command and go to the next one
-					m_queuedCommands.front().reset();
-					m_queuedCommands.pop_front();
-				}
-
-				currBlock.subPackets.push_back(packetStaticBuf);
-				m_serverCommandsSent++;
-
-				m_queuedCommands.front().reset();
-				m_queuedCommands.pop_front();
-
-				if (m_queuedCommands.size() < 1 || 
-					(currBlock.GetTotalSize() + packetStaticBuf.size() >= 1000) )
-				{
-					break;
-				}
+				it=m_queuedStates.erase(it);
+				continue;
 			}
 
-			//consume an ack if we can
-			if (m_packetsToAck.size() > 0)
+			ByteBuffer serializedData;
+			try
 			{
-				uint16 theClientSeq = m_packetsToAck.front();
-				m_packetsToAck.pop_front();
-
-				AddPacketToQueue(theClientSeq,true,make_shared<OrderedPacket>(currBlock));
+				serializedData=it->stateData->toBuf();
 			}
-			else
+			catch (MsgBaseClass::PacketNoLongerValid)
 			{
-				AddPacketToQueue(make_shared<OrderedPacket>(currBlock));
+				it=m_queuedStates.erase(it);
+				continue;
 			}
 		}
-		m_lastOrderedFlush = getMSTime();
-	}	
+		it->packetsItsIn.push_back(m_serverSequence);
+		it->msLastSent=getMSTime();
+		SendSequencedPacket(it->stateData);
+		if (it->noResend==true)
+			it = m_queuedStates.erase(it);
+		else
+			++it;
+	}
 
 	//we ran out of packets but there are still more acks to be sent ?
 	if (m_packetsToAck.size() > 0)
 	{
-		for (deque<uint16>::iterator it=m_packetsToAck.begin();it!=m_packetsToAck.end();++it)
+		for (packetsToAckType::iterator it=m_packetsToAck.begin();it!=m_packetsToAck.end();)
 		{
-			AddPacketToQueue(*it,true,make_shared<EmptyMsg>());
+			if (it->packetsIn.size() > 10)
+				it=m_packetsToAck.erase(it);
+			else
+				++it;
 		}
-		m_packetsToAck.clear();
+		sort(m_packetsToAck.begin(),m_packetsToAck.end());
+		for (packetsToAckType::iterator it=m_packetsToAck.begin();it!=m_packetsToAck.end();++it)
+		{
+			if (it->lastTimeSent == 0 || (getMSTime() - it->lastTimeSent > 500 && alsoResend==true))//500ms timeout
+			{
+				it->lastTimeSent = getMSTime();
+				it->packetsIn.push_back(m_serverSequence);
+				SendSequencedPacket(make_shared<EmptyMsg>(),it->seqToAck);
+			}
+		}
 	}
 }
 
-void GameClient::FlushQueue()
-{
-	MoveMsgsToQueue();
-
-	for(sendQueueList::iterator it=m_sendQueue.begin();it!=m_sendQueue.end();)
-	{
-		//skip sent packets
-		if (it->sent==true)
-		{
-			++it;
-			continue;
-		}
-
-		//serialize data from dynamic packet to a static one
-		ByteBuffer serializedData;
-		try
-		{
-			serializedData=it->theData->toBuf();
-		}
-		catch (MsgBaseClass::PacketNoLongerValid)
-		{
-			serializedData.clear();
-			//remove data from packet in queue, this will leave it to still have an ack if needed
-			it->theData.reset(new EmptyMsg());
-		}
-
-		ByteBuffer outputData;
-		//we send simtime synchronization only in the first packet (anything else seems to break the game)
-		uint32 currTimeMS = getMSTime();
-		if ( /*(*/m_lastSimTimeMS==0 /*|| currTimeMS-m_lastSimTimeMS>1000) 
-			&& serializedData.size() > 0
-			&& dynamic_pointer_cast<OrderedPacket>(it->theData) != NULL*/)
-		{
-			m_lastSimTimeMS = getMSTime();
-			outputData << uint8(0x82);
-			//theirs ticks at 64hz, ours ticks at 1000
-			double preciseInterval = double(m_lastSimTimeMS)/double(1000/64);
-			uint32 simTimeToSend = uint32(preciseInterval);
-			outputData << uint32(simTimeToSend);
-		}
-		else
-		{
-			//nosimtime byte
-			outputData << uint8(0x02);
-		}
-
-		//append that to our simtime or nosimtime byte
-		if (serializedData.size() > 0)
-		{
-			outputData.append(serializedData.contents(),serializedData.size());
-		}
-		else if (it->ack == false)
-		{
-			//if no ack, and data is 0, no reason to send this packet, so remove from queue and carry on
-			it=m_sendQueue.erase(it);
-			continue;
-		}
-
-		//prepend sequences
-		SequencedPacket prepended(it->serverSequences.back(),it->client_sequence,it->clientPSS,outputData);
-		SendEncrypted(prepended);
-
-//		DEBUG_LOG(format("(%s) Flush PSS: %x SSeq: %d CSeq: %d |%s|") % Address() % uint32(prepended.getPSS()) % prepended.getLocalSeq() % prepended.getRemoteSeq() % Bin2Hex(prepended));
-
-		//mark packet as sent
-		it->sent=true;
-		it->msTimeSent=getMSTime();
-
-		//if packet is non resendable, remove it
-		if (it->noResends==true)
-			it=m_sendQueue.erase(it);
-		else
-			++it;
-	}
-}
 
 void GameClient::CheckAndResend()
 {
-	bool modified = false;
-	for(sendQueueList::iterator it=m_sendQueue.begin();it!=m_sendQueue.end();)
-	{
-		//skip unsent packets
-		if (it->sent == false)
-		{
-			++it;
-			continue;
-		}
-		bool deleted = false;
-
-		uint32 currTime = getMSTime();
-		if (currTime - it->msTimeSent > /*std::min<uint32>(200,m_latency)*/ 300 ) //dynamic resend timeout, never smaller than 200
-		{
-			//client obviously doesnt want to ack this packet
-			if (it->resentCounter > 10)
-			{
-				ByteBuffer resentPacketDumpedData;
-				try
-				{
-					resentPacketDumpedData = it->theData->toBuf();
-				}
-				catch (MsgBaseClass::PacketNoLongerValid)
-				{
-					INFO_LOG(format("(%1%) Resent packet %2%'s data is no longer valid") % Address() % it->serverSequences.back());
-				}
-
-				INFO_LOG(format("(%1%) Doesn't want packet %2% of size %3%") % Address() % it->serverSequences.back() % resentPacketDumpedData.size());
-
-				if (resentPacketDumpedData.size() > 1000)
-				{
-					WARNING_LOG(format("(%1%) WTF, WHY IS THIS SO BIG, %2%") % Address() % Bin2Hex(resentPacketDumpedData) );
-				}
-
-				it=m_sendQueue.erase(it);
-				deleted=true;
-			}
-			else
-			{
-				bool subdivided=false;
-				//is it a 04 packet ?
-				shared_ptr<OrderedPacket> daPacket = dynamic_pointer_cast<OrderedPacket>(it->theData);
-				if (daPacket != NULL && daPacket->msgBlocks.size() == 1)
-				{
-					DEBUG_LOG(format("(%1%) Packet %2% is a 04 packet, with %3% msgblocks %4% msgs(1)") % Address() % it->serverSequences.back() % daPacket->msgBlocks.size() % daPacket->msgBlocks.front().subPackets.size());
-					shared_ptr<OrderedPacket> newPacket(new OrderedPacket());
-					for (list<MsgBlock>::iterator blockPtr=daPacket->msgBlocks.begin();blockPtr!=daPacket->msgBlocks.end();++blockPtr)
-					{
-						MsgBlock currBlock = *blockPtr;
-						//send the same subpackets only in smaller chunks
-						uint16 altCommandsSent = currBlock.sequenceId;
-						if (currBlock.subPackets.size() > 4)
-						{
-							int numAtATime = 2;
-							if (currBlock.subPackets.size() >= 12)
-							{
-								numAtATime = 4;
-							}
-							else if (currBlock.subPackets.size() >= 6)
-							{
-								numAtATime = 3;
-							}
-
-							for (;;)
-							{
-								MsgBlock newBlock;
-								newBlock.sequenceId = altCommandsSent;
-								for (int i=0;i<numAtATime;i++)
-								{
-									if (currBlock.subPackets.size() < 1)
-										break;
-
-									newBlock.subPackets.push_back(currBlock.subPackets.front());
-									altCommandsSent++;
-									currBlock.subPackets.pop_front();
-								}
-
-								if (newBlock.subPackets.size() < 1)
-									break;
-
-								newPacket->msgBlocks.push_back(newBlock);
-							}
-						}
-					}
-					if (newPacket->msgBlocks.size() > 1)
-					{
-						uint16 oldServerSeq = it->serverSequences.back();
-						uint16 oldClientSeq = it->client_sequence;
-						uint8 oldClientPSS = it->clientPSS;
-						bool oldAck = it->ack;
-
-						it = m_sendQueue.erase(it);
-						deleted=true;
-
-						INFO_LOG(format("(%1%) Subdivided packet sseq %2% from 1 msgblocks to %3% msgblocks") % Address() % oldServerSeq % newPacket->msgBlocks.size());
-						//reverse iterator because push_front inserts into reverse anyway
-						for (list<MsgBlock>::reverse_iterator hurr=newPacket->msgBlocks.rbegin();hurr!=newPacket->msgBlocks.rend();++hurr)
-						{
-							uint16 oldSeqz = m_serverSequence;
-							increaseServerSequence();
-							m_sendQueue.push_front( PacketInQueue(oldClientPSS,m_serverSequence,oldClientSeq,oldAck,shared_ptr<OrderedPacket>(new OrderedPacket(*hurr))) );
-						}
-						subdivided=true;
-					}
-				}
-				
-				if (subdivided==false)
-				{
-					it->resentCounter++;
-					it->sent = false;
-					it->msTimeSent=0;
-					uint16 oldSeq = it->serverSequences.back();
-					increaseServerSequence();
-					it->serverSequences.push_back(m_serverSequence);
-				}
-
-				//DEBUG_LOG(format("(%1%) Resending packet sseq %2% under new sseq %3%") % Address() % oldSeq % it->serverSequences.back());
-				modified = true;
-			}
-		}
-
-		if (deleted==false)
-		{
-			++it;
-		}
-	}
-	if (modified == true)
-	{
-		FlushQueue();
-	}
+	FlushQueue(true);
 }

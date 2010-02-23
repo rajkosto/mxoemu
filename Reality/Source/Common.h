@@ -239,6 +239,9 @@ using boost::lexical_cast;
 #include <boost/format.hpp>
 using boost::format;
 
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
 #if PLATFORM == PLATFORM_WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>

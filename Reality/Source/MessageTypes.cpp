@@ -24,6 +24,7 @@
 #include "GameClient.h"
 #include "GameServer.h"
 #include "ObjectMgr.h"
+#include "LocationVector.h"
 
 ObjectUpdateMsg::ObjectUpdateMsg( uint32 objectId ):m_objectId(objectId),m_toWho(NULL)
 {
@@ -544,4 +545,21 @@ const ByteBuffer& AnimationStateMsg::toBuf()
 	m_buf.clear();
 	m_buf.append(sampleAnimationBuf,sizeof(sampleAnimationBuf));
 	return m_buf;
+}
+
+WhereAmIResponse::WhereAmIResponse( const LocationVector &currPos )
+{
+	byte whereamipacket[] =
+	{
+		0x81, 0x54, 0x00, 0xB4, 0xC3, 0x46, 0x00, 0x80, 0xFC, 0xC3, 0x00, 0xE2, 0x01, 0x47, 0x07, 0x01,	0x00
+	} ;
+
+	currPos.toFloatBuf(&whereamipacket[2],sizeof(whereamipacket)-2);
+	m_buf.clear();
+	m_buf.append(whereamipacket,sizeof(whereamipacket));
+}
+
+WhereAmIResponse::~WhereAmIResponse()
+{
+
 }

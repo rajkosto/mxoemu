@@ -77,9 +77,9 @@ public:
 	void FlushQueue(bool alsoResend=false);
 	void CheckAndResend();
 private:
-	bool SendSequencedPacket(msgBaseClassPtr jumboPacket, int clientSeqAck = -1);
+	bool SendSequencedPacket(msgBaseClassPtr jumboPacket);
 	SequencedPacket Decrypt(const char *pData, uint16 nLength);
-	void PSSChanged(uint8 oldPSS,uint8 newPSS);
+	void FlagsChanged(uint8 oldFlags,uint8 newFlags);
 	bool PacketReceived(uint16 clientSeq)
 	{
 		bool wraparound=false;
@@ -94,19 +94,8 @@ private:
 
 		if (wraparound == true)
 		{
-			size_t removedPacketsToAck = 0;
-			for (packetsToAckType::iterator it=m_packetsToAck.begin();it!=m_packetsToAck.end();)
-			{
-				if (it->seqToAck < 4096/2)
-				{
-					it = m_packetsToAck.erase(it);
-					removedPacketsToAck++;
-				}
-				else
-				{
-					++it;
-				}
-			}
+			size_t removedPacketsToAck = m_packetsToAck.size();
+			m_packetsToAck.clear();
 
 			INFO_LOG(format("(%1%) Purged %2% acks due to client wraparound") % Address() % removedPacketsToAck);
 		}
@@ -114,7 +103,7 @@ private:
 		if (find(m_packetsToAck.begin(),m_packetsToAck.end(),clientSeq) != m_packetsToAck.end())
 			return false;
 
-		m_packetsToAck.push_back(packetToAck(clientSeq));
+		m_packetsToAck.push_back(clientSeq);
 		return true;
 	}
 	uint32 AcknowledgePacket(uint16 serverSeq)
@@ -148,23 +137,6 @@ private:
 					zeAckedPacketz.push_back(it->packetsItsIn[i]);
 				}*/
 				it=m_queuedCommands.erase(it);
-				eraseCounter++;
-			}
-			else
-			{
-				++it;
-			}
-		}
-		for (packetsToAckType::iterator it=m_packetsToAck.begin();it!=m_packetsToAck.end();)
-		{
-			if ( (it->packetsIn.size() > 0) &&
-				find(it->packetsIn.begin(),it->packetsIn.end(),serverSeq)!=it->packetsIn.end() )
-			{
-			/*	for (int i=0;i<it->packetsIn.size();i++)
-				{
-					zeAckedPacketz.push_back(it->packetsIn[i]);
-				}*/
-				it=m_packetsToAck.erase(it);
 				eraseCounter++;
 			}
 			else
@@ -272,52 +244,16 @@ private:
 	uint32 m_lastServerMS;
 
 	//sequences of packets received
-	struct packetToAck 
-	{
-		packetToAck(uint16 theClientSeq)
-		{
-			seqToAck=theClientSeq;
-			lastTimeSent=0;
-		}
-		~packetToAck() {}
-		bool operator<(const packetToAck& rhs) const
-		{
-			//sort by amount of times sent
-			if (this->packetsIn.size() != rhs.packetsIn.size())
-				return this->packetsIn.size() < rhs.packetsIn.size();
-
-			//then sort by last time sent
-			return this->lastTimeSent < rhs.lastTimeSent;
-		}
-		bool operator==(const uint16 anotherSeq)
-		{
-			return this->seqToAck == anotherSeq;
-		}
-
-		uint16 seqToAck;
-		vector<uint16> packetsIn;
-		uint32 lastTimeSent;
-	};
-	typedef deque<packetToAck> packetsToAckType;
+	typedef deque<uint16> packetsToAckType;
 	packetsToAckType m_packetsToAck;
 
 	uint16 GetAnAck(uint16 serverSeq)
 	{
 		if (m_packetsToAck.size() > 0)
 		{
-			for (packetsToAckType::iterator it=m_packetsToAck.begin();it!=m_packetsToAck.end();)
-			{
-				if (it->packetsIn.size() > 10)
-					it=m_packetsToAck.erase(it);
-				else
-					++it;
-			}
-			sort(m_packetsToAck.begin(),m_packetsToAck.end());
-
-			packetToAck &thePacket = m_packetsToAck.front();
-			thePacket.lastTimeSent = getMSTime();
-			thePacket.packetsIn.push_back(serverSeq);
-			return thePacket.seqToAck;
+			uint16 theAck = m_packetsToAck.front();
+			m_packetsToAck.pop_front();
+			return theAck;
 		}
 		return m_lastClientSequence;
 	}
@@ -325,7 +261,7 @@ private:
 	clientCommandsType m_clientCommandsReceived;
 
 	// Sequences
-	uint8 m_clientPSS;
+	uint8 m_clientFlags;
 	uint16 m_serverSequence;
 	inline void increaseServerSequence()
 	{

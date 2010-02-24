@@ -65,6 +65,8 @@ public:
 	void checkAndStore();
 	void saveDataToDB();
 
+	class GameClient& getClient() { return m_parent; }
+
 	vector<msgBaseClassPtr> getCurrentStatePackets();
 private:
 	class GameClient &m_parent;

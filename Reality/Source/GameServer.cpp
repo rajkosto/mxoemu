@@ -45,6 +45,8 @@ bool GameServer::Start()
 	}
 	m_udpHandler.Add(m_mainSocket.get());
 
+	m_simTime=0;
+
 	return true;
 }
 

@@ -163,7 +163,13 @@ void Log::Output( LogLevel level,const string &str )
 
 void Log::Critical( boost::format &fmt )
 {
-	Critical(fmt.str());
+	int ConsoleLogLevel = sConfig.GetIntDefault("Log.ConsoleLogLevel",LOGLEVEL_INFO);
+	int FileLogLevel = sConfig.GetIntDefault("Log.FileLogLevel",LOGLEVEL_WARNING);
+
+	if (ConsoleLogLevel >= LOGLEVEL_CRITICAL || FileLogLevel >= LOGLEVEL_CRITICAL)
+	{
+		Critical(fmt.str());
+	}
 }
 
 void Log::Critical( string fmt )
@@ -173,7 +179,13 @@ void Log::Critical( string fmt )
 
 void Log::Error( boost::format &fmt )
 {
-	Error(fmt.str());
+	int ConsoleLogLevel = sConfig.GetIntDefault("Log.ConsoleLogLevel",LOGLEVEL_INFO);
+	int FileLogLevel = sConfig.GetIntDefault("Log.FileLogLevel",LOGLEVEL_WARNING);
+
+	if (ConsoleLogLevel >= LOGLEVEL_ERROR || FileLogLevel >= LOGLEVEL_ERROR)
+	{
+		Error(fmt.str());
+	}
 }
 
 void Log::Error( string fmt )
@@ -183,7 +195,13 @@ void Log::Error( string fmt )
 
 void Log::Warning( boost::format &fmt )
 {
-	Warning(fmt.str());
+	int ConsoleLogLevel = sConfig.GetIntDefault("Log.ConsoleLogLevel",LOGLEVEL_INFO);
+	int FileLogLevel = sConfig.GetIntDefault("Log.FileLogLevel",LOGLEVEL_WARNING);
+
+	if (ConsoleLogLevel >= LOGLEVEL_WARNING || FileLogLevel >= LOGLEVEL_WARNING)
+	{
+		Warning(fmt.str());
+	}
 }
 
 void Log::Warning( string fmt )
@@ -193,7 +211,13 @@ void Log::Warning( string fmt )
 
 void Log::Info( boost::format &fmt )
 {
-	Info(fmt.str());
+	int ConsoleLogLevel = sConfig.GetIntDefault("Log.ConsoleLogLevel",LOGLEVEL_INFO);
+	int FileLogLevel = sConfig.GetIntDefault("Log.FileLogLevel",LOGLEVEL_WARNING);
+
+	if (ConsoleLogLevel >= LOGLEVEL_INFO || FileLogLevel >= LOGLEVEL_INFO)
+	{
+		Info(fmt.str());
+	}
 }
 
 void Log::Info( string fmt )
@@ -203,7 +227,13 @@ void Log::Info( string fmt )
 
 void Log::Debug( boost::format &fmt )
 {
-	Debug(fmt.str());
+	int ConsoleLogLevel = sConfig.GetIntDefault("Log.ConsoleLogLevel",LOGLEVEL_INFO);
+	int FileLogLevel = sConfig.GetIntDefault("Log.FileLogLevel",LOGLEVEL_WARNING);
+
+	if (ConsoleLogLevel >= LOGLEVEL_DEBUG || FileLogLevel >= LOGLEVEL_DEBUG)
+	{
+		Debug(fmt.str());
+	}
 }
 
 void Log::Debug( string fmt )

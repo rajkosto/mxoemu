@@ -270,10 +270,19 @@ void PlayerObject::PopulateWorld()
 			}
 		}
 	}
+
+	//open doors that are opened
+/*	vector<msgBaseClassPtr> openedDoorPackets = sObjMgr.GetAllOpenDoors();
+	for (vector<msgBaseClassPtr>::iterator it=openedDoorPackets.begin();it!=openedDoorPackets.end();++it)
+	{
+		m_parent.QueueState(*it);
+	}*/
 }
 
 void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
 {
+/*	testCount++;
+	m_parent.QueueCommand(make_shared<SystemChatMsg>( (format("CMD %1%")%testCount).str() ));*/
 	checkAndStore();
 
 	uint8 zeroThree;
@@ -389,6 +398,9 @@ void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
 	}
 }
 
+#include <boost/algorithm/string.hpp>
+using boost::iequals;
+
 void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 {
 	checkAndStore();
@@ -433,6 +445,106 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 			INFO_LOG(format("%1% says %2%") % m_handle % theMessage);
 			m_parent.QueueCommand(make_shared<SystemChatMsg>((format("You said %1%") % theMessage).str()));
 			sGame.AnnounceCommand(&m_parent,make_shared<PlayerChatMsg>(m_handle,theMessage));
+			return;
+		}
+	}
+	else if (firstByte == 0x29)
+	{
+		uint8 secondByte;
+		if (srcCmd.remaining() < sizeof(secondByte))
+			return;
+		srcCmd >> secondByte;
+
+		if (secondByte == 0x07) //whisper
+		{
+			uint8 thirdByte;
+			if (srcCmd.remaining() < sizeof(thirdByte))
+				return;
+			srcCmd >> thirdByte;
+
+			if (thirdByte != 0)
+				WARNING_LOG(format("(%1%) Whisper packet third byte not 0 but %2%, packet %3%") % m_parent.Address() % uint32(thirdByte) % Bin2Hex(srcCmd));
+
+			uint16 messageLenPos;
+			if (srcCmd.remaining() < sizeof(messageLenPos))
+				return;
+			srcCmd >> messageLenPos;
+
+			if (srcCmd.size() < messageLenPos)
+				return;
+
+			uint16 whisperCount;
+			if (srcCmd.remaining() < sizeof(whisperCount))
+				return;
+			srcCmd >> whisperCount;
+			whisperCount = swap16(whisperCount); //big endian in packet
+
+			uint16 recipientStrLen;
+			if (srcCmd.remaining() < sizeof(recipientStrLen))
+				return;
+			srcCmd >> recipientStrLen;
+
+			if (srcCmd.remaining() < recipientStrLen)
+				return;
+			vector<byte> tempBuf(recipientStrLen);
+			srcCmd.read(&tempBuf[0],tempBuf.size());
+
+			string theRecipient = string((const char*)&tempBuf[0],tempBuf.size()-1);
+			string serverPrefix = "SOE+MXO+Reality+";
+			string::size_type prefixPos = theRecipient.find_first_of(serverPrefix);
+			if (prefixPos != string::npos)
+			{
+				theRecipient = theRecipient.substr(prefixPos+serverPrefix.length());
+			}
+
+			if (srcCmd.rpos() != messageLenPos)
+				WARNING_LOG(format("(%1%) Whisper packet size byte mismatch, packet %2%") % m_parent.Address() % Bin2Hex(srcCmd));
+
+			uint16 messageStrLen;
+			if (srcCmd.remaining() < sizeof(messageStrLen))
+				return;
+			srcCmd >> messageStrLen;
+
+			if (srcCmd.remaining() < messageStrLen)
+				return;
+			tempBuf.resize(messageStrLen);
+			srcCmd.read(&tempBuf[0],tempBuf.size());dw
+			string theMessage = string((const char*)&tempBuf[0],tempBuf.size()-1);
+
+			bool sentProperly=false;
+			vector<uint32> objectLists = sObjMgr.getAllGOIds();
+			for (int i=0;i<objectLists.size();i++)
+			{
+				PlayerObject* targetPlayer = NULL;
+				try
+				{
+					targetPlayer = sObjMgr.getGOPtr(objectLists[i]);
+				}
+				catch (ObjectMgr::ObjectNotAvailable)
+				{
+					continue;
+				}
+				
+				if (targetPlayer == NULL)
+					continue;
+
+				if (targetPlayer->getHandle() == theRecipient)
+				{
+					targetPlayer->getClient().QueueCommand(make_shared<WhisperMsg>(m_handle,theMessage));
+					sentProperly=true;
+				}
+			}
+			if (sentProperly)
+			{
+				INFO_LOG(format("%1% whispered to %2%: %3%") % m_handle % theRecipient % theMessage);
+				m_parent.QueueCommand(make_shared<SystemChatMsg>((format("You whispered %1% to %2%")%theMessage%theRecipient).str()));
+			}
+			else
+			{
+				INFO_LOG(format("%1% sent whisper to disconnected player %2%: %3%") % m_handle % theRecipient % theMessage);
+				m_parent.QueueCommand(make_shared<SystemChatMsg>((format("%1% is not online")%theRecipient).str()));
+			}
+			return;
 		}
 	}
 	else if (firstByte == 0x33) //stop animation
@@ -440,6 +552,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 		m_currAnimation = 0;
 		m_parent.QueueState(make_shared<AnimationStateMsg>(m_goId));
 		sGame.AnnounceStateUpdate(&m_parent,make_shared<AnimationStateMsg>(m_goId));
+		return;
 	}
 	else if (firstByte == 0x34) //start animation
 	{
@@ -450,6 +563,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 		m_currAnimation = newAnimation;
 		m_parent.QueueState(make_shared<AnimationStateMsg>(m_goId));
 		sGame.AnnounceStateUpdate(&m_parent,make_shared<AnimationStateMsg>(m_goId));
+		return;
 	}
 	else if (firstByte == 0x35) //change mood
 	{
@@ -460,6 +574,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 		m_currMood = newMood;	
 		m_parent.QueueState(make_shared<AnimationStateMsg>(m_goId));
 		sGame.AnnounceStateUpdate(&m_parent,make_shared<AnimationStateMsg>(m_goId));
+		return;
 	}
 	else if (firstByte == 0x30) //perform emote
 	{
@@ -483,12 +598,85 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 			% Bin2Hex((const byte*)&emoteId,sizeof(emoteId),0)
 			% Bin2Hex((const byte*)&emoteTarget,sizeof(emoteTarget),0)
 			% m_pos.x % m_pos.y % m_pos.z );
+		return;
 	}
-	else
+	else if (firstByte == 0x80)
 	{
-		srcCmd.rpos(0);
-		DEBUG_LOG(format("(%1%) unknown 04 command: %2%") % m_parent.Address() % Bin2Hex(srcCmd) );
+		uint8 secondByte;
+		if (srcCmd.remaining() < sizeof(secondByte))
+			return;
+		srcCmd >> secondByte;
+
+		if (secondByte == 0xc8) //interact with static object
+		{
+			uint32 staticObjId;
+			uint16 interaction;
+
+			if (srcCmd.remaining() < sizeof(staticObjId))
+				return;
+			srcCmd >> staticObjId;
+
+			if (srcCmd.remaining() < sizeof(interaction))
+				return;
+			srcCmd >> interaction;
+
+			if (interaction == 0x03) //open door
+			{
+			//	sObjMgr.OpenDoor(staticObjId);
+				return;
+			}
+		}
 	}
+	else if (firstByte == 0x81)
+	{
+		uint8 secondByte;
+		if (srcCmd.remaining() < sizeof(secondByte))
+			return;
+		srcCmd >> secondByte;
+
+		if (secondByte == 0x54) //whereami
+		{
+			LocationVector clientSidePos;
+			if (clientSidePos.fromFloatBuf(srcCmd) == false)
+				return;
+
+			bool byte1Valid = false;
+			bool byte2Valid = false;
+			bool byte3Valid = false;
+			uint8 byte1,byte2,byte3;
+			
+			if (srcCmd.remaining() >= sizeof(byte1))
+			{
+				byte1Valid=true;
+				srcCmd >> byte1;
+			}
+			if (srcCmd.remaining() >= sizeof(byte2))
+			{
+				byte2Valid=true;
+				srcCmd >> byte2;
+			}
+			if (srcCmd.remaining() >= sizeof(byte3))
+			{
+				byte3Valid=true;
+				srcCmd >> byte3;
+			}
+
+			INFO_LOG(format("(%1%) %2%:%3% requesting whereami clientPos %4%,%5%,%6% %7%:%8% %9%:%10% %11%:%12%")
+				% m_parent.Address()
+				% m_handle
+				% m_goId
+				% clientSidePos.x % clientSidePos.y % clientSidePos.z
+				% byte1Valid % uint32(byte1)
+				% byte2Valid % uint32(byte2)
+				% byte3Valid % uint32(byte3) );
+
+			m_parent.QueueCommand(make_shared<WhereAmIResponse>(m_pos));
+			return;
+		}
+	}
+
+	srcCmd.rpos(0);
+	DEBUG_LOG(format("(%1%) unknown 04 command: %2%") % m_parent.Address() % Bin2Hex(srcCmd) );
 }
 
 vector<msgBaseClassPtr> PlayerObject::getCurrentStatePackets()

@@ -23,6 +23,7 @@
 #define MXOEMU_OBJECTMGR_H
 
 #include "Common.h"
+#include "MessageTypes.h"
 
 const uint32 OBJECTMANAGER_STARTINGOBJECTID = 0x8000; //we have plenty of uint32s
 
@@ -52,6 +53,8 @@ public:
 		}
 		return tempVect;
 	}
+	void OpenDoor(uint32 doorId);
+	vector<msgBaseClassPtr> GetAllOpenDoors();
 private:
 	typedef shared_ptr<PlayerObject> objectPtr;
 	typedef map<uint32,objectPtr> objectsMap;
@@ -69,6 +72,8 @@ private:
 		return theObjId;
 	}
 	uint32 m_currFreeObjectId;
+
+	map<uint16,uint32> m_openDoors;
 };
 
 #endif

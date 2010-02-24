@@ -31,26 +31,26 @@ public:
 	SequencedPacket()
 	{
 		setSequences(0,0);
-		setPlayerSetupState(0);
+		setFlags(0);
 		this->clear();
 	}
-	SequencedPacket(uint16 _localSeq,uint16 _remoteSeq,uint8 pss)
+	SequencedPacket(uint16 _localSeq,uint16 _remoteSeq,uint8 _flags)
 	{
 		setSequences(_localSeq,_remoteSeq);
-		setPlayerSetupState(pss);
+		setFlags(_flags);
 		this->clear();
 	}
-	SequencedPacket(uint16 _localSeq,uint16 _remoteSeq,uint8 pss,const string &headerless)
+	SequencedPacket(uint16 _localSeq,uint16 _remoteSeq,uint8 _flags,const string &headerless)
 	{
 		setSequences(_localSeq,_remoteSeq);
-		setPlayerSetupState(pss);
+		setFlags(_flags);
 		this->clear();
 		this->append((const byte*)headerless.data(),headerless.size());
 	}
-	SequencedPacket(uint16 _localSeq,uint16 _remoteSeq,uint8 pss,const ByteBuffer &headerless)
+	SequencedPacket(uint16 _localSeq,uint16 _remoteSeq,uint8 _flags,const ByteBuffer &headerless)
 	{
 		setSequences(_localSeq,_remoteSeq);
-		setPlayerSetupState(pss);
+		setFlags(_flags);
 		this->clear();
 		this->append((const byte*)headerless.contents(),headerless.size());
 	}
@@ -65,9 +65,9 @@ public:
 		this->localSeq = _localSeq;
 		this->remoteSeq = _remoteSeq;
 	}
-	void setPlayerSetupState(byte pss)
+	void setFlags(byte _flags)
 	{
-		playerSetupState = pss;
+		flags = _flags;
 	}
 	void setData(const string &headerless)
 	{
@@ -88,9 +88,9 @@ public:
 	{
 		return localSeq;
 	}
-	byte getPSS()
+	byte getFlags()
 	{
-		return playerSetupState;
+		return flags;
 	}
 	ByteBuffer getData()
 	{
@@ -104,7 +104,7 @@ private:
 	void Construct(ByteBuffer withHeader);
 	uint16 localSeq;
 	uint16 remoteSeq;
-	uint8 playerSetupState;
+	uint8 flags;
 };
 
 #endif

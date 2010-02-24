@@ -242,12 +242,12 @@ public:
 		tempByteBuf.read(outputBuf,tempByteBuf.size());
 		return true;
 	}
-	bool toFloatBuf(ByteBuffer &outputBuf)
+	bool toFloatBuf(ByteBuffer &outputBuf) const
 	{
 		outputBuf << float(x) << float(y) << float(z);
 		return true;
 	}
-	bool toFloatBuf(byte *outputBuf,size_t maxLen)
+	bool toFloatBuf(byte *outputBuf,size_t maxLen) const
 	{
 		ByteBuffer tempByteBuf;
 		toFloatBuf(tempByteBuf);

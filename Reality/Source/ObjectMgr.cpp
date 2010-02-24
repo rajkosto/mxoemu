@@ -139,14 +139,14 @@ void ObjectMgr::clientSigningOff( GameClient *requester )
 
 uint16 ObjectMgr::allocateViewId( GameClient* requester)
 {
-	if (requester == NULL)
-		throw ClientNotAvailable();
+//	if (requester == NULL)
+//		throw ClientNotAvailable();
 
 	//get the views map for current client
 	viewIdsMap &viewsOfClient = m_views[requester];
 
 	//go through all possible viewIds, when we find one thats not in the list, return it
-	for (uint16 i=2;i<0xFFFF;i++) //we start from 2 because 1 is the object manager id, it spawns and deletes objects
+	for (uint16 i=0x128;i<0xFFFF;i++) //we start from 2 because 1 is the object manager id, it spawns and deletes objects
 	{
 		if (viewsOfClient.find(i)==viewsOfClient.end())
 		{
@@ -154,4 +154,31 @@ uint16 ObjectMgr::allocateViewId( GameClient* requester)
 		}
 	}
 	throw NoMoreFreeViews();
+}
+
+#include "GameServer.h"
+
+void ObjectMgr::OpenDoor( uint32 doorId )
+{
+/*	for (map<uint16,uint32>::iterator it=m_openDoors.begin();it!=m_openDoors.end();++it)
+	{
+		if (it->second == doorId)
+			return;
+	}
+	uint16 viewId = allocateViewId(NULL);
+	viewIdsMap &viewsOfClient = m_views[NULL];
+	viewsOfClient[viewId]=doorId;
+	m_openDoors[viewId]=doorId;
+
+	sGame.AnnounceStateUpdate(NULL,make_shared<DoorAnimationMsg>(doorId,viewId));*/
+}
+
+vector<msgBaseClassPtr> ObjectMgr::GetAllOpenDoors()
+{
+	vector<msgBaseClassPtr> tempVec;
+/*	for (map<uint16,uint32>::iterator it=m_openDoors.begin();it!=m_openDoors.end();++it)
+	{
+		tempVec.push_back(make_shared<DoorAnimationMsg>(it->second,it->first));
+	}*/
+	return tempVec;
 }

@@ -31,7 +31,7 @@ void SequencedPacket::Construct(ByteBuffer withHeader)
 	uint32 packed = swap32(packedSeqs);
 	localSeq = packed&0xFFF;
 	remoteSeq = (packed>>12)&0xFFF;
-	playerSetupState = (packed>>24)&0xFF;
+	flags = (packed>>24)&0xFF;
 
 	vector<byte> restOfPacket;
 	restOfPacket.resize(withHeader.size() - withHeader.rpos());
@@ -56,7 +56,7 @@ SequencedPacket::SequencedPacket( const string &withHeader )
 
 ByteBuffer SequencedPacket::getDataWithHeader()
 {
-	uint32 packedSeqs = swap32((playerSetupState << 24) | ((remoteSeq & 0xFFF) << 12) | (localSeq & 0xFFF)); // FL CC CS SS
+	uint32 packedSeqs = swap32((flags << 24) | ((remoteSeq & 0xFFF) << 12) | (localSeq & 0xFFF)); // FL CC CS SS
 
 	ByteBuffer returnMe;
 	returnMe << packedSeqs;

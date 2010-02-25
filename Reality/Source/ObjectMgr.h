@@ -37,12 +37,12 @@ public:
 	ObjectMgr():m_currFreeObjectId(OBJECTMANAGER_STARTINGOBJECTID) {}
 	~ObjectMgr(){}
 
-	uint32 allocatePlayer(class GameClient *requester, uint64 charUID );
-	void deallocatePlayer(uint32 goId);
+	uint32 constructPlayer(class GameClient *requester, uint64 charUID );
+	void destroyObject(uint32 goId);
 	class PlayerObject* getGOPtr(uint32 goId);
 	uint32 getGOId(class PlayerObject* forWhichObj);
 	uint16 getViewForGO(class GameClient *requester, uint32 goId);
-	void clientSigningOff(class GameClient *requester);
+	void releaseRelevantSet(class GameClient *requester);
 	vector<uint32> getAllGOIds()
 	{
 		vector<uint32> tempVect;

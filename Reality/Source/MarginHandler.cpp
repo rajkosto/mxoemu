@@ -33,8 +33,9 @@ MarginHandler::~MarginHandler()
 {
 }
 
-MarginSocket *MarginHandler::FindByCharacterUID( uint64 charUID )
+vector<MarginSocket*> MarginHandler::FindByCharacterUID( uint64 charUID )
 {
+	vector<MarginSocket*> tempVect;
 	for (socket_m::iterator it = m_sockets.begin(); it != m_sockets.end(); it++)
 	{
 		Socket *p = it->second;
@@ -48,9 +49,11 @@ MarginSocket *MarginHandler::FindByCharacterUID( uint64 charUID )
 			continue;
 
 		if (margSock->GetCharUID() == charUID)
-			return margSock;
+		{
+			tempVect.push_back(margSock);
+		}
 	}
-	return NULL;
+	return tempVect;
 }
 
 class MarginSocket *MarginHandler::FindBySessionId( uint32 sessionId )

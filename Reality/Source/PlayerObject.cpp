@@ -153,6 +153,8 @@ void PlayerObject::initGoId(uint32 theGoId)
 {
 	m_goId = theGoId;
 	INFO_LOG(format("Player name %1% has goid %2%") % m_handle % m_goId);
+	m_parent.QueueCommand(make_shared<SystemChatMsg>((format("Your Object Id is %1%")%m_goId).str()));
+	sGame.AnnounceCommand(&m_parent,make_shared<SystemChatMsg>((format("Player %1% connected with object id %2%")%m_handle%m_goId).str()));
 }
 
 PlayerObject::~PlayerObject()
@@ -161,6 +163,7 @@ PlayerObject::~PlayerObject()
 	{
 		INFO_LOG(format("Player object for %1%:%2% deconstructing") % m_handle % m_goId);
 		sGame.AnnounceStateUpdate(&m_parent,make_shared<DeletePlayerMsg>(m_goId));
+		sGame.AnnounceCommand(&m_parent,make_shared<SystemChatMsg>((format("Player %1% with object id %2% disconnected")%m_handle%m_goId).str()));
 		m_spawnedInWorld=false;
 
 		//commit position changes
@@ -307,7 +310,7 @@ void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
 	srcData >> shouldBeOne;
 	if (shouldBeOne != 1)
 	{
-		WARNING_LOG(format("Client %1% Player %2%:%3% 03 doesn't have number 1 after viewId") % m_parent.Address() % m_handle % m_goId);
+		WARNING_LOG(format("Client %1% Player %2%:%3% 03 doesn't have number 1 after viewId, packet: %4%") % m_parent.Address() % m_handle % m_goId % Bin2Hex(srcData));
 		return;
 	}
 	uint8 updateType;
@@ -508,7 +511,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 			if (srcCmd.remaining() < messageStrLen)
 				return;
 			tempBuf.resize(messageStrLen);
-			srcCmd.read(&tempBuf[0],tempBuf.size());dw
+			srcCmd.read(&tempBuf[0],tempBuf.size());
 			string theMessage = string((const char*)&tempBuf[0],tempBuf.size()-1);
 
 			bool sentProperly=false;
@@ -625,6 +628,11 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 			//	sObjMgr.OpenDoor(staticObjId);
 				return;
 			}
+		}
+		else if (secondByte == 0xc9)
+		{
+			//some weird coords inside ?
+			return;
 		}
 	}
 	else if (firstByte == 0x81)

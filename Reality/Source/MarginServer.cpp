@@ -84,7 +84,7 @@ void MarginServer::Loop(void)
 	marginSocketHandler.Select(0, 100000);// 100 ms
 }
 
-MarginSocket *MarginServer::GetSocketByCharacterUID( uint64 charUID )
+vector<MarginSocket*> MarginServer::GetSocketsForCharacterUID( uint64 charUID )
 {
 	return marginSocketHandler.FindByCharacterUID(charUID);
 }

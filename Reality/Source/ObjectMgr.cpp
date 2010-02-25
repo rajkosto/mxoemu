@@ -23,7 +23,7 @@
 #include "PlayerObject.h"
 #include "GameClient.h"
 
-uint32 ObjectMgr::allocatePlayer( GameClient* requester, uint64 charUID )
+uint32 ObjectMgr::constructPlayer( GameClient* requester, uint64 charUID )
 {
 	if (requester == NULL)
 		throw ClientNotAvailable();
@@ -44,16 +44,16 @@ uint32 ObjectMgr::allocatePlayer( GameClient* requester, uint64 charUID )
 	return theNewObjectId;
 }
 
-void ObjectMgr::deallocatePlayer( uint32 goId )
+void ObjectMgr::destroyObject( uint32 goId )
 {
 	//erase from valid objects
-	for (;;)
+	objectsMap::iterator it=m_objects.find(goId);
+	if (it!=m_objects.end())
 	{
-		objectsMap::iterator it=m_objects.find(goId);
-		if (it==m_objects.end())
-			break;
-
 		it->second.reset();
+	}
+	if (it!=m_objects.end())
+	{
 		m_objects.erase(it);
 	}
 
@@ -62,16 +62,11 @@ void ObjectMgr::deallocatePlayer( uint32 goId )
 	{
 		for (viewIdsMap::iterator it2=it1->second.begin();it2!=it1->second.end();)
 		{
-			uint16 theViewId = it2->first;
 			uint32 theGoId = it2->second;
 			if (theGoId == goId)
-			{
 				it1->second.erase(it2++);
-			}
 			else
-			{
 				++it2;
-			}
 		}
 	}
 }
@@ -107,12 +102,8 @@ uint16 ObjectMgr::getViewForGO( GameClient* requester, uint32 goId )
 	if (m_objects.find(goId)==m_objects.end())
 		throw ObjectNotAvailable();
 
-/*	//first time client asked for this
-	if (m_views.find(requester)==m_views.end())
-		m_views[requester] = viewIdsMap();
-
-	viewIdsMap &viewsOfClient = m_views[requester];
-	for (viewIdsMap::iterator it=viewsOfClient.begin();it!=viewsOfClient.end();++it)
+/*	viewIdsMap &viewsOfClient = m_views[requester];
+	for (viewIdsMap::const_iterator it=viewsOfClient.begin();it!=viewsOfClient.end();++it)
 	{
 		if (it->second == goId)
 			return it->first;
@@ -120,38 +111,31 @@ uint16 ObjectMgr::getViewForGO( GameClient* requester, uint32 goId )
 
 	//otherwise allocate new viewID, put that in the views list with the goId, and return it
 	uint16 newViewId = allocateViewId(requester);
-	viewsOfClient[newViewId] = goId;*/
-//had to revert to this simpler mechanism, the more complex one didnt want to work :(
-	return (uint16)goId;
+	m_views[requester][newViewId] = goId;
+	return newViewId;*/
+
+	return uint16(goId);
 }
 
-void ObjectMgr::clientSigningOff( GameClient *requester )
+void ObjectMgr::releaseRelevantSet( GameClient *requester )
 {
-	for (;;)
-	{
-		clientToViewMap::iterator it=m_views.find(requester);
-		if (it==m_views.end())
-			return;
-
+	clientToViewMap::iterator it=m_views.find(requester);
+	if (it!=m_views.end())
 		m_views.erase(it);
-	}
 }
 
 uint16 ObjectMgr::allocateViewId( GameClient* requester)
 {
-//	if (requester == NULL)
-//		throw ClientNotAvailable();
+	if (requester == NULL)
+		throw ClientNotAvailable();
 
 	//get the views map for current client
-	viewIdsMap &viewsOfClient = m_views[requester];
-
+	const viewIdsMap &viewsOfClient = m_views[requester];
 	//go through all possible viewIds, when we find one thats not in the list, return it
-	for (uint16 i=0x128;i<0xFFFF;i++) //we start from 2 because 1 is the object manager id, it spawns and deletes objects
+	for (uint16 i=2;i<0xFFFF;i++) //we start from 2 because 1 is the object manager id, it spawns and deletes objects
 	{
 		if (viewsOfClient.find(i)==viewsOfClient.end())
-		{
 			return i;
-		}
 	}
 	throw NoMoreFreeViews();
 }

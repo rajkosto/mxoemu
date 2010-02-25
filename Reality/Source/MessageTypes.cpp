@@ -60,16 +60,6 @@ void DeletePlayerMsg::setReceiver( class GameClient *toWho )
 	m_toWho = toWho;
 	m_buf.clear();
 
-	PlayerObject *m_player = NULL;
-	try
-	{
-		m_player = sObjMgr.getGOPtr(m_objectId);
-	}
-	catch (ObjectMgr::ObjectNotAvailable)
-	{
-		throw PacketNoLongerValid();
-	}
-
 	uint16 viewId = 0;
 	try
 	{
@@ -138,6 +128,8 @@ const ByteBuffer& PlayerSpawnMsg::toBuf()
 	memcpy(lastNamePos,m_player->getLastName().c_str(),m_player->getLastName().length());
 	byte *handlePos = &sampleSpawnPacket[0x5F];
 	memset(handlePos,0,32);
+//	string testHandle = lexical_cast<string,uint32>(m_objectId);
+//	memcpy(handlePos,testHandle.c_str(),testHandle.length());
 	memcpy(handlePos,m_player->getHandle().c_str(),m_player->getHandle().length());
 
 	byte *rsiDataPos = &sampleSpawnPacket[0x8C];

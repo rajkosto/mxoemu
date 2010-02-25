@@ -113,7 +113,7 @@ bool ConsoleThread::run()
 				% charHandle % worldName % userName % firstName % lastName );
 
 		}
-		else if (iequals(command, "announce"))
+		else if (iequals(command, "broadcastMsg") || iequals(command, "modalMsg"))
 		{
 			string theAnnouncement;
 			getline(cin,theAnnouncement);
@@ -124,8 +124,11 @@ bool ConsoleThread::run()
 
 			if (theAnnouncement.size() > 0)
 			{
-				theAnnouncement = string("{c:ff0000}") + theAnnouncement + string("{/c}");
-				sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(theAnnouncement));
+				if (iequals(command, "broadcastMsg"))
+					sGame.AnnounceCommand(NULL,make_shared<BroadcastMsg>(theAnnouncement));
+				else if (iequals(command, "modalMsg"))
+					sGame.AnnounceCommand(NULL,make_shared<ModalMsg>(theAnnouncement));
+
 				cout << "OK" << std::endl;
 			}
 			else

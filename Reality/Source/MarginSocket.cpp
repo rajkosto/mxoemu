@@ -44,10 +44,12 @@ MarginSocket::MarginSocket(ISocketHandler& h) : TCPVarLenSocket(h)
 	worldCharId = 0;
 	numCharacterReplies = 0;
 	readyForUdp = false;
+	INFO_LOG("Margin socket constructed");
 }
 
 MarginSocket::~MarginSocket()
 {
+	INFO_LOG("Margin socket deconstructed");
 }
 
 void MarginSocket::OnDisconnect( short info, int code )
@@ -422,11 +424,14 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			}
 
 			//disconnect any other users that are connected on acc
-/*			{
-				MarginSocket *othrUser = sMargin.GetSocketByCharacterUID(charId);
-				if (othrUser!=NULL && othrUser!=this)
-					othrUser->ForceDisconnect();
-			}*/
+			{
+				vector<MarginSocket*> othrUsers = sMargin.GetSocketsForCharacterUID(charId);
+				foreach(MarginSocket* sock, othrUsers)
+				{
+					if (sock!=NULL && sock!=this)
+						sock->ForceDisconnect();
+				}	
+			}
 
 
 			//then 32 zeroes

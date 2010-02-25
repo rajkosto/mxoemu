@@ -165,12 +165,13 @@ public:
 		m_buf << uint32(0);
 
 		uint32 putSenderStrLenPosHere = m_buf.wpos();
-		m_buf << uint32(0);
-		uint32 putMessagStrLenPosHere = m_buf.wpos();
-		m_buf << uint32(0);
+		m_buf << uint32(0); //will overwrite this later
+		uint32 putMessageStrLenPosHere = m_buf.wpos();
+		m_buf << uint32(0); //will overwrite this later
 
 		//0x15 bytes of 0s
-		m_buf.wpos(m_buf.wpos()+0x15);
+		for (int i=0;i<0x15;i++)
+			m_buf << uint8(0);
 
 		uint32 senderStrLenPos = m_buf.wpos();
 
@@ -187,7 +188,7 @@ public:
 		//go back and put positions there
 		m_buf.wpos(putSenderStrLenPosHere);
 		m_buf << uint32(senderStrLenPos);
-		m_buf.wpos(putMessagStrLenPosHere);
+		m_buf.wpos(putMessageStrLenPosHere);
 		m_buf << uint32(messageStrLenPos);
 	}
 	~WhisperMsg()
@@ -196,25 +197,55 @@ public:
 	}
 };
 
-class SystemChatMsg : public StaticMsg
+class SystemMsg : public StaticMsg
 {
 public:
-	SystemChatMsg(string theChatMsg) 
+	SystemMsg(uint16 opcode,string message)
 	{
 		m_buf.clear();
-		//2E0700000000000000000024000000000000000000000000000000000000000000000000 DATALEN(UINT16) ZEROSTR
-		const byte headerData[] =
-		{
-			0x2E, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00, 0x00, 
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-			0x00, 0x00, 0x00, 0x00
-		} ;
 
-		m_buf.append(headerData,sizeof(headerData));
-		uint16 dataSize = theChatMsg.length()+1;
-		m_buf << uint16(dataSize);
-		m_buf.append(theChatMsg.c_str(),dataSize);
+		m_buf << uint16(swap16(opcode));
+		m_buf << uint8(0);
+		m_buf << uint32(0);
+
+		m_buf << uint32(0); //no sender
+		uint32 putMessageStrLenPosHere = m_buf.wpos();
+		m_buf << uint32(0); //we will overwrite this later
+
+		//0x15 bytes of 0s
+		for (int i=0;i<0x15;i++)
+			m_buf << uint8(0);
+
+		uint32 messageStrLenPos = m_buf.wpos();
+		uint16 messageStrLen = message.length()+1;
+		m_buf << uint16(messageStrLen);
+		m_buf.append(message.c_str(),messageStrLen);
+
+		//go back and put position there
+		m_buf.wpos(putMessageStrLenPosHere);
+		m_buf << uint32(messageStrLenPos);
 	}
+	~SystemMsg() {}
+};
+
+class BroadcastMsg : public SystemMsg
+{
+public:
+	BroadcastMsg(string message) : SystemMsg(0x2EC7,message) {}
+	~BroadcastMsg() {}
+};
+
+class ModalMsg : public SystemMsg
+{
+public:
+	ModalMsg(string message) : SystemMsg(0x2ED7,message) {}
+	~ModalMsg() {}
+};
+
+class SystemChatMsg : public SystemMsg
+{
+public:
+	SystemChatMsg(string message) : SystemMsg(0x2E07,message) {}
 	~SystemChatMsg() {}
 };
 

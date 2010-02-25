@@ -56,14 +56,14 @@ GameClient::~GameClient()
 {
 	if (m_playerGoId != 0)
 	{
-		sObjMgr.deallocatePlayer(m_playerGoId);
+		sObjMgr.destroyObject(m_playerGoId);
 	}
-	sObjMgr.clientSigningOff(this);
+	sObjMgr.releaseRelevantSet(this);
 
-	MarginSocket *marginConn = sMargin.GetSocketByCharacterUID(m_characterUID);
-	if (marginConn != NULL)
+	vector<MarginSocket*> marginConns = sMargin.GetSocketsForCharacterUID(m_characterUID);
+	foreach(MarginSocket* it, marginConns)
 	{
-		marginConn->ForceDisconnect();
+		it->ForceDisconnect();
 	}
 }
 
@@ -90,7 +90,7 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 		packetData >> m_characterUID;
 		try
 		{
-			m_playerGoId = sObjMgr.allocatePlayer(this,m_characterUID);
+			m_playerGoId = sObjMgr.constructPlayer(this,m_characterUID);
 		}
 		catch (ObjectMgr::ObjectNotAvailable)
 		{
@@ -99,13 +99,14 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 			return;
 		}
 
-		MarginSocket *marginConn = sMargin.GetSocketByCharacterUID(m_characterUID);
-		if (marginConn == NULL)
+		vector<MarginSocket*> marginConns = sMargin.GetSocketsForCharacterUID(m_characterUID);
+		if (marginConns.size() != 1)
 		{
 			ERROR_LOG(format("InitialUDPPacket(%1%): Margin session not found") % Address() );
 			m_validClient = false;
 			return;
 		}
+		MarginSocket *marginConn = marginConns[0];
 		m_sessionId = marginConn->GetSessionId();
 		m_charWorldId = marginConn->GetWorldCharId();
 
@@ -345,7 +346,7 @@ void GameClient::HandleOrdered( ByteBuffer &orderedData )
 			}
 			else
 			{
-				DEBUG_LOG(format("(%1%) Parsing command %2%.") % Address() % currCmdSequence);
+//				DEBUG_LOG(format("(%1%) Parsing command %2%.") % Address() % currCmdSequence);
 				m_clientCommandsReceived[currCmdSequence] = *it2;
 
 				if (m_playerGoId != 0)
@@ -468,9 +469,9 @@ void GameClient::FlushQueue( bool alsoResend )
 		sort(m_queuedCommands.begin(),m_queuedCommands.end());
 		for (msgQueueType::iterator it=m_queuedCommands.begin();it!=m_queuedCommands.end();)
 		{
-			if (it->packetsItsIn.size() > 0 /*&& (currBlock.subPackets.size() == 0 || currBlock.sequenceId+currBlock.subPackets.size() != it->sequenceId)*/)
+			if (it->packetsItsIn.size() > 0 && (currBlock.subPackets.size() == 0 || currBlock.sequenceId+currBlock.subPackets.size() != it->sequenceId))
 			{
-				if (getMSTime() - it->msLastSent < 200 || alsoResend == false) //200ms resend
+				if (getMSTime() - it->msLastSent < 300 || alsoResend == false) //300ms resend
 				{
 					++it;
 					continue;
@@ -527,7 +528,7 @@ void GameClient::FlushQueue( bool alsoResend )
 	//03 next
 	for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();)
 	{
-		if ((getMSTime() - it->msLastSent < 200 || alsoResend == false) && it->packetsItsIn.size() > 0) //200ms resend
+		if ((getMSTime() - it->msLastSent < 300 || alsoResend == false) && it->packetsItsIn.size() > 0) //300ms resend
 		{
 			++it;
 			continue;

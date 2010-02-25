@@ -36,7 +36,7 @@ public:
 	void Stop();
 	void Loop();
 
-	class MarginSocket *GetSocketByCharacterUID(uint64 charUID);
+	vector<class MarginSocket*> GetSocketsForCharacterUID(uint64 charUID);
 	class MarginSocket *GetSocketBySessionId(uint32 sessionId);
 private:
 	MarginHandler marginSocketHandler;

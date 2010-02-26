@@ -539,6 +539,52 @@ const ByteBuffer& AnimationStateMsg::toBuf()
 	return m_buf;
 }
 
+
+PositionStateMsg::PositionStateMsg( uint32 objectId ):ObjectUpdateMsg(objectId)
+{
+}
+
+PositionStateMsg::~PositionStateMsg()
+{
+
+}
+
+const ByteBuffer& PositionStateMsg::toBuf()
+{
+	m_buf.clear();
+	m_buf << uint8(0x03);
+
+	PlayerObject *m_player = NULL;
+	try
+	{
+		m_player = sObjMgr.getGOPtr(m_objectId);
+	}
+	catch (ObjectMgr::ObjectNotAvailable)
+	{
+		m_buf.clear();
+		throw PacketNoLongerValid();
+	}
+	uint16 viewId = 0;
+	try
+	{
+		viewId = sObjMgr.getViewForGO(m_toWho,m_objectId);
+	}
+	catch (ObjectMgr::ClientNotAvailable)
+	{
+		m_buf.clear();
+		throw PacketNoLongerValid();		
+	}
+
+	m_buf << uint16(viewId);
+	m_buf << uint8(1);
+
+	m_buf << uint8(0x08); //pos update
+
+	m_player->getPosition().toFloatBuf(m_buf);
+
+	return m_buf;
+}
+
 WhereAmIResponse::WhereAmIResponse( const LocationVector &currPos )
 {
 	byte whereamipacket[] =

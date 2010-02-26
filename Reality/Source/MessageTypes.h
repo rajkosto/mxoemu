@@ -90,6 +90,14 @@ public:
 	const ByteBuffer& toBuf();
 };
 
+class PositionStateMsg : public ObjectUpdateMsg
+{
+public:
+	PositionStateMsg(uint32 objectId);
+	~PositionStateMsg();
+	const ByteBuffer& toBuf();
+};
+
 class StateUpdateMsg : public ObjectUpdateMsg
 {
 public:

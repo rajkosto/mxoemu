@@ -102,7 +102,7 @@ void GameSocket::Broadcast( const ByteBuffer &message )
 	}*/
 }
 
-void GameSocket::AnnounceStateUpdate( GameClient* clFrom,msgBaseClassPtr theMsg, bool immediateOnly/*=false*/ )
+void GameSocket::AnnounceStateUpdate( GameClient* clFrom, msgBaseClassPtr theMsg, bool immediateOnly )
 {
 	for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();++it)
 	{

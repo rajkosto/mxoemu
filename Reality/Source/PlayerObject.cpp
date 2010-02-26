@@ -37,7 +37,7 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 													 `firstName`, `lastName`, `background`,\
 													 `x`, `y`, `z`, `rot`, \
 													 `healthC`, `healthM`, `innerStrC`, `innerStrM`,\
-													 `level`, `profession`, `alignment`, `pvpflag`, `exp`, `cash`, `district`\
+													 `level`, `profession`, `alignment`, `pvpflag`, `exp`, `cash`, `district`, `adminFlags`\
 													 FROM `characters` WHERE `charId` = '%1%' LIMIT 1") % m_characterUID) );
 
 		if (result == NULL)
@@ -82,6 +82,7 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 		m_exp = field[16].GetUInt64();
 		m_cash = field[17].GetUInt64();
 		m_district = field[18].GetUInt8();
+		m_isAdmin = field[19].GetBool();
 	}
 	//grab data from rsi table
 	{
@@ -445,6 +446,17 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 			srcCmd.read(&messageBuf[0],messageBuf.size());
 			string theMessage((const char*)&messageBuf[0],messageBuf.size()-1);
 
+			if (m_isAdmin && theMessage[0] == '!')
+			{
+				ParseAdminCommand(theMessage.substr(1));
+				return;
+			}
+			else if (theMessage[0] == '&')
+			{
+				ParsePlayerCommand(theMessage.substr(1));
+				return;
+			}
+
 			INFO_LOG(format("%1% says %2%") % m_handle % theMessage);
 			m_parent.QueueCommand(make_shared<SystemChatMsg>((format("You said %1%") % theMessage).str()));
 			sGame.AnnounceCommand(&m_parent,make_shared<PlayerChatMsg>(m_handle,theMessage));
@@ -531,7 +543,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 				if (targetPlayer == NULL)
 					continue;
 
-				if (targetPlayer->getHandle() == theRecipient)
+				if (iequals(targetPlayer->getHandle(),theRecipient))
 				{
 					targetPlayer->getClient().QueueCommand(make_shared<WhisperMsg>(m_handle,theMessage));
 					sentProperly=true;
@@ -553,8 +565,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 	else if (firstByte == 0x33) //stop animation
 	{
 		m_currAnimation = 0;
-		m_parent.QueueState(make_shared<AnimationStateMsg>(m_goId));
-		sGame.AnnounceStateUpdate(&m_parent,make_shared<AnimationStateMsg>(m_goId));
+		sGame.AnnounceStateUpdate(NULL,make_shared<AnimationStateMsg>(m_goId));
 		return;
 	}
 	else if (firstByte == 0x34) //start animation
@@ -564,8 +575,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 			return;
 		srcCmd >> newAnimation;
 		m_currAnimation = newAnimation;
-		m_parent.QueueState(make_shared<AnimationStateMsg>(m_goId));
-		sGame.AnnounceStateUpdate(&m_parent,make_shared<AnimationStateMsg>(m_goId));
+		sGame.AnnounceStateUpdate(NULL,make_shared<AnimationStateMsg>(m_goId));
 		return;
 	}
 	else if (firstByte == 0x35) //change mood
@@ -575,8 +585,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 			return;
 		srcCmd >> newMood;
 		m_currMood = newMood;	
-		m_parent.QueueState(make_shared<AnimationStateMsg>(m_goId));
-		sGame.AnnounceStateUpdate(&m_parent,make_shared<AnimationStateMsg>(m_goId));
+		sGame.AnnounceStateUpdate(NULL,make_shared<AnimationStateMsg>(m_goId));
 		return;
 	}
 	else if (firstByte == 0x30) //perform emote
@@ -591,8 +600,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 		srcCmd >> emoteTarget;
 
 		m_emoteCounter++;
-		m_parent.QueueState(make_shared<EmoteMsg>(m_goId,emoteId,m_emoteCounter));
-		sGame.AnnounceStateUpdate(&m_parent,make_shared<EmoteMsg>(m_goId,emoteId,m_emoteCounter));
+		sGame.AnnounceStateUpdate(NULL,make_shared<EmoteMsg>(m_goId,emoteId,m_emoteCounter));
 
 		DEBUG_LOG(format("(%1%) %2%:%3% doing emote %4% on target %5% at coords %6%,%7%,%8%")
 			% m_parent.Address()
@@ -696,4 +704,287 @@ vector<msgBaseClassPtr> PlayerObject::getCurrentStatePackets()
 		tempVect.push_back(make_shared<AnimationStateMsg>(m_goId));
 	}
 	return tempVect;
+}
+
+void PlayerObject::ParseAdminCommand( string theCmd )
+{
+	stringstream cmdStream;
+	cmdStream.str(theCmd);
+
+	string command;
+	cmdStream >> command;
+
+	if (cmdStream.fail())
+		return;
+
+	if (iequals(command, "teleportPlayer") || iequals(command, "bringPlayer"))
+	{
+		string playerName;
+		cmdStream >> playerName;
+
+		if (cmdStream.fail() || playerName.length() < 1)
+			return;
+
+		if (iequals(command, "teleportPlayer") && cmdStream.eof())
+			return;
+
+		PlayerObject* theTargetPlayer = NULL;
+		{
+			vector<uint32> allObjects = sObjMgr.getAllGOIds();
+			foreach(uint32 objId, allObjects)
+			{
+				PlayerObject* playerObj = NULL;
+				try
+				{
+					playerObj = sObjMgr.getGOPtr(objId);
+				}
+				catch (ObjectMgr::ObjectNotAvailable)
+				{
+					continue;
+				}
+
+				if (iequals(playerName,playerObj->getHandle()))
+				{
+					theTargetPlayer = playerObj;
+					break;
+				}
+			}
+		}
+
+		if (theTargetPlayer == NULL)
+		{
+			m_parent.QueueCommand(make_shared<SystemChatMsg>((format("Player %1% is not online")%playerName).str()));
+			return;
+		}
+
+		LocationVector derp;
+
+		if (iequals(command, "teleportPlayer"))
+		{
+			double x,y,z;
+			cmdStream >> x;
+			if (cmdStream.eof() || cmdStream.fail())
+				return;
+			cmdStream >> y;
+			if (cmdStream.eof() || cmdStream.fail())
+				return;
+			cmdStream >> z;
+			if (cmdStream.fail())
+				return;
+
+			x*=100;
+			y*=100;
+			z*=100;
+
+			derp.ChangeCoords(x,y,z);
+		}
+		else if (iequals(command, "bringPlayer"))
+		{
+			LocationVector newPos = this->getPosition();
+			derp.ChangeCoords(newPos.x,newPos.y,newPos.z,newPos.getMxoRot());
+		}
+
+		theTargetPlayer->setPosition(derp);
+		sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(sObjMgr.getGOId(theTargetPlayer)));
+		return;
+	}
+	else if (iequals(command, "teleportAll") || iequals(command, "bringAll"))
+	{
+		LocationVector derp;
+
+		if (iequals(command, "teleportAll"))
+		{
+			double x,y,z;
+			cmdStream >> x;
+			if (cmdStream.eof() || cmdStream.fail())
+				return;
+			cmdStream >> y;
+			if (cmdStream.eof() || cmdStream.fail())
+				return;
+			cmdStream >> z;
+			if (cmdStream.fail())
+				return;
+
+			x*=100;
+			y*=100;
+			z*=100;
+
+			derp.ChangeCoords(x,y,z);
+		}
+		else if (iequals(command, "bringAll"))
+		{
+			LocationVector newPos = this->getPosition();
+			derp.ChangeCoords(newPos.x,newPos.y,newPos.z,newPos.getMxoRot());
+		}
+
+		vector<uint32> allObjects = sObjMgr.getAllGOIds();
+		foreach(uint32 objId, allObjects)
+		{
+			PlayerObject* playerObj = NULL;
+			try
+			{
+				playerObj = sObjMgr.getGOPtr(objId);
+			}
+			catch (ObjectMgr::ObjectNotAvailable)
+			{
+				continue;
+			}
+
+			if (playerObj == NULL)
+				continue;
+
+			playerObj->setPosition(derp);
+			sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(objId));
+		}
+		return;
+	}
+	else
+	{
+		m_parent.QueueCommand(make_shared<SystemChatMsg>((format("Unrecognized server command %1%")%command).str()));
+		return;
+	}
+}
+
+void PlayerObject::ParsePlayerCommand( string theCmd )
+{
+	stringstream cmdStream;
+	cmdStream.str(theCmd);
+
+	string command;
+	cmdStream >> command;
+
+	if (cmdStream.fail())
+		return;
+
+	if (iequals(command, "gotoPos"))
+	{
+		double x,y,z;
+		cmdStream >> x;
+		if (cmdStream.eof() || cmdStream.fail())
+			return;
+		cmdStream >> y;
+		if (cmdStream.eof() || cmdStream.fail())
+			return;
+		cmdStream >> z;
+		if (cmdStream.fail())
+			return;
+
+		x*=100;
+		y*=100;
+		z*=100;
+
+		PlayerObject* playerObj = NULL; 
+		try
+		{
+			playerObj = sObjMgr.getGOPtr(m_goId);
+		}
+		catch (ObjectMgr::ObjectNotAvailable)
+		{
+			return;
+		}
+
+		LocationVector derp(x,y,z);
+		playerObj->setPosition(derp);
+		sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
+		return;
+	}
+	else if (iequals(command, "incX") || iequals(command, "incY") || iequals(command, "incZ"))
+	{
+		double incrementAmount=0;
+
+		if (cmdStream.eof())
+			incrementAmount = 1;
+
+		cmdStream >> incrementAmount;
+
+		if (cmdStream.fail())
+			incrementAmount = 1;
+
+		if (incrementAmount==0)
+			return;
+
+		incrementAmount*=100;
+
+		PlayerObject* playerObj = NULL; 
+		try
+		{
+			playerObj = sObjMgr.getGOPtr(m_goId);
+		}
+		catch (ObjectMgr::ObjectNotAvailable)
+		{
+			return;
+		}
+
+		double newX,newY,newZ;
+		newX = playerObj->getPosition().x;
+		newY = playerObj->getPosition().y;
+		newZ = playerObj->getPosition().z;
+
+		if (iequals(command, "incX"))
+			newX+=incrementAmount;
+		else if (iequals(command, "incY"))
+			newY+=incrementAmount;
+		else if (iequals(command,"incZ"))
+			newZ+=incrementAmount;
+		
+		LocationVector newPos(newX,newY,newZ);
+		playerObj->setPosition(newPos);
+		sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
+		return;
+	}
+	else if (iequals(command, "gotoPlayer"))
+	{
+		string playerName;
+		cmdStream >> playerName;
+
+		if (cmdStream.fail())
+			return;
+
+		PlayerObject* theTargetPlayer = NULL;
+		{
+			vector<uint32> allObjects = sObjMgr.getAllGOIds();
+			foreach(uint32 objId, allObjects)
+			{
+				PlayerObject* playerObj = NULL;
+				try
+				{
+					playerObj = sObjMgr.getGOPtr(objId);
+				}
+				catch (ObjectMgr::ObjectNotAvailable)
+				{
+					continue;
+				}
+
+				if (iequals(playerName,playerObj->getHandle()))
+				{
+					theTargetPlayer = playerObj;
+					break;
+				}
+			}
+		}
+
+		if (theTargetPlayer == NULL)
+		{
+			m_parent.QueueCommand(make_shared<SystemChatMsg>((format("Player %1% is not online")%playerName).str()));
+			return;
+		}
+
+		PlayerObject* thisPlayer = NULL; 
+		try
+		{
+			thisPlayer = sObjMgr.getGOPtr(m_goId);
+		}
+		catch (ObjectMgr::ObjectNotAvailable)
+		{
+			return;
+		}
+
+		thisPlayer->setPosition(theTargetPlayer->getPosition());
+		sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
+	}
+	else
+	{
+		m_parent.QueueCommand(make_shared<SystemChatMsg>((format("Unrecognized server command %1%")%command).str()));
+		return;
+	}
 }

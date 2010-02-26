@@ -49,6 +49,7 @@ public:
 	uint64 getExperience() const {return m_exp;}
 	uint64 getInformation() const {return m_cash;}
 	LocationVector getPosition() const {return m_pos;}
+	void setPosition(const LocationVector& newPos) {m_pos = newPos;}
 	uint8 getRsiData(byte* outputBuf,uint32 maxBufLen) const ;
 	uint16 getCurrentHealth() const {return m_healthC;}
 	uint16 getMaximumHealth() const {return m_healthM;}
@@ -95,6 +96,10 @@ private:
 	uint8 m_currMood;
 
 	uint8 m_emoteCounter;
+
+	bool m_isAdmin;
+	void ParseAdminCommand(string theCmd);
+	void ParsePlayerCommand(string theCmd);
 };
 
 #endif

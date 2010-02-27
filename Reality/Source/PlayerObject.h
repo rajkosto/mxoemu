@@ -45,6 +45,7 @@ public:
 	string getFirstName() const {return m_firstName;}
 	string getLastName() const {return m_lastName;}
 	string getBackground() const {return m_background;}
+	bool setBackground(string newBackground);
 
 	uint64 getExperience() const {return m_exp;}
 	uint64 getInformation() const {return m_cash;}
@@ -55,7 +56,7 @@ public:
 	uint16 getMaximumHealth() const {return m_healthM;}
 	uint16 getCurrentIS() const {return m_innerStrC;}
 	uint16 getMaximumIS() const {return m_innerStrM;}
-	uint8 getProfession() const {return m_prof;}
+	uint32 getProfession() const {return m_prof;}
 	uint8 getLevel() const {return m_lvl;}
 	uint8 getAlignment() const {return m_alignment;}
 	bool getPvpFlag() const {return m_pvpflag;}
@@ -85,7 +86,8 @@ private:
 	LocationVector m_pos,m_savedPos;
 	shared_ptr<class RsiData> m_rsi;
 	uint16 m_healthC,m_healthM,m_innerStrC,m_innerStrM;
-	uint8 m_prof,m_lvl,m_alignment;
+	uint32 m_prof;
+	uint8 m_lvl,m_alignment;
 	bool m_pvpflag;
 	uint32 testCount;
 

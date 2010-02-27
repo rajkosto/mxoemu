@@ -240,6 +240,7 @@ void GameClient::HandleEncrypted( ByteBuffer &srcData )
 	ByteBuffer dataCopy(&srcData.contents()[srcData.rpos()],srcData.remaining());
 	int32 commandOffset = -1;
 	ByteBuffer zeroFourBlock;
+	ByteBuffer zeroFiveBlock;
 
 	//try to find 04 block
 	while (dataCopy.remaining() > 0)
@@ -255,11 +256,17 @@ void GameClient::HandleEncrypted( ByteBuffer &srcData )
 			//try and parse
 			OrderedPacket testPacket;
 			bool parseSuccessfull = testPacket.FromBuffer(dataCopy);
-			if (parseSuccessfull == true && dataCopy.remaining() == 0)
+			if (parseSuccessfull == true)
 			{
+				size_t zeroFiveBlockSize = dataCopy.remaining();
+				if (zeroFiveBlockSize > 0)
+				{
+					zeroFiveBlock = ByteBuffer(&dataCopy.contents()[dataCopy.rpos()],zeroFiveBlockSize);
+				}
 				dataCopy.rpos(thePos);
-				zeroFourBlock = ByteBuffer(&dataCopy.contents()[dataCopy.rpos()],dataCopy.remaining());
+				zeroFourBlock = ByteBuffer(&dataCopy.contents()[dataCopy.rpos()],dataCopy.remaining()-zeroFiveBlockSize);
 				commandOffset=thePos;
+
 				break;
 			}
 		}
@@ -275,6 +282,10 @@ void GameClient::HandleEncrypted( ByteBuffer &srcData )
 		otherBlock = ByteBuffer(dataCopy.contents(),commandOffset);
 	}
 
+	if (zeroFiveBlock.size() > 0)
+	{
+		HandleOther(zeroFiveBlock);
+	}
 	if (otherBlock.size() > 0)
 	{
 		HandleOther(otherBlock);
@@ -415,6 +426,105 @@ void GameClient::FlagsChanged( uint8 oldFlags,uint8 newFlags )
 	}
 }
 
+
+bool GameClient::PacketReceived( uint16 clientSeq )
+{
+	bool wraparound=false;
+
+	if (isSequenceMoreRecent(clientSeq,m_lastClientSequence) == true)
+	{
+		if ( (m_lastClientSequence > 4096/2) && clientSeq < 4096/2 )
+			wraparound=true;
+
+		m_lastClientSequence = clientSeq;
+	}
+
+	if (wraparound == true)
+	{
+		size_t removedPacketsToAck = m_packetsToAck.size();
+		m_packetsToAck.clear();
+
+		INFO_LOG(format("(%1%) Purged %2% acks due to client wraparound") % Address() % removedPacketsToAck);
+	}
+
+	if (find(m_packetsToAck.begin(),m_packetsToAck.end(),clientSeq) != m_packetsToAck.end())
+		return false;
+
+	m_packetsToAck.push_back(clientSeq);
+	return true;
+}
+
+
+
+uint32 GameClient::AcknowledgePacket( uint16 serverSeq )
+{
+	//		vector<uint16> zeAckedPacketz;
+	uint32 eraseCounter=0;
+	for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();)
+	{
+		if ( (it->packetsItsIn.size() > 0) &&
+			find(it->packetsItsIn.begin(),it->packetsItsIn.end(),serverSeq)!=it->packetsItsIn.end() )
+		{
+			/*for (int i=0;i<it->packetsItsIn.size();i++)
+			{
+				zeAckedPacketz.push_back(it->packetsItsIn[i]);
+			}*/
+			it=m_queuedStates.erase(it);
+			eraseCounter++;
+		}
+		else
+		{
+			++it;
+		}
+	}
+	for (msgQueueType::iterator it=m_queuedCommands.begin();it!=m_queuedCommands.end();)
+	{
+		if ( (it->packetsItsIn.size() > 0) &&
+			find(it->packetsItsIn.begin(),it->packetsItsIn.end(),serverSeq)!=it->packetsItsIn.end() )
+		{
+			/*for (int i=0;i<it->packetsItsIn.size();i++)
+			{
+				zeAckedPacketz.push_back(it->packetsItsIn[i]);
+			}*/
+			it=m_queuedCommands.erase(it);
+			eraseCounter++;
+		}
+		else
+		{
+			++it;
+		}
+	}
+	/*stringstream derp;
+	derp << "Acking " << serverSeq << " Acked " << eraseCounter << " packets latency " << m_latency << "ms ( ";
+	for (int i=0;i<zeAckedPacketz.size();i++)
+	{
+		derp << zeAckedPacketz[i] << " ";
+	}
+	vector<uint16> zePacketsLeft;
+	for (msgQueueType::iterator it=m_queuedCommands.begin();it!=m_queuedCommands.end();++it)
+	{
+		for (int i=0;i<it->packetsItsIn.size();i++)
+		{
+			zePacketsLeft.push_back(it->packetsItsIn[i]);
+		}
+	}
+	for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();++it)
+	{
+		for (int i=0;i<it->packetsItsIn.size();i++)
+		{
+			zePacketsLeft.push_back(it->packetsItsIn[i]);
+		}
+	}
+	derp << ") " << zePacketsLeft.size() << " left ( ";
+	for (int i=0;i<zePacketsLeft.size();i++)
+	{
+		derp << zePacketsLeft[i] << " ";
+	}
+	derp << ")";
+	DEBUG_LOG(derp.str());*/
+	return eraseCounter;
+}
+
 bool GameClient::SendSequencedPacket( msgBaseClassPtr jumboPacket )
 {
 	//serialize data from dynamic packet to a static one
@@ -471,7 +581,7 @@ void GameClient::FlushQueue( bool alsoResend )
 		{
 			if (it->packetsItsIn.size() > 0 && (currBlock.subPackets.size() == 0 || currBlock.sequenceId+currBlock.subPackets.size() != it->sequenceId))
 			{
-				if (getMSTime() - it->msLastSent < 300 || alsoResend == false) //300ms resend
+				if (getMSTime() - it->msLastSent < 200 || alsoResend == false) //200ms resend
 				{
 					++it;
 					continue;
@@ -528,7 +638,7 @@ void GameClient::FlushQueue( bool alsoResend )
 	//03 next
 	for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();)
 	{
-		if ((getMSTime() - it->msLastSent < 300 || alsoResend == false) && it->packetsItsIn.size() > 0) //300ms resend
+		if ((getMSTime() - it->msLastSent < 1000 || alsoResend == false) && it->packetsItsIn.size() > 0) //1000ms resend
 		{
 			++it;
 			continue;

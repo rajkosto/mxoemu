@@ -255,7 +255,7 @@ void AuthSocket::HandleAuthRequest( ByteBuffer &packet )
 
 	//scope for db ptr
 	{
-		scoped_ptr<QueryResult> result(sDatabase.Query(format("SELECT `userId`, `username`, `passwordSalt`, `passwordHash`, `publicExponent`, `publicModulus`, `privateExponent`, `timeCreated` FROM `users` WHERE `username` = '%1%' LIMIT 1") % m_username ) );
+		scoped_ptr<QueryResult> result(sDatabase.Query(format("SELECT `userId`, `username`, `passwordSalt`, `passwordHash`, `publicExponent`, `publicModulus`, `privateExponent`, `timeCreated` FROM `users` WHERE `username` = '%1%' LIMIT 1") % sDatabase.EscapeString(m_username) ) );
 		if (result == NULL)
 		{
 			INFO_LOG(format("Username %1% doesn't exist, disconnecting.") % m_username );

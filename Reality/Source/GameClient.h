@@ -50,6 +50,7 @@ public:
 		else
 			return 0;
 	}
+	uint32 GetWorldCharId() { return m_charWorldId; }
 
 	void HandlePacket(const char *pData, uint16 nLength);
 	void HandleEncrypted(ByteBuffer &srcData);
@@ -80,100 +81,8 @@ private:
 	bool SendSequencedPacket(msgBaseClassPtr jumboPacket);
 	SequencedPacket Decrypt(const char *pData, uint16 nLength);
 	void FlagsChanged(uint8 oldFlags,uint8 newFlags);
-	bool PacketReceived(uint16 clientSeq)
-	{
-		bool wraparound=false;
-
-		if (isSequenceMoreRecent(clientSeq,m_lastClientSequence) == true)
-		{
-			if ( (m_lastClientSequence > 4096/2) && clientSeq < 4096/2 )
-				wraparound=true;
-
-			m_lastClientSequence = clientSeq;
-		}
-
-		if (wraparound == true)
-		{
-			size_t removedPacketsToAck = m_packetsToAck.size();
-			m_packetsToAck.clear();
-
-			INFO_LOG(format("(%1%) Purged %2% acks due to client wraparound") % Address() % removedPacketsToAck);
-		}
-
-		if (find(m_packetsToAck.begin(),m_packetsToAck.end(),clientSeq) != m_packetsToAck.end())
-			return false;
-
-		m_packetsToAck.push_back(clientSeq);
-		return true;
-	}
-	uint32 AcknowledgePacket(uint16 serverSeq)
-	{
-//		vector<uint16> zeAckedPacketz;
-		uint32 eraseCounter=0;
-		for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();)
-		{
-			if ( (it->packetsItsIn.size() > 0) &&
-				find(it->packetsItsIn.begin(),it->packetsItsIn.end(),serverSeq)!=it->packetsItsIn.end() )
-			{
-	/*			for (int i=0;i<it->packetsItsIn.size();i++)
-				{
-					zeAckedPacketz.push_back(it->packetsItsIn[i]);
-				}*/
-				it=m_queuedStates.erase(it);
-				eraseCounter++;
-			}
-			else
-			{
-				++it;
-			}
-		}
-		for (msgQueueType::iterator it=m_queuedCommands.begin();it!=m_queuedCommands.end();)
-		{
-			if ( (it->packetsItsIn.size() > 0) &&
-				find(it->packetsItsIn.begin(),it->packetsItsIn.end(),serverSeq)!=it->packetsItsIn.end() )
-			{
-		/*		for (int i=0;i<it->packetsItsIn.size();i++)
-				{
-					zeAckedPacketz.push_back(it->packetsItsIn[i]);
-				}*/
-				it=m_queuedCommands.erase(it);
-				eraseCounter++;
-			}
-			else
-			{
-				++it;
-			}
-		}
-/*		stringstream derp;
-		derp << "Acking " << serverSeq << " Acked " << eraseCounter << " packets latency " << m_latency << "ms ( ";
-		for (int i=0;i<zeAckedPacketz.size();i++)
-		{
-			derp << zeAckedPacketz[i] << " ";
-		}
-		vector<uint16> zePacketsLeft;
-		for (msgQueueType::iterator it=m_queuedCommands.begin();it!=m_queuedCommands.end();++it)
-		{
-			for (int i=0;i<it->packetsItsIn.size();i++)
-			{
-				zePacketsLeft.push_back(it->packetsItsIn[i]);
-			}
-		}
-		for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();++it)
-		{
-			for (int i=0;i<it->packetsItsIn.size();i++)
-			{
-				zePacketsLeft.push_back(it->packetsItsIn[i]);
-			}
-		}
-		derp << ") " << zePacketsLeft.size() << " left ( ";
-		for (int i=0;i<zePacketsLeft.size();i++)
-		{
-			derp << zePacketsLeft[i] << " ";
-		}
-		derp << ")";
-		DEBUG_LOG(derp.str());*/
-		return eraseCounter;
-	}
+	bool PacketReceived(uint16 clientSeq);
+	uint32 AcknowledgePacket(uint16 serverSeq);
 	struct queuedMsg
 	{
 		queuedMsg(uint16 newSeqId, msgBaseClassPtr dataToSend)

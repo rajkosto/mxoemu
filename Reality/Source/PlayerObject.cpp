@@ -76,7 +76,7 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 		m_innerStrC = field[10].GetUInt16();
 		m_innerStrM = field[11].GetUInt16();
 		m_lvl = field[12].GetUInt8();
-		m_prof = field[13].GetUInt8();
+		m_prof = field[13].GetUInt32();
 		m_alignment = field[14].GetUInt8();
 		m_pvpflag = field[15].GetBool();
 		m_exp = field[16].GetUInt64();
@@ -631,11 +631,71 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 				return;
 			srcCmd >> interaction;
 
+			INFO_LOG(format("(%1%) %2%:%3% interacting with object id %4% interaction %5%")
+				% m_parent.Address()
+				% m_handle
+				% m_goId
+				% Bin2Hex((const byte*)&staticObjId,sizeof(staticObjId),0)
+				% uint32(interaction) );
+
 			if (interaction == 0x03) //open door
 			{
-			//	sObjMgr.OpenDoor(staticObjId);
+				//sObjMgr.OpenDoor(staticObjId);
 				return;
 			}
+			else
+			{
+				return;
+			}
+		}
+		else if (secondByte == 0xc2) //jump
+		{
+			LocationVector endPos;
+			if (endPos.fromDoubleBuf(srcCmd) == false)
+			{
+				WARNING_LOG(format("(%1%) %2%:%3% jump packet doesn't have endPos: %4%")
+					% m_parent.Address()
+					% m_handle
+					% m_goId
+					% Bin2Hex(srcCmd) );
+				return;
+			}
+
+			vector<byte> extraData(0x0B);
+			if (srcCmd.remaining() < extraData.size())
+			{
+				WARNING_LOG(format("(%1%) %2%:%3% jump packet doesn't have extraData: %4%")
+					% m_parent.Address()
+					% m_handle
+					% m_goId
+					% Bin2Hex(srcCmd) );
+				return;
+			}
+			srcCmd.read(&extraData[0],extraData.size());
+
+			uint32 theTimeStamp = 0;
+			if (srcCmd.remaining() < sizeof(theTimeStamp))
+			{
+				WARNING_LOG(format("(%1%) %2%:%3% jump packet doesn't have timestamp: %4%")
+					% m_parent.Address()
+					% m_handle
+					% m_goId
+					% Bin2Hex(srcCmd) );
+				return;				
+			}
+			srcCmd >> theTimeStamp;
+
+			DEBUG_LOG(format("(%1%) %2%:%3% jumping to %4%,%5%,%6% extra data %7% timestamp %8%")
+				% m_parent.Address()
+				% m_handle
+				% m_goId
+				% endPos.x % endPos.y % endPos.z
+				% Bin2Hex(&extraData[0],extraData.size())
+				% theTimeStamp );
+
+			this->setPosition(endPos);
+			sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
+			return;
 		}
 		else if (secondByte == 0xc9)
 		{
@@ -689,10 +749,124 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 			m_parent.QueueCommand(make_shared<WhereAmIResponse>(m_pos));
 			return;
 		}
+		else if (secondByte == 0x92) //get player details
+		{
+			uint32 zeroInt;
+			if (srcCmd.remaining() < sizeof(zeroInt))
+				return;
+			srcCmd >> zeroInt;
+
+			if (zeroInt != 0)
+			{
+				WARNING_LOG(format("Get player details zero int is %1%") % zeroInt );
+				return;
+			}
+
+			uint16 playerNameStrLenPos;
+			if (srcCmd.remaining() < sizeof(playerNameStrLenPos))
+				return;
+			srcCmd >> playerNameStrLenPos;
+
+			if (playerNameStrLenPos != srcCmd.rpos())
+			{
+				WARNING_LOG(format("Get player details strlenpos not %1% but %2%") % srcCmd.rpos() % playerNameStrLenPos );
+				return;
+			}
+
+			srcCmd.rpos(playerNameStrLenPos);
+			uint16 playerNameStrLen;
+			if (srcCmd.remaining() < sizeof(playerNameStrLen))
+				return;
+			srcCmd >> playerNameStrLen;
+			if (playerNameStrLen < 1 || srcCmd.remaining() < playerNameStrLen)
+				return;
+			vector<byte> rawPlayerName(playerNameStrLen);
+			srcCmd.read(&rawPlayerName[0],rawPlayerName.size());
+			string thePlayerName = string((const char*)&rawPlayerName[0],rawPlayerName.size()-1);
+
+			vector<uint32> objectList = sObjMgr.getAllGOIds();
+			foreach(uint32 objId, objectList)
+			{
+				PlayerObject* targetPlayer = NULL;
+				try
+				{
+					targetPlayer = sObjMgr.getGOPtr(objId);
+				}
+				catch (ObjectMgr::ObjectNotAvailable)
+				{
+					continue;
+				}
+
+				if (targetPlayer == NULL)
+					continue;
+
+				if (targetPlayer->getHandle() == thePlayerName)
+				{
+					m_parent.QueueCommand(make_shared<PlayerDetailsMsg>(targetPlayer));
+					m_parent.QueueCommand(make_shared<PlayerBackgroundMsg>(targetPlayer->getBackground()));
+					break;
+				}
+			}
+			return;
+		}
+		else if (secondByte == 0x94) //get background
+		{
+			m_parent.QueueCommand(make_shared<BackgroundResponseMsg>(this->getBackground()));
+			return;
+		}
+		else if (secondByte == 0x96) //set background
+		{
+			uint16 backgroundStrLenPos = 0;
+			if (srcCmd.remaining() < sizeof(backgroundStrLenPos))
+				return;
+			srcCmd >> backgroundStrLenPos;
+
+			if (srcCmd.size() < backgroundStrLenPos)
+				return;
+			srcCmd.rpos(backgroundStrLenPos);
+			uint16 backgroundStrLen = 0;
+
+			if (srcCmd.remaining() < sizeof(backgroundStrLen))
+				return;
+			srcCmd >> backgroundStrLen;
+
+			if (backgroundStrLen < 1 || srcCmd.remaining() < backgroundStrLen)
+				return;
+			vector<byte> backgroundRawBuf(backgroundStrLen);
+			srcCmd.read(&backgroundRawBuf[0],backgroundRawBuf.size());
+			string theNewBackground = string((const char*)&backgroundRawBuf[0],backgroundRawBuf.size()-1);
+
+			bool success = this->setBackground(theNewBackground);
+			if (success)
+			{
+				INFO_LOG(format("(%1%) %2%:%3% changed background to |%4%|")
+					% m_parent.Address()
+					% m_handle
+					% m_goId
+					% this->getBackground() );
+			}
+			else
+			{
+				WARNING_LOG(format("(%1%) %2%:%3% background sql query update failed")
+					% m_parent.Address()
+					% m_handle
+					% m_goId );
+			}
+			return;
+		}
 	}
 
 	srcCmd.rpos(0);
 	DEBUG_LOG(format("(%1%) unknown 04 command: %2%") % m_parent.Address() % Bin2Hex(srcCmd) );
+}
+
+bool PlayerObject::setBackground(string newBackground)
+{
+	m_background = newBackground;
+
+	return sDatabase.Execute(format("UPDATE `characters` SET `background` = '%1%' WHERE `charId` = '%2%'")
+		% sDatabase.EscapeString(this->getBackground())
+		% m_characterUID );
 }
 
 vector<msgBaseClassPtr> PlayerObject::getCurrentStatePackets()
@@ -873,18 +1047,8 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 		y*=100;
 		z*=100;
 
-		PlayerObject* playerObj = NULL; 
-		try
-		{
-			playerObj = sObjMgr.getGOPtr(m_goId);
-		}
-		catch (ObjectMgr::ObjectNotAvailable)
-		{
-			return;
-		}
-
 		LocationVector derp(x,y,z);
-		playerObj->setPosition(derp);
+		this->setPosition(derp);
 		sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
 		return;
 	}
@@ -905,20 +1069,10 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 
 		incrementAmount*=100;
 
-		PlayerObject* playerObj = NULL; 
-		try
-		{
-			playerObj = sObjMgr.getGOPtr(m_goId);
-		}
-		catch (ObjectMgr::ObjectNotAvailable)
-		{
-			return;
-		}
-
 		double newX,newY,newZ;
-		newX = playerObj->getPosition().x;
-		newY = playerObj->getPosition().y;
-		newZ = playerObj->getPosition().z;
+		newX = this->getPosition().x;
+		newY = this->getPosition().y;
+		newZ = this->getPosition().z;
 
 		if (iequals(command, "incX"))
 			newX+=incrementAmount;
@@ -928,7 +1082,7 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 			newZ+=incrementAmount;
 		
 		LocationVector newPos(newX,newY,newZ);
-		playerObj->setPosition(newPos);
+		this->setPosition(newPos);
 		sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
 		return;
 	}
@@ -969,17 +1123,7 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 			return;
 		}
 
-		PlayerObject* thisPlayer = NULL; 
-		try
-		{
-			thisPlayer = sObjMgr.getGOPtr(m_goId);
-		}
-		catch (ObjectMgr::ObjectNotAvailable)
-		{
-			return;
-		}
-
-		thisPlayer->setPosition(theTargetPlayer->getPosition());
+		this->setPosition(theTargetPlayer->getPosition());
 		sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
 	}
 	else

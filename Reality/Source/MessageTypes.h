@@ -292,6 +292,59 @@ public:
 	~PlayerChatMsg() {}
 };
 
+class BackgroundResponseMsg : public StaticMsg
+{
+public:
+	BackgroundResponseMsg(string playerBackground)
+	{
+		m_buf.clear();
+
+		m_buf << uint16(swap16(0x8195));
+		uint32 insertBackgroundStrLenPosHere = m_buf.wpos();
+		m_buf << uint16(0); //placeholder
+		m_buf << uint8(0);
+		uint16 backgroundStrLenPos = m_buf.wpos();
+		uint16 backgroundStrLen = playerBackground.length()+1;
+		m_buf << uint16(backgroundStrLen);
+		m_buf.append(playerBackground.c_str(),backgroundStrLen);
+
+		//go back and put position there
+		m_buf.wpos(insertBackgroundStrLenPosHere);
+		m_buf << uint16(backgroundStrLenPos);
+	}
+	~BackgroundResponseMsg() {}
+};
+
+class PlayerDetailsMsg : public StaticMsg
+{
+public:
+	PlayerDetailsMsg(class PlayerObject *thePlayer);
+	~PlayerDetailsMsg();
+};
+
+class PlayerBackgroundMsg : public StaticMsg
+{
+public:
+	PlayerBackgroundMsg(string playerBackground)
+	{
+		m_buf.clear();
+
+		m_buf << uint16(swap16(0x8198));
+		uint32 insertBackgroundStrLenPosHere = m_buf.wpos();
+		m_buf << uint16(0); //placeholder
+		m_buf << uint8(1);
+		uint16 backgroundStrLenPos = m_buf.wpos();
+		uint16 backgroundStrLen = playerBackground.length()+1;
+		m_buf << uint16(backgroundStrLen);
+		m_buf.append(playerBackground.c_str(),backgroundStrLen);
+
+		//go back and put position there
+		m_buf.wpos(insertBackgroundStrLenPosHere);
+		m_buf << uint16(backgroundStrLenPos);
+	}
+	~PlayerBackgroundMsg() {}
+};
+
 class HexGenericMsg : public StaticMsg
 {
 public:

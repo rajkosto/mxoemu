@@ -102,7 +102,7 @@ const ByteBuffer& PlayerSpawnMsg::toBuf()
 		0x3B, 0x3B, 0x80, 0x98, 0x5A, 0x5A, 0x04, 0x86, 0x8C, 0xFF, 0x6A, 0x6A, 0xC6, 0xC5, 0xFF, 0x3C, 
 		0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 
 		0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x5B, 
-		0x5B, 0xED, 0x7A, 0x00, 0x00, 0x00, 0xC5, 0xFF, 0x75, 0xD4, 0x01, 0x00, 0x8A, 0x8A, 0x8A, 0x8A, 
+		0x5B, 0xED, 0x7A, 0x7A, 0x7A, 0x7A, 0xC5, 0xFF, 0x75, 0xD4, 0x01, 0x00, 0x8A, 0x8A, 0x8A, 0x8A, 
 		0x8A, 0x8A, 0x8A, 0x8A, 0x8A, 0x8A, 0x8A, 0x8A, 0x8A, 0x00, 0x00, 0x6B, 0x6B, 0x9D, 0x4A, 0x4A, 
 		0x4A, 0x4A, 0x4A, 0x4A, 0x4A, 0x4A, 0x4B, 0x4B, 0x4B, 0x4B, 0x4B, 0x4B, 0x4B, 0x4B, 0x4C, 0x4C, 
 		0x4C, 0x4C, 0x4C, 0x4C, 0x4C, 0x4C, 0x8C, 0xFF, 0x7B, 0x22, 0x80, 0x88, 0x17, 0x1C, 0x7C, 0x00, 
@@ -159,8 +159,8 @@ const ByteBuffer& PlayerSpawnMsg::toBuf()
 	memcpy(innerStrMpos,&temp16,sizeof(temp16));
 
 	byte *professionPos = &sampleSpawnPacket[0x82];
-	temp8 = m_player->getProfession();
-	memcpy(professionPos,&temp8,sizeof(temp8));
+	uint32 temp32 = m_player->getProfession();
+	memcpy(professionPos,&temp32,sizeof(temp32));
 
 	byte *levelPos = &sampleSpawnPacket[0xB8];
 	temp8 = m_player->getLevel();
@@ -598,6 +598,89 @@ WhereAmIResponse::WhereAmIResponse( const LocationVector &currPos )
 }
 
 WhereAmIResponse::~WhereAmIResponse()
+{
+
+}
+
+PlayerDetailsMsg::PlayerDetailsMsg( PlayerObject *thePlayer )
+{
+	m_buf.clear();
+
+	if (thePlayer == NULL)
+		throw PacketNoLongerValid();
+
+	m_buf << uint16(swap16(0x8193));
+
+	m_buf << uint32(thePlayer->getClient().GetWorldCharId());
+
+	size_t putHandleStrLenPosHere = m_buf.wpos();
+	m_buf << uint16(0); //placeholder
+
+	m_buf << uint32(0); //zero int
+
+	size_t putFirstNameStrLenPosHere = m_buf.wpos();
+	m_buf << uint16(0); //placeholder
+
+	size_t putLastNameStrLenPosHere = m_buf.wpos();
+	m_buf << uint16(0); //placeholder
+
+	m_buf << uint32(300); //character trait	
+
+	m_buf << uint8(thePlayer->getAlignment()); //organization
+
+	size_t putCrewStrLenPosHere = m_buf.wpos();
+	m_buf << uint16(0); //placeholder
+
+	size_t putFactionStrLenPosHere = m_buf.wpos();
+	m_buf << uint16(0); //placeholder
+
+	m_buf << uint32(9001); //CQ points
+
+	uint16 handleStrLenPos = m_buf.wpos();
+	uint16 handleStrLen = thePlayer->getHandle().length()+1;
+	m_buf << uint16(handleStrLen);
+	m_buf.append(thePlayer->getHandle().c_str(),handleStrLen);
+
+	uint16 firstNameStrLenPos = m_buf.wpos();
+	uint16 firstNameStrLen = thePlayer->getFirstName().length()+1;
+	m_buf << uint16(firstNameStrLen);
+	m_buf.append(thePlayer->getFirstName().c_str(),firstNameStrLen);
+
+	uint16 lastNameStrLenPos = m_buf.wpos();
+	uint16 lastNameStrLen = thePlayer->getLastName().length()+1;
+	m_buf << uint16(lastNameStrLen);
+	m_buf.append(thePlayer->getLastName().c_str(),lastNameStrLen);
+
+	string crewName,factionName;
+
+	uint16 crewNameStrLenPos = m_buf.wpos();
+	uint16 crewNameStrLen = crewName.length()+1;
+	m_buf << uint16(crewNameStrLen);
+	m_buf.append(crewName.c_str(),crewNameStrLen);
+
+	uint16 factionNameStrLenPos = m_buf.wpos();
+	uint16 factionNameStrLen = factionName.length()+1;
+	m_buf << uint16(factionNameStrLen);
+	m_buf.append(factionName.c_str(),factionNameStrLen);
+
+	//go back and put position there
+	m_buf.wpos(putHandleStrLenPosHere);
+	m_buf << uint16(handleStrLenPos);
+
+	m_buf.wpos(putFirstNameStrLenPosHere);
+	m_buf << uint16(firstNameStrLenPos);
+
+	m_buf.wpos(putLastNameStrLenPosHere);
+	m_buf << uint16(lastNameStrLenPos);
+
+	m_buf.wpos(putCrewStrLenPosHere);
+	m_buf << uint16(crewNameStrLenPos);
+
+	m_buf.wpos(putFactionStrLenPosHere);
+	m_buf << uint16(factionNameStrLenPos);
+}
+
+PlayerDetailsMsg::~PlayerDetailsMsg()
 {
 
 }

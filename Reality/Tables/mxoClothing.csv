@@ -179,27 +179,27 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 47767;0x97ba0000;0x0000ba97;FEMALE SHIRT;KunoFGiMastG;Gray Kunoichi Master Gi;26;1
 47766;0x96ba0000;0x0000ba96;FEMALE SHIRT;KunoFGiMastW;White Kunoichi Master Gi;26;0
 47817;0xc9ba0000;0x0000bac9;FEMALE SHIRT;KunoFGiPink;{c:FF97CB}Pink Kunoichi Gi{/c};26;3
-46983;0x87b70000;0x0000b787;FEMALE SHIRT;Anniv07TShirtFBliss;"Bliss" Anniversary T-Shirt;6;42
-46981;0x85b70000;0x0000b785;FEMALE SHIRT;Anniv07TShirtFCausality;"Causality" Anniversary T-Shirt;6;40
-46979;0x83b70000;0x0000b783;FEMALE SHIRT;Anniv07TShirtFChoice;"Choice" Anniversary T-Shirt;6;38
-46982;0x86b70000;0x0000b786;FEMALE SHIRT;Anniv07TShirtFFreedom;"Freedom" Anniversary T-Shirt;6;41
-46978;0x82b70000;0x0000b782;FEMALE SHIRT;Anniv07TShirtFHate;"Hate" Anniversary T-Shirt;6;37
-46980;0x84b70000;0x0000b784;FEMALE SHIRT;Anniv07TShirtFInevitability;"Inevitability" Anniversary T-Shirt;6;39
-46977;0x81b70000;0x0000b781;FEMALE SHIRT;Anniv07TShirtFLove;"Love" Anniversary T-Shirt;6;36
-46975;0x7fb70000;0x0000b77f;FEMALE SHIRT;Anniv07TShirtFPeace;"Peace" Anniversary T-Shirt;6;34
-46996;0x94b70000;0x0000b794;FEMALE SHIRT;Anniv07TShirtFSmith;"Smith" Anniversary T-Shirt;6;43
-46976;0x80b70000;0x0000b780;FEMALE SHIRT;Anniv07TShirtFWar;"War" Anniversary T-Shirt;6;35
-47280;0xb0b80000;0x0000b8b0;FEMALE SHIRT;Anniv08TShirtFDeath;"Death" Anniversary T-Shirt;6;45
-47281;0xb1b80000;0x0000b8b1;FEMALE SHIRT;Anniv08TShirtFDream;"Dream" Anniversary T-Shirt;6;46
-47282;0xb2b80000;0x0000b8b2;FEMALE SHIRT;Anniv08TShirtFExile;"Exile" Anniversary T-Shirt;6;47
-47283;0xb3b80000;0x0000b8b3;FEMALE SHIRT;Anniv08TShirtFLife;"Life" Anniversary T-Shirt;6;48
-47284;0xb4b80000;0x0000b8b4;FEMALE SHIRT;Anniv08TShirtFMachine;"Machine" Anniversary T-Shirt;6;49
+46983;0x87b70000;0x0000b787;FEMALE SHIRT;Anniv07TShirtFBliss;Bliss Anniversary T-Shirt;6;42
+46981;0x85b70000;0x0000b785;FEMALE SHIRT;Anniv07TShirtFCausality;Causality Anniversary T-Shirt;6;40
+46979;0x83b70000;0x0000b783;FEMALE SHIRT;Anniv07TShirtFChoice;Choice Anniversary T-Shirt;6;38
+46982;0x86b70000;0x0000b786;FEMALE SHIRT;Anniv07TShirtFFreedom;Freedom Anniversary T-Shirt;6;41
+46978;0x82b70000;0x0000b782;FEMALE SHIRT;Anniv07TShirtFHate;Hate Anniversary T-Shirt;6;37
+46980;0x84b70000;0x0000b784;FEMALE SHIRT;Anniv07TShirtFInevitability;Inevitability Anniversary T-Shirt;6;39
+46977;0x81b70000;0x0000b781;FEMALE SHIRT;Anniv07TShirtFLove;Love Anniversary T-Shirt;6;36
+46975;0x7fb70000;0x0000b77f;FEMALE SHIRT;Anniv07TShirtFPeace;Peace Anniversary T-Shirt;6;34
+46996;0x94b70000;0x0000b794;FEMALE SHIRT;Anniv07TShirtFSmith;Smith Anniversary T-Shirt;6;43
+46976;0x80b70000;0x0000b780;FEMALE SHIRT;Anniv07TShirtFWar;War Anniversary T-Shirt;6;35
+47280;0xb0b80000;0x0000b8b0;FEMALE SHIRT;Anniv08TShirtFDeath;Death Anniversary T-Shirt;6;45
+47281;0xb1b80000;0x0000b8b1;FEMALE SHIRT;Anniv08TShirtFDream;Dream Anniversary T-Shirt;6;46
+47282;0xb2b80000;0x0000b8b2;FEMALE SHIRT;Anniv08TShirtFExile;Exile Anniversary T-Shirt;6;47
+47283;0xb3b80000;0x0000b8b3;FEMALE SHIRT;Anniv08TShirtFLife;Life Anniversary T-Shirt;6;48
+47284;0xb4b80000;0x0000b8b4;FEMALE SHIRT;Anniv08TShirtFMachine;Machine Anniversary T-Shirt;6;49
 47285;0xb5b80000;0x0000b8b5;FEMALE SHIRT;Anniv08TShirtFMetacortex;Metacortex T-Shirt;6;50
-47286;0xb6b80000;0x0000b8b6;FEMALE SHIRT;Anniv08TShirtFNightmare;"Nightmare" Anniversary T-Shirt;6;51
-47287;0xb7b80000;0x0000b8b7;FEMALE SHIRT;Anniv08TShirtFParadise;"Paradise" Anniversary T-Shirt;6;52
-47288;0xb8b80000;0x0000b8b8;FEMALE SHIRT;Anniv08TShirtFPrison;"Prison" Anniversary T-Shirt;6;53
+47286;0xb6b80000;0x0000b8b6;FEMALE SHIRT;Anniv08TShirtFNightmare;Nightmare Anniversary T-Shirt;6;51
+47287;0xb7b80000;0x0000b8b7;FEMALE SHIRT;Anniv08TShirtFParadise;Paradise Anniversary T-Shirt;6;52
+47288;0xb8b80000;0x0000b8b8;FEMALE SHIRT;Anniv08TShirtFPrison;Prison Anniversary T-Shirt;6;53
 47289;0xb9b80000;0x0000b8b9;FEMALE SHIRT;Anniv08TShirtFWhite;Plain White T-Shirt;6;54
-47290;0xbab80000;0x0000b8ba;FEMALE SHIRT;Anniv08TShirtFWoman;"Woman" Anniversary T-Shirt;6;55
+47290;0xbab80000;0x0000b8ba;FEMALE SHIRT;Anniv08TShirtFWoman;Woman Anniversary T-Shirt;6;55
 39504;0x509a0000;0x00009a50;FEMALE SHIRT;AshencourteFShirt;Ashencourte Vestment;-1;-1
 38328;0xb8950000;0x000095b8;FEMALE SHIRT;DungeonCrestonHeightsFShirt1;Helen's Raiment;-1;-1
 38329;0xb9950000;0x000095b9;FEMALE SHIRT;DungeonCrestonHeightsFShirt2;Black Widow Threads;-1;-1
@@ -267,12 +267,12 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 46571;0xebb50000;0x0000b5eb;MALE COAT;01areaKTrenchM;Area K Trenchcoat;26;1
 47242;0x8ab80000;0x0000b88a;MALE COAT;Archive5MervMTrench;Blood Noble Trench;25;1
 46409;0x49b50000;0x0000b549;MALE COAT;ArchiveMervMTrench;Demon Army Trench;25;0
-38305;0xa1950000;0x000095a1;MALE COAT;DungeonHammervilleMCoat1;Ravenswing;-1;-1
-42931;0xb3a70000;0x0000a7b3;MALE COAT;DungeonHammervilleMCoat1R1;Ravenswing;-1;-1
-39224;0x38990000;0x00009938;MALE COAT;DungeonHammervilleMCoat2;Ravenstail;-1;-1
-42932;0xb4a70000;0x0000a7b4;MALE COAT;DungeonHammervilleMCoat2R1;Ravenstail;-1;-1
-38306;0xa2950000;0x000095a2;MALE COAT;DungeonHammervilleMCoat3;Ravensfeather;-1;-1
-42933;0xb5a70000;0x0000a7b5;MALE COAT;DungeonHammervilleMCoat3R1;Ravensfeather;-1;-1
+38305;0xa1950000;0x000095a1;MALE COAT;DungeonHammervilleMCoat1;Ravenswing;2;9
+42931;0xb3a70000;0x0000a7b3;MALE COAT;DungeonHammervilleMCoat1R1;Ravenswing;2;9
+39224;0x38990000;0x00009938;MALE COAT;DungeonHammervilleMCoat2;Ravenstail;2;9
+42932;0xb4a70000;0x0000a7b4;MALE COAT;DungeonHammervilleMCoat2R1;Ravenstail;2;9
+38306;0xa2950000;0x000095a2;MALE COAT;DungeonHammervilleMCoat3;Ravensfeather;2;9
+42933;0xb5a70000;0x0000a7b5;MALE COAT;DungeonHammervilleMCoat3R1;Ravensfeather;2;9
 38311;0xa7950000;0x000095a7;MALE COAT;DungeonHarajukoMCoat1;Lionskin Wrap;9;16
 39227;0x3b990000;0x0000993b;MALE COAT;DungeonHarajukoMCoat2;Tigerskin Wrap;9;16
 38313;0xa9950000;0x000095a9;MALE COAT;DungeonHarajukoMCoat3;Dragonskin Wrap;9;16
@@ -282,23 +282,23 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 42944;0xc0a70000;0x0000a7c0;MALE COAT;DungeonRidgeWayMCoat2R1;Black Shadow Jacket;4;0
 39230;0x3e990000;0x0000993e;MALE COAT;DungeonRidgeWayMCoat3;Deep Shadow Jacket;4;0
 42945;0xc1a70000;0x0000a7c1;MALE COAT;DungeonRidgeWayMCoat3R1;Deep Shadow Jacket;4;0
-38325;0xb5950000;0x000095b5;MALE COAT;DungeonSouthVauxtonMCoat1;Blackwolf Coat;-1;-1
-39236;0x44990000;0x00009944;MALE COAT;DungeonSouthVauxtonMCoat2;Greywolf Coat;-1;-1
-38326;0xb6950000;0x000095b6;MALE COAT;DungeonSouthVauxtonMCoat3;Direwolf Skin;-1;-1
+38325;0xb5950000;0x000095b5;MALE COAT;DungeonSouthVauxtonMCoat1;Blackwolf Coat;9;0
+39236;0x44990000;0x00009944;MALE COAT;DungeonSouthVauxtonMCoat2;Greywolf Coat;9;0
+38326;0xb6950000;0x000095b6;MALE COAT;DungeonSouthVauxtonMCoat3;Direwolf Skin;9;0
 38116;0xe4940000;0x000094e4;MALE COAT;EggMCoat;Egg's Shell;5;12
 47139;0x23b80000;0x0000b823;MALE COAT;EliteCommMCoat;Elite Commando Jacket;27;0
-38143;0xff940000;0x000094ff;MALE COAT;GregoreMCoat;Vampire Coat;-1;-1
-42909;0x9da70000;0x0000a79d;MALE COAT;GregoreMCoatR1;Vampire Coat;-1;-1
+38143;0xff940000;0x000094ff;MALE COAT;GregoreMCoat;Vampire Coat;8;0
+42909;0x9da70000;0x0000a79d;MALE COAT;GregoreMCoatR1;Vampire Coat;8;0
 48040;0xa8bb0000;0x0000bba8;MALE COAT;HamptonMCoat;Hampton Jacket;29;0
 47098;0xfab70000;0x0000b7fa;MALE COAT;IndustrialMCoat;Industrial Jacket;5;12
-38205;0x3d950000;0x0000953d;MALE COAT;KatScratchMCoat;Kat Skin;-1;-1
-42885;0x85a70000;0x0000a785;MALE COAT;KatScratchMCoatR1;Kat Skin;-1;-1
-38091;0xcb940000;0x000094cb;MALE COAT;LoriporMCoat;Loripor's Jacket;-1;-1
-42880;0x80a70000;0x0000a780;MALE COAT;LoriporMCoatR1;Loripor's Jacket;-1;-1
+38205;0x3d950000;0x0000953d;MALE COAT;KatScratchMCoat;Kat Skin;5;3
+42885;0x85a70000;0x0000a785;MALE COAT;KatScratchMCoatR1;Kat Skin;5;3
+38091;0xcb940000;0x000094cb;MALE COAT;LoriporMCoat;Loripor's Jacket;9;0
+42880;0x80a70000;0x0000a780;MALE COAT;LoriporMCoatR1;Loripor's Jacket;9;0
 48180;0x34bc0000;0x0000bc34;MALE COAT;OmegaMCoat;Omega Trenchcoat;26;0
-38162;0x12950000;0x00009512;MALE COAT;SergeantWynnMCoat;Winner's Coat;-1;-1
+38162;0x12950000;0x00009512;MALE COAT;SergeantWynnMCoat;Winner's Coat;1;26
 42746;0xfaa60000;0x0000a6fa;MALE COAT;TransitionMCoat;Awakening Jacket;23;1
-39517;0x5d9a0000;0x00009a5d;MALE COAT;WidowsMoorMCoat;Widow's Moor Wool;-1;-1
+39517;0x5d9a0000;0x00009a5d;MALE COAT;WidowsMoorMCoat;Widow's Moor Wool;9;31
 38097;0xd1940000;0x000094d1;MALE COAT;BigJimmyZMCoat;Z Gi;11;8
 42768;0x10a70000;0x0000a710;MALE COAT;BigJimmyZMCoat2;Z Gi;11;8
 42896;0x90a70000;0x0000a790;MALE COAT;BigJimmyZMCoatR1;Z Gi;11;8
@@ -306,10 +306,10 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 39232;0x40990000;0x00009940;MALE COAT;DungeonShinjukoMCoat1_Old;Widow's Gi;11;5
 40482;0x229e0000;0x00009e22;MALE COAT;DungeonShinjukoMCoat2;Spider Gi;11;5
 38322;0xb2950000;0x000095b2;MALE COAT;DungeonShinjukoMCoat2_Old;Spider Gi;11;5
-40483;0x239e0000;0x00009e23;MALE COAT;DungeonShinjukoMCoat3;The Black Widow's Gi;-1;-1
-39233;0x41990000;0x00009941;MALE COAT;DungeonShinjukoMCoat3_Old;The Black Widow's Gi;-1;-1
-38146;0x02950000;0x00009502;MALE COAT;EthanMCoat;Mother Coat;-1;-1
-42901;0x95a70000;0x0000a795;MALE COAT;EthanMCoatR1;Mother Coat;-1;-1
+40483;0x239e0000;0x00009e23;MALE COAT;DungeonShinjukoMCoat3;The Black Widow's Gi;11;5
+39233;0x41990000;0x00009941;MALE COAT;DungeonShinjukoMCoat3_Old;The Black Widow's Gi;11;5
+38146;0x02950000;0x00009502;MALE COAT;EthanMCoat;Mother Coat;12;4
+42901;0x95a70000;0x0000a795;MALE COAT;EthanMCoatR1;Mother Coat;12;4
 38139;0xfb940000;0x000094fb;MALE COAT;KennyLeeMCoat;Kenny's Gi;11;8
 47774;0x9eba0000;0x0000ba9e;MALE COAT;KunoMGiGranB;Black Shinobi Grandmaster Gi;28;2
 47773;0x9dba0000;0x0000ba9d;MALE COAT;KunoMGiGranG;Gray Shinobi Grandmaster Gi;28;1
@@ -325,38 +325,38 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 42695;0xc7a60000;0x0000a6c7;MALE COAT;Pandora2_2MCoat;Tiger Warrior's Gi;11;8
 42696;0xc8a60000;0x0000a6c8;MALE COAT;Pandora2_3MCoat;Tiger Master's Gi;11;8
 45903;0x4fb30000;0x0000b34f;MALE GLASSES;Mclothing_Glasses_Twins_C1;Black Void Shades;16;0
-45912;0x58b30000;0x0000b358;MALE GLASSES;Mclothing_Glasses_Twins_C10;Brown Void Shades;-1;-1
-45913;0x59b30000;0x0000b359;MALE GLASSES;Mclothing_Glasses_Twins_C11;Orange Void Shades;-1;-1
-45914;0x5ab30000;0x0000b35a;MALE GLASSES;Mclothing_Glasses_Twins_C12;Steel Void Shades;-1;-1
-45915;0x5bb30000;0x0000b35b;MALE GLASSES;Mclothing_Glasses_Twins_C13;Pink Void Shades;-1;-1
-45904;0x50b30000;0x0000b350;MALE GLASSES;Mclothing_Glasses_Twins_C2;Slate Void Shades;-1;-1
-45905;0x51b30000;0x0000b351;MALE GLASSES;Mclothing_Glasses_Twins_C3;Gray Void Shades;-1;-1
-45906;0x52b30000;0x0000b352;MALE GLASSES;Mclothing_Glasses_Twins_C4;Jade Void Shades;-1;-1
-45907;0x53b30000;0x0000b353;MALE GLASSES;Mclothing_Glasses_Twins_C5;Green Void Shades;-1;-1
-45908;0x54b30000;0x0000b354;MALE GLASSES;Mclothing_Glasses_Twins_C6;Red Void Shades;-1;-1
-45909;0x55b30000;0x0000b355;MALE GLASSES;Mclothing_Glasses_Twins_C7;Yellow Void Shades;-1;-1
-45910;0x56b30000;0x0000b356;MALE GLASSES;Mclothing_Glasses_Twins_C8;Cyan Void Shades;-1;-1
-45911;0x57b30000;0x0000b357;MALE GLASSES;Mclothing_Glasses_Twins_C9;Purple Void Shades;-1;-1
+45912;0x58b30000;0x0000b358;MALE GLASSES;Mclothing_Glasses_Twins_C10;Brown Void Shades;16;9
+45913;0x59b30000;0x0000b359;MALE GLASSES;Mclothing_Glasses_Twins_C11;Orange Void Shades;16;10
+45914;0x5ab30000;0x0000b35a;MALE GLASSES;Mclothing_Glasses_Twins_C12;Steel Void Shades;16;11
+45915;0x5bb30000;0x0000b35b;MALE GLASSES;Mclothing_Glasses_Twins_C13;Pink Void Shades;16;12
+45904;0x50b30000;0x0000b350;MALE GLASSES;Mclothing_Glasses_Twins_C2;Slate Void Shades;16;1
+45905;0x51b30000;0x0000b351;MALE GLASSES;Mclothing_Glasses_Twins_C3;Gray Void Shades;16;2
+45906;0x52b30000;0x0000b352;MALE GLASSES;Mclothing_Glasses_Twins_C4;Jade Void Shades;16;3
+45907;0x53b30000;0x0000b353;MALE GLASSES;Mclothing_Glasses_Twins_C5;Green Void Shades;16;4
+45908;0x54b30000;0x0000b354;MALE GLASSES;Mclothing_Glasses_Twins_C6;Red Void Shades;16;5
+45909;0x55b30000;0x0000b355;MALE GLASSES;Mclothing_Glasses_Twins_C7;Yellow Void Shades;16;6
+45910;0x56b30000;0x0000b356;MALE GLASSES;Mclothing_Glasses_Twins_C8;Cyan Void Shades;16;7
+45911;0x57b30000;0x0000b357;MALE GLASSES;Mclothing_Glasses_Twins_C9;Purple Void Shades;16;8
 46408;0x48b50000;0x0000b548;MALE GLASSES;ArchiveMachMGlasses;System Sunglasses;17;0
-39509;0x559a0000;0x00009a55;MALE GLASSES;AshencourteMGlasses;Ashencourte Shades;-1;-1
-38105;0xd9940000;0x000094d9;MALE GLASSES;CaspianMGlasses;Caspian's Sunglasses;-1;-1
-42771;0x13a70000;0x0000a713;MALE GLASSES;CaspianMGlasses2;Caspian's Sunglasses;-1;-1
-42887;0x87a70000;0x0000a787;MALE GLASSES;CaspianMGlassesR1;Caspian's Sunglasses;-1;-1
+39509;0x559a0000;0x00009a55;MALE GLASSES;AshencourteMGlasses;Ashencourte Shades;10;3
+38105;0xd9940000;0x000094d9;MALE GLASSES;CaspianMGlasses;Caspian's Sunglasses;4;2
+42771;0x13a70000;0x0000a713;MALE GLASSES;CaspianMGlasses2;Caspian's Sunglasses;4;2
+42887;0x87a70000;0x0000a787;MALE GLASSES;CaspianMGlassesR1;Caspian's Sunglasses;4;2
 48052;0xb4bb0000;0x0000bbb4;MALE GLASSES;CloudedMGlasses;Clouded Spectacles;15;0
-39238;0x46990000;0x00009946;MALE GLASSES;DungeonStanoMGlasses1;Detection Shades;-1;-1
-42949;0xc5a70000;0x0000a7c5;MALE GLASSES;DungeonStanoMGlasses1R1;Detection Shades;-1;-1
-38319;0xaf950000;0x000095af;MALE GLASSES;DungeonStanoMGlasses2;Perception Shades;-1;-1
-42950;0xc6a70000;0x0000a7c6;MALE GLASSES;DungeonStanoMGlasses2R1;Perception Shades;-1;-1
-39239;0x47990000;0x00009947;MALE GLASSES;DungeonStanoMGlasses3;Watcher's Shades;-1;-1
-42951;0xc7a70000;0x0000a7c7;MALE GLASSES;DungeonStanoMGlasses3R1;Watcher's Shades;-1;-1
+39238;0x46990000;0x00009946;MALE GLASSES;DungeonStanoMGlasses1;Detection Shades;8;6
+42949;0xc5a70000;0x0000a7c5;MALE GLASSES;DungeonStanoMGlasses1R1;Detection Shades;8;6
+38319;0xaf950000;0x000095af;MALE GLASSES;DungeonStanoMGlasses2;Perception Shades;8;6
+42950;0xc6a70000;0x0000a7c6;MALE GLASSES;DungeonStanoMGlasses2R1;Perception Shades;8;6
+39239;0x47990000;0x00009947;MALE GLASSES;DungeonStanoMGlasses3;Watcher's Shades;8;6
+42951;0xc7a70000;0x0000a7c7;MALE GLASSES;DungeonStanoMGlasses3R1;Watcher's Shades;8;6
 47143;0x27b80000;0x0000b827;MALE GLASSES;EliteCommMGlasses;Elite Commando Goggles;14;0
 47127;0x17b80000;0x0000b817;MALE GLASSES;HeadlessMGlasses;Headless Glasses;4;8
-38132;0xf4940000;0x000094f4;MALE GLASSES;LieutenantChangMGlasses;Viral Shades;-1;-1
-38154;0x0a950000;0x0000950a;MALE GLASSES;MikahMGlasses;Hacker Glasses;-1;-1
-38124;0xec940000;0x000094ec;MALE GLASSES;OptixMGlasses;Optix Optics;-1;-1
-42905;0x99a70000;0x0000a799;MALE GLASSES;OptixMGlassesR1;Optix Optics;-1;-1
-38093;0xcd940000;0x000094cd;MALE GLASSES;ReactorMGlasses;Reaction Sunglasses;-1;-1
-42891;0x8ba70000;0x0000a78b;MALE GLASSES;ReactorMGlassesR1;Reaction Sunglasses;-1;-1
+38132;0xf4940000;0x000094f4;MALE GLASSES;LieutenantChangMGlasses;Viral Shades;8;5
+38154;0x0a950000;0x0000950a;MALE GLASSES;MikahMGlasses;Hacker Glasses;8;5
+38124;0xec940000;0x000094ec;MALE GLASSES;OptixMGlasses;Optix Optics;8;5
+42905;0x99a70000;0x0000a799;MALE GLASSES;OptixMGlassesR1;Optix Optics;8;5
+38093;0xcd940000;0x000094cd;MALE GLASSES;ReactorMGlasses;Reaction Sunglasses;4;1
+42891;0x8ba70000;0x0000a78b;MALE GLASSES;ReactorMGlassesR1;Reaction Sunglasses;4;1
 38134;0xf6940000;0x000094f6;MALE GLASSES;ShockKiddMGlasses;Security Glasses;18;5
 47898;0x1abb0000;0x0000bb1a;MALE GLASSES;SleepMGlasses1;Blurred Sleepwalker Shades;5;24
 47899;0x1bbb0000;0x0000bb1b;MALE GLASSES;SleepMGlasses2;Fogged Sleepwalker Shades;5;25
@@ -366,11 +366,11 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 47938;0x42bb0000;0x0000bb42;MALE GLASSES;ValkMGlassesRose;Rose-colored Glasses;18;1
 47942;0x46bb0000;0x0000bb46;MALE GLASSES;ValkMGlassesValf;Valfreyja's Shield;18;3
 47940;0x44bb0000;0x0000bb44;MALE GLASSES;ValkMGlassesValk;Valkyrja Glasses;18;2
-39521;0x619a0000;0x00009a61;MALE GLASSES;WidowsMoorMGlasses;Widow's Moor Lenses;-1;-1
+39521;0x619a0000;0x00009a61;MALE GLASSES;WidowsMoorMGlasses;Widow's Moor Lenses;8;1
 48046;0xaebb0000;0x0000bbae;MALE GLASSES;WireMGlasses;Wireframe Glasses;18;4
 38141;0xfd940000;0x000094fd;MALE GLOVES;CormanMGloves;Tiger Claws;5;0
-39241;0x49990000;0x00009949;MALE GLOVES;DungeonUriahMGloves1;Corrupt Hands;-1;-1
-42919;0xa7a70000;0x0000a7a7;MALE GLOVES;DungeonUriahMGloves1R1;Corrupt Hands;-1;-1
+39241;0x49990000;0x00009949;MALE GLOVES;DungeonUriahMGloves1;Corrupt Hands;5;0
+42919;0xa7a70000;0x0000a7a7;MALE GLOVES;DungeonUriahMGloves1R1;Corrupt Hands;5;0
 38300;0x9c950000;0x0000959c;MALE GLOVES;DungeonUriahMGloves2;Defiled Gloves;-1;-1
 42920;0xa8a70000;0x0000a7a8;MALE GLOVES;DungeonUriahMGloves2R1;Defiled Gloves;-1;-1
 39242;0x4a990000;0x0000994a;MALE GLOVES;DungeonUriahMGloves3;Fighter's Gloves;-1;-1
@@ -379,8 +379,8 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 48009;0x89bb0000;0x0000bb89;MALE GLOVES;IndustrialMGloves;Industrial Gloves;1;0
 38095;0xcf940000;0x000094cf;MALE GLOVES;JackMGloves;Jack's Gloves;5;0
 42899;0x93a70000;0x0000a793;MALE GLOVES;JackMGlovesR1;Jack's Gloves;5;0
-38207;0x3f950000;0x0000953f;MALE GLOVES;KertonMGloves;Sublime Gloves;-1;-1
-42882;0x82a70000;0x0000a782;MALE GLOVES;KertonMGlovesR1;Sublime Gloves;-1;-1
+38207;0x3f950000;0x0000953f;MALE GLOVES;KertonMGloves;Sublime Gloves;5;0
+42882;0x82a70000;0x0000a782;MALE GLOVES;KertonMGlovesR1;Sublime Gloves;5;0
 47792;0xb0ba0000;0x0000bab0;MALE GLOVES;KunoMGlovesGranB;Black Shinobi Grandmaster Tebukuro;15;0
 47791;0xafba0000;0x0000baaf;MALE GLOVES;KunoMGlovesGranG;Gray Shinobi Grandmaster Tebukuro;14;0
 47790;0xaeba0000;0x0000baae;MALE GLOVES;KunoMGlovesGranW;White Shinobi Grandmaster Tebukuro;13;0
@@ -396,9 +396,9 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 42687;0xbfa60000;0x0000a6bf;MALE GLOVES;Pandora1_3MGloves;Torturer's Gloves;6;0
 47109;0x05b80000;0x0000b805;MALE GLOVES;QuicksilverMGloves;Quicksilver Gloves;1;0
 39511;0x579a0000;0x00009a57;MALE GLOVES;SakuraMGloves;Sakura Ninja Gloves;1;0
-38119;0xe7940000;0x000094e7;MALE GLOVES;StraightEdgeJohnMGloves;Pugilist's Gloves;-1;-1
-42903;0x97a70000;0x0000a797;MALE GLOVES;StraightEdgeJohnMGlovesR1;Pugilist's Gloves;-1;-1
-46437;0x65b50000;0x0000b565;MALE GLOVES;StraightEdgeJohnMGlovesR2;Pugilist's Gloves;-1;-1
+38119;0xe7940000;0x000094e7;MALE GLOVES;StraightEdgeJohnMGloves;Pugilist's Gloves;2;0
+42903;0x97a70000;0x0000a797;MALE GLOVES;StraightEdgeJohnMGlovesR1;Pugilist's Gloves;2;0
+46437;0x65b50000;0x0000b565;MALE GLOVES;StraightEdgeJohnMGlovesR2;Pugilist's Gloves;2;0
 38164;0x14950000;0x00009514;MALE GLOVES;WinstonMGloves;Reactive Gloves;3;0
 39499;0x4b9a0000;0x00009a4b;MALE GLOVES;YukiMGloves;Yuki Ninja Gloves;1;0
 45929;0x69b30000;0x0000b369;MALE HAT;BlueSkyMHat;Blue Sky Cap;22;0
@@ -415,12 +415,12 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 47007;0x9fb70000;0x0000b79f;MALE HAT;CorruptPatchersBandM;Patcher's Bandana;31;0
 47005;0x9db70000;0x0000b79d;MALE HAT;CorruptPatchersHatM;Patcher's Hat;30;0
 47009;0xa1b70000;0x0000b7a1;MALE HAT;CorruptPatchersHeadM;Patcher's Headgear;32;0
-39221;0x35990000;0x00009935;MALE HAT;DungeonGracyHeightsMHat1;Euphoricap;-1;-1
-42937;0xb9a70000;0x0000a7b9;MALE HAT;DungeonGracyHeightsMHat1R1;Euphoricap;-1;-1
-38309;0xa5950000;0x000095a5;MALE HAT;DungeonGracyHeightsMHat2;Hygenicap;-1;-1
-42938;0xbaa70000;0x0000a7ba;MALE HAT;DungeonGracyHeightsMHat2R1;Hygenicap;-1;-1
-39220;0x34990000;0x00009934;MALE HAT;DungeonGracyHeightsMHat3;Asepticap;-1;-1
-42939;0xbba70000;0x0000a7bb;MALE HAT;DungeonGracyHeightsMHat3R1;Asepticap;-1;-1
+39221;0x35990000;0x00009935;MALE HAT;DungeonGracyHeightsMHat1;Euphoricap;5;0
+42937;0xb9a70000;0x0000a7b9;MALE HAT;DungeonGracyHeightsMHat1R1;Euphoricap;5;0
+38309;0xa5950000;0x000095a5;MALE HAT;DungeonGracyHeightsMHat2;Hygenicap;5;0
+42938;0xbaa70000;0x0000a7ba;MALE HAT;DungeonGracyHeightsMHat2R1;Hygenicap;5;0
+39220;0x34990000;0x00009934;MALE HAT;DungeonGracyHeightsMHat3;Asepticap;5;0
+42939;0xbba70000;0x0000a7bb;MALE HAT;DungeonGracyHeightsMHat3R1;Asepticap;5;0
 47145;0x29b80000;0x0000b829;MALE HAT;EliteCommMHat;Elite Commando Helmet;34;0
 48163;0x23bc0000;0x0000bc23;MALE HAT;ExecMCap;Executable Skullcap;45;0
 48167;0x27bc0000;0x0000bc27;MALE HAT;ExecMHeader;Executable Header;46;0
@@ -443,7 +443,7 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 38294;0x96950000;0x00009596;MALE HAT;TaskmasterMHat;Taskmaster Beret;6;0
 46566;0xe6b50000;0x0000b5e6;MALE HAT;TaskmasterMHat2;Taskmaster Beret Zero;6;0
 38136;0xf8940000;0x000094f8;MALE HAT;TinCanMHat;Tin Can's Headgear;7;0
-39519;0x5f9a0000;0x00009a5f;MALE HAT;WidowsMoorMHat;Widow's Moor Cap;-1;-1
+39519;0x5f9a0000;0x00009a5f;MALE HAT;WidowsMoorMHat;Widow's Moor Cap;3;0
 48042;0xaabb0000;0x0000bbaa;MALE HAT;WireMEarpiece;Wireframe Earpiece;40;0
 39503;0x4f9a0000;0x00009a4f;MALE HAT;YukiMHat;Yuki Ninja Bandana;10;0
 47244;0x8cb80000;0x0000b88c;MALE PANTS;Archive5ZionMPants;Rave Pants;15;1
@@ -454,57 +454,57 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 48038;0xa6bb0000;0x0000bba6;MALE PANTS;HamptonMPants;Hampton Pants;3;23
 42869;0x75a70000;0x0000a775;MALE PANTS;IndustrialMPants;Industrial Pants;3;0
 38206;0x3e950000;0x0000953e;MALE PANTS;JacobMPants;Coward's Pants;6;9
-38128;0xf0940000;0x000094f0;MALE PANTS;PetalMPants;Petal Pants;-1;-1
+38128;0xf0940000;0x000094f0;MALE PANTS;PetalMPants;Petal Pants;3;0
 47886;0x0ebb0000;0x0000bb0e;MALE PANTS;SleepMPants1;Faded Sleepwalker Jeans;3;20
 47887;0x0fbb0000;0x0000bb0f;MALE PANTS;SleepMPants2;Worn Sleepwalker Jeans;3;21
 47888;0x10bb0000;0x0000bb10;MALE PANTS;SleepMPants3;Threadbare Sleepwalker Jeans;3;22
-38150;0x06950000;0x00009506;MALE PANTS;YorkieMPants;Action Pants;-1;-1
+38150;0x06950000;0x00009506;MALE PANTS;YorkieMPants;Action Pants;2;3
 45927;0x67b30000;0x0000b367;MALE SHIRT;BlueSkyMShirt;Blue Sky T-Shirt;2;34
-46992;0x90b70000;0x0000b790;MALE SHIRT;Anniv07TShirtMBliss;"Bliss" Anniversary T-Shirt;2;43
-46990;0x8eb70000;0x0000b78e;MALE SHIRT;Anniv07TShirtMCausality;"Causality" Anniversary T-Shirt;2;41
-46988;0x8cb70000;0x0000b78c;MALE SHIRT;Anniv07TShirtMChoice;"Choice" Anniversary T-Shirt;2;39
-46991;0x8fb70000;0x0000b78f;MALE SHIRT;Anniv07TShirtMFreedom;"Freedom" Anniversary T-Shirt;2;42
-46987;0x8bb70000;0x0000b78b;MALE SHIRT;Anniv07TShirtMHate;"Hate" Anniversary T-Shirt;2;38
-46989;0x8db70000;0x0000b78d;MALE SHIRT;Anniv07TShirtMInevitability;"Inevitability" Anniversary T-Shirt;2;40
-46986;0x8ab70000;0x0000b78a;MALE SHIRT;Anniv07TShirtMLove;"Love" Anniversary T-Shirt;2;37
-46984;0x88b70000;0x0000b788;MALE SHIRT;Anniv07TShirtMPeace;"Peace" Anniversary T-Shirt;2;35
-46997;0x95b70000;0x0000b795;MALE SHIRT;Anniv07TShirtMSmith;"Smith" Anniversary T-Shirt;2;44
-46985;0x89b70000;0x0000b789;MALE SHIRT;Anniv07TShirtMWar;"War" Anniversary T-Shirt;2;36
-47291;0xbbb80000;0x0000b8bb;MALE SHIRT;Anniv08TShirtMDeath;"Death" Anniversary T-Shirt;2;45
-47292;0xbcb80000;0x0000b8bc;MALE SHIRT;Anniv08TShirtMDream;"Dream" Anniversary T-Shirt;2;46
-47293;0xbdb80000;0x0000b8bd;MALE SHIRT;Anniv08TShirtMExile;"Exile" Anniversary T-Shirt;2;47
-47294;0xbeb80000;0x0000b8be;MALE SHIRT;Anniv08TShirtMLife;"Life" Anniversary T-Shirt;2;48
-47295;0xbfb80000;0x0000b8bf;MALE SHIRT;Anniv08TShirtMMachine;"Machine" Anniversary T-Shirt;2;49
-47296;0xc0b80000;0x0000b8c0;MALE SHIRT;Anniv08TShirtMMan;"Man" Anniversary T-Shirt;2;50
+46992;0x90b70000;0x0000b790;MALE SHIRT;Anniv07TShirtMBliss;Bliss Anniversary T-Shirt;2;43
+46990;0x8eb70000;0x0000b78e;MALE SHIRT;Anniv07TShirtMCausality;Causality Anniversary T-Shirt;2;41
+46988;0x8cb70000;0x0000b78c;MALE SHIRT;Anniv07TShirtMChoice;Choice Anniversary T-Shirt;2;39
+46991;0x8fb70000;0x0000b78f;MALE SHIRT;Anniv07TShirtMFreedom;Freedom Anniversary T-Shirt;2;42
+46987;0x8bb70000;0x0000b78b;MALE SHIRT;Anniv07TShirtMHate;Hate Anniversary T-Shirt;2;38
+46989;0x8db70000;0x0000b78d;MALE SHIRT;Anniv07TShirtMInevitability;Inevitability Anniversary T-Shirt;2;40
+46986;0x8ab70000;0x0000b78a;MALE SHIRT;Anniv07TShirtMLove;Love Anniversary T-Shirt;2;37
+46984;0x88b70000;0x0000b788;MALE SHIRT;Anniv07TShirtMPeace;Peace Anniversary T-Shirt;2;35
+46997;0x95b70000;0x0000b795;MALE SHIRT;Anniv07TShirtMSmith;Smith Anniversary T-Shirt;2;44
+46985;0x89b70000;0x0000b789;MALE SHIRT;Anniv07TShirtMWar;War Anniversary T-Shirt;2;36
+47291;0xbbb80000;0x0000b8bb;MALE SHIRT;Anniv08TShirtMDeath;Death Anniversary T-Shirt;2;45
+47292;0xbcb80000;0x0000b8bc;MALE SHIRT;Anniv08TShirtMDream;Dream Anniversary T-Shirt;2;46
+47293;0xbdb80000;0x0000b8bd;MALE SHIRT;Anniv08TShirtMExile;Exile Anniversary T-Shirt;2;47
+47294;0xbeb80000;0x0000b8be;MALE SHIRT;Anniv08TShirtMLife;Life Anniversary T-Shirt;2;48
+47295;0xbfb80000;0x0000b8bf;MALE SHIRT;Anniv08TShirtMMachine;Machine Anniversary T-Shirt;2;49
+47296;0xc0b80000;0x0000b8c0;MALE SHIRT;Anniv08TShirtMMan;Man Anniversary T-Shirt;2;50
 47297;0xc1b80000;0x0000b8c1;MALE SHIRT;Anniv08TShirtMMetacortex;Metacortex T-Shirt;2;51
-47298;0xc2b80000;0x0000b8c2;MALE SHIRT;Anniv08TShirtMNightmare;"Nightmare" Anniversary T-Shirt;2;52
-47299;0xc3b80000;0x0000b8c3;MALE SHIRT;Anniv08TShirtMParadise;"Paradise" Anniversary T-Shirt;2;53
-47300;0xc4b80000;0x0000b8c4;MALE SHIRT;Anniv08TShirtMPrison;"Prison" Anniversary T-Shirt;2;54
+47298;0xc2b80000;0x0000b8c2;MALE SHIRT;Anniv08TShirtMNightmare;Nightmare Anniversary T-Shirt;2;52
+47299;0xc3b80000;0x0000b8c3;MALE SHIRT;Anniv08TShirtMParadise;Paradise Anniversary T-Shirt;2;53
+47300;0xc4b80000;0x0000b8c4;MALE SHIRT;Anniv08TShirtMPrison;Prison Anniversary T-Shirt;2;54
 47301;0xc5b80000;0x0000b8c5;MALE SHIRT;Anniv08TShirtMWhite;Plain White T-Shirt;2;55
 47246;0x8eb80000;0x0000b88e;MALE SHIRT;Archive5MachMSuit;System Suit;10;32
-39505;0x519a0000;0x00009a51;MALE SHIRT;AshencourteMShirt;Ashencourte Vestment;-1;-1
+39505;0x519a0000;0x00009a51;MALE SHIRT;AshencourteMShirt;Ashencourte Vestment;4;12
 38331;0xbb950000;0x000095bb;MALE SHIRT;DungeonCrestonHeightsMShirt1;Dark Forest Shirt;2;1
 38332;0xbc950000;0x000095bc;MALE SHIRT;DungeonCrestonHeightsMShirt2;Evergreenskin;2;1
 38333;0xbd950000;0x000095bd;MALE SHIRT;DungeonCrestonHeightsMShirt3;Troll's Hide;2;1
-47118;0x0eb80000;0x0000b80e;MALE SHIRT;FanFaire07TShirtMVerdigris;Verdigris Shirt;-1;-1
-38121;0xe9940000;0x000094e9;MALE SHIRT;FatherJonesMShirt;Devotional Shirt;-1;-1
-42912;0xa0a70000;0x0000a7a0;MALE SHIRT;FatherJonesMShirtR1;Devotional Shirt;-1;-1
-38158;0x0e950000;0x0000950e;MALE SHIRT;HasadMShirt;Panacea;-1;-1
-38114;0xe2940000;0x000094e2;MALE SHIRT;HuangMShirt;Huang's Shirt;-1;-1
-42867;0x73a70000;0x0000a773;MALE SHIRT;IndustrialMShirt;Industrial Shirt;-1;-1
-38109;0xdd940000;0x000094dd;MALE SHIRT;KravenMShirt;Ghost Shirt;-1;-1
-42893;0x8da70000;0x0000a78d;MALE SHIRT;KravenMShirtR1;Ghost Shirt;-1;-1
-38099;0xd3940000;0x000094d3;MALE SHIRT;MichelMShirt;Demonskin Shirt;-1;-1
-38168;0x18950000;0x00009518;MALE SHIRT;OfficerPeckMShirt;Peck's Shirt;-1;-1
-42698;0xcaa60000;0x0000a6ca;MALE SHIRT;Pandora3_1MShirt;Sharpshooter Shirt;-1;-1
-42700;0xcca60000;0x0000a6cc;MALE SHIRT;Pandora3_2MShirt;Sniper Shirt;-1;-1
-42702;0xcea60000;0x0000a6ce;MALE SHIRT;Pandora3_3MShirt;Squad Leader's Shirt;-1;-1
+47118;0x0eb80000;0x0000b80e;MALE SHIRT;FanFaire07TShirtMVerdigris;Verdigris Shirt;8;32
+38121;0xe9940000;0x000094e9;MALE SHIRT;FatherJonesMShirt;Devotional Shirt;8;14
+42912;0xa0a70000;0x0000a7a0;MALE SHIRT;FatherJonesMShirtR1;Devotional Shirt;8;14
+38158;0x0e950000;0x0000950e;MALE SHIRT;HasadMShirt;Panacea;1;6
+38114;0xe2940000;0x000094e2;MALE SHIRT;HuangMShirt;Huang's Shirt;5;3
+42867;0x73a70000;0x0000a773;MALE SHIRT;IndustrialMShirt;Industrial Shirt;2;16
+38109;0xdd940000;0x000094dd;MALE SHIRT;KravenMShirt;Ghost Shirt;4;4
+42893;0x8da70000;0x0000a78d;MALE SHIRT;KravenMShirtR1;Ghost Shirt;4;4
+38099;0xd3940000;0x000094d3;MALE SHIRT;MichelMShirt;Demonskin Shirt;2;5
+38168;0x18950000;0x00009518;MALE SHIRT;OfficerPeckMShirt;Peck's Shirt;4;9
+42698;0xcaa60000;0x0000a6ca;MALE SHIRT;Pandora3_1MShirt;Sharpshooter Shirt;2;0
+42700;0xcca60000;0x0000a6cc;MALE SHIRT;Pandora3_2MShirt;Sniper Shirt;2;0
+42702;0xcea60000;0x0000a6ce;MALE SHIRT;Pandora3_3MShirt;Squad Leader's Shirt;2;0
 48157;0x1dbc0000;0x0000bc1d;MALE SHIRT;PhoenixMShirt;Phoenix Shirt;1;32
 45931;0x6bb30000;0x0000b36b;MALE SHIRT;SecurityMShirt;Security T-Shirt;2;33
 47880;0x08bb0000;0x0000bb08;MALE SHIRT;SleepMShirt1;Faded Sleepwalker Tee;8;33
 47881;0x09bb0000;0x0000bb09;MALE SHIRT;SleepMShirt2;Worn Sleepwalker Tee;8;34
 47882;0x0abb0000;0x0000bb0a;MALE SHIRT;SleepMShirt3;Threadbare Sleepwalker Tee;8;35
-38172;0x1c950000;0x0000951c;MALE SHIRT;TaggertMShirt;Taggert's Pipeline;-1;-1
+38172;0x1c950000;0x0000951c;MALE SHIRT;TaggertMShirt;Taggert's Pipeline;10;7
 47944;0x48bb0000;0x0000bb48;MALE SHIRT;ValkMSuit;Valshamr;10;33
 48155;0x1bbc0000;0x0000bc1b;MALE SHIRT;WebbedBloodMShirt;Webbed Blood Noble Shirt;11;0
 40477;0x1d9e0000;0x00009e1d;MALE SHOES;DeadboyMShoes;Caution;-1;-1

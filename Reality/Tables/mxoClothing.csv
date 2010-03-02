@@ -3,44 +3,44 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 47245;0x8db80000;0x0000b88d;FEMALE COAT;Archive5MachFSuit;System Suit;18;0
 47241;0x89b80000;0x0000b889;FEMALE COAT;Archive5MervFTrench;Blood Noble Trench;17;0
 46406;0x46b50000;0x0000b546;FEMALE COAT;ArchiveMervFTrench;Demon Army Trench;14;1
-39222;0x36990000;0x00009936;FEMALE COAT;DungeonHammervilleFCoat1;Ravenswing;-1;-1
-42928;0xb0a70000;0x0000a7b0;FEMALE COAT;DungeonHammervilleFCoat1R1;Ravenswing;-1;-1
-38307;0xa3950000;0x000095a3;FEMALE COAT;DungeonHammervilleFCoat2;Ravenstail;-1;-1
-42929;0xb1a70000;0x0000a7b1;FEMALE COAT;DungeonHammervilleFCoat2R1;Ravenstail;-1;-1
-39223;0x37990000;0x00009937;FEMALE COAT;DungeonHammervilleFCoat3;Ravensfeather;-1;-1
-42930;0xb2a70000;0x0000a7b2;FEMALE COAT;DungeonHammervilleFCoat3R1;Ravensfeather;-1;-1
-39225;0x39990000;0x00009939;FEMALE COAT;DungeonHarajukoFCoat1;Lionskin Wrap;-1;-1
-38312;0xa8950000;0x000095a8;FEMALE COAT;DungeonHarajukoFCoat2;Tigerskin Wrap;-1;-1
-39226;0x3a990000;0x0000993a;FEMALE COAT;DungeonHarajukoFCoat3;Dragonskin Wrap;-1;-1
-38314;0xaa950000;0x000095aa;FEMALE COAT;DungeonRidgeWayFCoat1;Dark Shadow Jacket;-1;-1
-42940;0xbca70000;0x0000a7bc;FEMALE COAT;DungeonRidgeWayFCoat1R1;Dark Shadow Jacket;-1;-1
-39228;0x3c990000;0x0000993c;FEMALE COAT;DungeonRidgeWayFCoat2;Black Shadow Jacket;-1;-1
-42941;0xbda70000;0x0000a7bd;FEMALE COAT;DungeonRidgeWayFCoat2R1;Black Shadow Jacket;-1;-1
-38316;0xac950000;0x000095ac;FEMALE COAT;DungeonRidgeWayFCoat3;Deep Shadow Jacket;-1;-1
-42942;0xbea70000;0x0000a7be;FEMALE COAT;DungeonRidgeWayFCoat3R1;Deep Shadow Jacket;-1;-1
-39234;0x42990000;0x00009942;FEMALE COAT;DungeonSouthVauxtonFCoat1;Blackwolf Coat;-1;-1
-38324;0xb4950000;0x000095b4;FEMALE COAT;DungeonSouthVauxtonFCoat2;Greywolf Coat;-1;-1
-39235;0x43990000;0x00009943;FEMALE COAT;DungeonSouthVauxtonFCoat3;Direwolf Skin;-1;-1
-38115;0xe3940000;0x000094e3;FEMALE COAT;EggFCoat;Egg's Shell;-1;-1
+39222;0x36990000;0x00009936;FEMALE COAT;DungeonHammervilleFCoat1;Ravenswing;7;3
+42928;0xb0a70000;0x0000a7b0;FEMALE COAT;DungeonHammervilleFCoat1R1;Ravenswing;7;3
+38307;0xa3950000;0x000095a3;FEMALE COAT;DungeonHammervilleFCoat2;Ravenstail;7;3
+42929;0xb1a70000;0x0000a7b1;FEMALE COAT;DungeonHammervilleFCoat2R1;Ravenstail;7;3
+39223;0x37990000;0x00009937;FEMALE COAT;DungeonHammervilleFCoat3;Ravensfeather;7;3
+42930;0xb2a70000;0x0000a7b2;FEMALE COAT;DungeonHammervilleFCoat3R1;Ravensfeather;7;3
+39225;0x39990000;0x00009939;FEMALE COAT;DungeonHarajukoFCoat1;Lionskin Wrap;8;5
+38312;0xa8950000;0x000095a8;FEMALE COAT;DungeonHarajukoFCoat2;Tigerskin Wrap;8;5
+39226;0x3a990000;0x0000993a;FEMALE COAT;DungeonHarajukoFCoat3;Dragonskin Wrap;8;5
+38314;0xaa950000;0x000095aa;FEMALE COAT;DungeonRidgeWayFCoat1;Dark Shadow Jacket;6;13
+42940;0xbca70000;0x0000a7bc;FEMALE COAT;DungeonRidgeWayFCoat1R1;Dark Shadow Jacket;6;13
+39228;0x3c990000;0x0000993c;FEMALE COAT;DungeonRidgeWayFCoat2;Black Shadow Jacket;6;13
+42941;0xbda70000;0x0000a7bd;FEMALE COAT;DungeonRidgeWayFCoat2R1;Black Shadow Jacket;6;13
+38316;0xac950000;0x000095ac;FEMALE COAT;DungeonRidgeWayFCoat3;Deep Shadow Jacket;6;13
+42942;0xbea70000;0x0000a7be;FEMALE COAT;DungeonRidgeWayFCoat3R1;Deep Shadow Jacket;6;13
+39234;0x42990000;0x00009942;FEMALE COAT;DungeonSouthVauxtonFCoat1;Blackwolf Coat;2;10
+38324;0xb4950000;0x000095b4;FEMALE COAT;DungeonSouthVauxtonFCoat2;Greywolf Coat;2;10
+39235;0x43990000;0x00009943;FEMALE COAT;DungeonSouthVauxtonFCoat3;Direwolf Skin;2;10
+38115;0xe3940000;0x000094e3;FEMALE COAT;EggFCoat;Egg's Shell;8;0
 47138;0x22b80000;0x0000b822;FEMALE COAT;EliteCommFCoat;Elite Commando Jacket;16;0
-38145;0x01950000;0x00009501;FEMALE COAT;EthanFCoat;Mother Coat;-1;-1
-42900;0x94a70000;0x0000a794;FEMALE COAT;EthanFCoatR1;Mother Coat;-1;-1
+38145;0x01950000;0x00009501;FEMALE COAT;EthanFCoat;Mother Coat;1;9
+42900;0x94a70000;0x0000a794;FEMALE COAT;EthanFCoatR1;Mother Coat;1;9
 38142;0xfe940000;0x000094fe;FEMALE COAT;GregoreFCoat;Vampire Coat;14;1
 42908;0x9ca70000;0x0000a79c;FEMALE COAT;GregoreFCoatR1;Vampire Coat;14;1
 48041;0xa9bb0000;0x0000bba9;FEMALE COAT;HamptonFCoat;Hampton Jacket;19;0
-47097;0xf9b70000;0x0000b7f9;FEMALE COAT;IndustrialFCoat;Industrial Jacket;-1;-1
-38204;0x3c950000;0x0000953c;FEMALE COAT;KatScratchFCoat;Kat Skin;-1;-1
-42884;0x84a70000;0x0000a784;FEMALE COAT;KatScratchFCoatR1;Kat Skin;-1;-1
-38090;0xca940000;0x000094ca;FEMALE COAT;LoriporFCoat;Loripor's Jacket;-1;-1
-42879;0x7fa70000;0x0000a77f;FEMALE COAT;LoriporFCoatR1;Loripor's Jacket;-1;-1
+47097;0xf9b70000;0x0000b7f9;FEMALE COAT;IndustrialFCoat;Industrial Jacket;8;21
+38204;0x3c950000;0x0000953c;FEMALE COAT;KatScratchFCoat;Kat Skin;8;19
+42884;0x84a70000;0x0000a784;FEMALE COAT;KatScratchFCoatR1;Kat Skin;8;19
+38090;0xca940000;0x000094ca;FEMALE COAT;LoriporFCoat;Loripor's Jacket;3;2
+42879;0x7fa70000;0x0000a77f;FEMALE COAT;LoriporFCoatR1;Loripor's Jacket;3;2
 48179;0x33bc0000;0x0000bc33;FEMALE COAT;OmegaFCoat;Omega Trenchcoat;15;0
-42691;0xc3a60000;0x0000a6c3;FEMALE COAT;Pandora2_1FCoat;Tiger Acolyte's Coat;-1;-1
-42692;0xc4a60000;0x0000a6c4;FEMALE COAT;Pandora2_2FCoat;Tiger Warrior's Coat;-1;-1
-42693;0xc5a60000;0x0000a6c5;FEMALE COAT;Pandora2_3FCoat;Tiger Master's Coat;-1;-1
-38161;0x11950000;0x00009511;FEMALE COAT;SergeantWynnFCoat;Winner's Coat;-1;-1
+42691;0xc3a60000;0x0000a6c3;FEMALE COAT;Pandora2_1FCoat;Tiger Acolyte's Coat;5;13
+42692;0xc4a60000;0x0000a6c4;FEMALE COAT;Pandora2_2FCoat;Tiger Warrior's Coat;5;13
+42693;0xc5a60000;0x0000a6c5;FEMALE COAT;Pandora2_3FCoat;Tiger Master's Coat;5;13
+38161;0x11950000;0x00009511;FEMALE COAT;SergeantWynnFCoat;Winner's Coat;6;1
 42745;0xf9a60000;0x0000a6f9;FEMALE COAT;TransitionFCoat;Awakening Jacket;13;0
 47943;0x47bb0000;0x0000bb47;FEMALE COAT;ValkFSuit;Valshamr;18;1
-39516;0x5c9a0000;0x00009a5c;FEMALE COAT;WidowsMoorFCoat;Widow's Moor Wool;-1;-1
+39516;0x5c9a0000;0x00009a5c;FEMALE COAT;WidowsMoorFCoat;Widow's Moor Wool;6;4
 46407;0x47b50000;0x0000b547;FEMALE GLASSES;ArchiveMachFGlasses;System Sunglasses;12;0
 39508;0x549a0000;0x00009a54;FEMALE GLASSES;AshencourteFGlasses;Ashencourte Shades;-1;-1
 38104;0xd8940000;0x000094d8;FEMALE GLASSES;CaspianFGlasses;Caspian's Sunglasses;-1;-1
@@ -371,10 +371,10 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 38141;0xfd940000;0x000094fd;MALE GLOVES;CormanMGloves;Tiger Claws;5;0
 39241;0x49990000;0x00009949;MALE GLOVES;DungeonUriahMGloves1;Corrupt Hands;5;0
 42919;0xa7a70000;0x0000a7a7;MALE GLOVES;DungeonUriahMGloves1R1;Corrupt Hands;5;0
-38300;0x9c950000;0x0000959c;MALE GLOVES;DungeonUriahMGloves2;Defiled Gloves;-1;-1
-42920;0xa8a70000;0x0000a7a8;MALE GLOVES;DungeonUriahMGloves2R1;Defiled Gloves;-1;-1
-39242;0x4a990000;0x0000994a;MALE GLOVES;DungeonUriahMGloves3;Fighter's Gloves;-1;-1
-42921;0xa9a70000;0x0000a7a9;MALE GLOVES;DungeonUriahMGloves3R1;Fighter's Gloves;-1;-1
+38300;0x9c950000;0x0000959c;MALE GLOVES;DungeonUriahMGloves2;Defiled Gloves;5;0
+42920;0xa8a70000;0x0000a7a8;MALE GLOVES;DungeonUriahMGloves2R1;Defiled Gloves;5;0
+39242;0x4a990000;0x0000994a;MALE GLOVES;DungeonUriahMGloves3;Fighter's Gloves;5;0
+42921;0xa9a70000;0x0000a7a9;MALE GLOVES;DungeonUriahMGloves3R1;Fighter's Gloves;5;0
 47147;0x2bb80000;0x0000b82b;MALE GLOVES;EliteCommMGloves;Elite Commando Gloves;11;0
 48009;0x89bb0000;0x0000bb89;MALE GLOVES;IndustrialMGloves;Industrial Gloves;1;0
 38095;0xcf940000;0x000094cf;MALE GLOVES;JackMGloves;Jack's Gloves;5;0
@@ -507,24 +507,24 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 38172;0x1c950000;0x0000951c;MALE SHIRT;TaggertMShirt;Taggert's Pipeline;10;7
 47944;0x48bb0000;0x0000bb48;MALE SHIRT;ValkMSuit;Valshamr;10;33
 48155;0x1bbc0000;0x0000bc1b;MALE SHIRT;WebbedBloodMShirt;Webbed Blood Noble Shirt;11;0
-40477;0x1d9e0000;0x00009e1d;MALE SHOES;DeadboyMShoes;Caution;-1;-1
-38156;0x0c950000;0x0000950c;MALE SHOES;DeadboyMShoes_Old;Caution;-1;-1
-42955;0xcba70000;0x0000a7cb;MALE SHOES;DungeonLuceroMShoes1R1;Project Shoes;-1;-1
-42956;0xcca70000;0x0000a7cc;MALE SHOES;DungeonLuceroMShoes2R1;Section Shoes;-1;-1
-42957;0xcda70000;0x0000a7cd;MALE SHOES;DungeonLuceroMShoes3R1;Ethereal Shoes;-1;-1
-39244;0x4c990000;0x0000994c;MALE SHOES;DungeonZiaMShoes1;Surefoot Sneakers;-1;-1
-42925;0xada70000;0x0000a7ad;MALE SHOES;DungeonZiaMShoes1R1;Surefoot Sneakers;-1;-1
-39245;0x4d990000;0x0000994d;MALE SHOES;DungeonZiaMShoes2;Steady Sneakers;-1;-1
-42926;0xaea70000;0x0000a7ae;MALE SHOES;DungeonZiaMShoes2R1;Steady Sneakers;-1;-1
-38304;0xa0950000;0x000095a0;MALE SHOES;DungeonZiaMShoes3;Solid Sneakers;-1;-1
-42927;0xafa70000;0x0000a7af;MALE SHOES;DungeonZiaMShoes3R1;Solid Sneakers;-1;-1
+40477;0x1d9e0000;0x00009e1d;MALE SHOES;DeadboyMShoes;Caution;4;0
+38156;0x0c950000;0x0000950c;MALE SHOES;DeadboyMShoes_Old;Caution;4;0
+42955;0xcba70000;0x0000a7cb;MALE SHOES;DungeonLuceroMShoes1R1;Project Shoes;1;0
+42956;0xcca70000;0x0000a7cc;MALE SHOES;DungeonLuceroMShoes2R1;Section Shoes;1;0
+42957;0xcda70000;0x0000a7cd;MALE SHOES;DungeonLuceroMShoes3R1;Ethereal Shoes;1;0
+39244;0x4c990000;0x0000994c;MALE SHOES;DungeonZiaMShoes1;Surefoot Sneakers;1;0
+42925;0xada70000;0x0000a7ad;MALE SHOES;DungeonZiaMShoes1R1;Surefoot Sneakers;1;0
+39245;0x4d990000;0x0000994d;MALE SHOES;DungeonZiaMShoes2;Steady Sneakers;1;0
+42926;0xaea70000;0x0000a7ae;MALE SHOES;DungeonZiaMShoes2R1;Steady Sneakers;1;0
+38304;0xa0950000;0x000095a0;MALE SHOES;DungeonZiaMShoes3;Solid Sneakers;1;0
+42927;0xafa70000;0x0000a7af;MALE SHOES;DungeonZiaMShoes3R1;Solid Sneakers;1;0
 47149;0x2db80000;0x0000b82d;MALE SHOES;EliteCommMShoes;Elite Commando Boots;33;0
-38103;0xd7940000;0x000094d7;MALE SHOES;FastBackMShoes;Industrial Boots;-1;-1
-42774;0x16a70000;0x0000a716;MALE SHOES;FastBackMShoes2;Industrial Boots;-1;-1
+38103;0xd7940000;0x000094d7;MALE SHOES;FastBackMShoes;Industrial Boots;2;0
+42774;0x16a70000;0x0000a716;MALE SHOES;FastBackMShoes2;Industrial Boots;2;0
 48050;0xb2bb0000;0x0000bbb2;MALE SHOES;HelBootsMShoes;Hel Stompers;34;0
-40473;0x199e0000;0x00009e19;MALE SHOES;HoraceMShoes;Horace's Sneakers;-1;-1
-38089;0xc9940000;0x000094c9;MALE SHOES;HoraceMShoes_Old;Horace's Sneakers;-1;-1
-42878;0x7ea70000;0x0000a77e;MALE SHOES;HoraceMShoesR1;Horace's Sneakers;-1;-1
+40473;0x199e0000;0x00009e19;MALE SHOES;HoraceMShoes;Horace's Sneakers;7;0
+38089;0xc9940000;0x000094c9;MALE SHOES;HoraceMShoes_Old;Horace's Sneakers;7;0
+42878;0x7ea70000;0x0000a77e;MALE SHOES;HoraceMShoesR1;Horace's Sneakers;7;0
 47810;0xc2ba0000;0x0000bac2;MALE SHOES;KunoMShoesGranB;Black Shinobi Grandmaster Tabi;33;3
 47809;0xc1ba0000;0x0000bac1;MALE SHOES;KunoMShoesGranG;Gray Shinobi Grandmaster Tabi;33;2
 47808;0xc0ba0000;0x0000bac0;MALE SHOES;KunoMShoesGranW;White Shinobi Grandmaster Tabi;33;1
@@ -546,7 +546,7 @@ GoidDecimal;GoidLittleEndian;GoidBigEndian;ClothesType;ShortName;ItemName;ModelI
 47921;0x31bb0000;0x0000bb31;MALE SHOES;SleepMShoes2;Worn Sleepwalker Boots;19;1
 47922;0x32bb0000;0x0000bb32;MALE SHOES;SleepMShoes3;Threadbare Sleepwalker Boots;19;2
 47373;0x0db90000;0x0000b90d;MALE SHOES;SSRMShoes;SSR Dress Shoes;20;0
-38130;0xf2940000;0x000094f2;MALE SHOES;TantoMShoes;Kickin' Boots;-1;-1
+38130;0xf2940000;0x000094f2;MALE SHOES;TantoMShoes;Kickin' Boots;2;0
 39501;0x4d9a0000;0x00009a4d;MALE SHOES;YukiMShoes;Yuki Ninja Boots;2;0
 11278;0x0e2c0000;0x00002c0e;FEMALE COAT;Armor_F_Coat_A1_C1_1;Armored White Avera Open Trench;1;0
 12560;0x10310000;0x00003110;FEMALE COAT;Armor_F_Coat_A1_C1_2;Armored White Avera Open Trench;1;0

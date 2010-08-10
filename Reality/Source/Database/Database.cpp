@@ -227,7 +227,7 @@ void AsyncQuery::AddQuery( string fmt )
 	AsyncQueryResult res;
 	res.query = NULL;
 	res.result = NULL;
-	int len = fmt.length();
+	size_t len = fmt.length();
 	if(len>0)
 	{
 		res.query = new char[len+1];

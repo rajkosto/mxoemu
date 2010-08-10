@@ -167,7 +167,7 @@ GameClient::~GameClient()
 	}
 }
 
-void GameClient::HandlePacket( const char *pData, uint16 nLength )
+void GameClient::HandlePacket( const char *pData, size_t nLength )
 {
 	if (nLength < 1 || m_validClient == false)
 		return;
@@ -276,7 +276,7 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 		}
 		else
 		{
-			m_sock->SendToBuf(m_address, pData, nLength, 0);
+			m_sock->SendToBuf(m_address, pData, int(nLength), 0);
 		}
 	}
 	else
@@ -349,7 +349,7 @@ void GameClient::HandleEncrypted( ByteBuffer &srcData )
 		{
 			//reverse read of byte
 			dataCopy.rpos(dataCopy.rpos()-sizeof(theByte));
-			int32 thePos = dataCopy.rpos();
+			size_t thePos = dataCopy.rpos();
 
 			//try and parse
 			OrderedPacket testPacket;
@@ -363,7 +363,7 @@ void GameClient::HandleEncrypted( ByteBuffer &srcData )
 				}
 				dataCopy.rpos(thePos);
 				zeroFourBlock = ByteBuffer(&dataCopy.contents()[dataCopy.rpos()],dataCopy.remaining()-zeroFiveBlockSize);
-				commandOffset=thePos;
+				commandOffset=(int32)thePos;
 
 				break;
 			}
@@ -468,7 +468,7 @@ void GameClient::HandleOrdered( ByteBuffer &orderedData )
 	}
 }
 
-SequencedPacket GameClient::Decrypt(const char *pData, uint16 nLength)
+SequencedPacket GameClient::Decrypt( const char *pData, size_t nLength )
 {
 	ByteBuffer tempBuf(pData,nLength);
 	TwofishEncryptedPacket decryptedData(tempBuf,m_tfEngine);

@@ -161,43 +161,8 @@ public:
 class WhisperMsg : public StaticMsg
 {
 public:
-	WhisperMsg(string sender, string message)
-	{
-		m_buf << uint16(swap16(0x2E11));
-		m_buf << uint8(0);
-		m_buf << uint32(0);
-
-		size_t putSenderStrLenPosHere = m_buf.wpos();
-		m_buf << uint32(0); //will overwrite this later
-		size_t putMessageStrLenPosHere = m_buf.wpos();
-		m_buf << uint32(0); //will overwrite this later
-
-		//0x15 bytes of 0s
-		for (int i=0;i<0x15;i++)
-			m_buf << uint8(0);
-
-		size_t senderStrLenPos = m_buf.wpos();
-
-		sender = "SOE+MXO+Reality+" + sender;
-		uint16 senderStrLen = sender.length()+1;
-		m_buf << uint16(senderStrLen);
-		m_buf.append(sender.c_str(),senderStrLen);
-		
-		size_t messageStrLenPos = m_buf.wpos();
-		uint16 messageStrLen = message.length()+1;
-		m_buf << uint16(messageStrLen);
-		m_buf.append(message.c_str(),messageStrLen);
-
-		//go back and put positions there
-		m_buf.wpos(putSenderStrLenPosHere);
-		m_buf << uint32(senderStrLenPos);
-		m_buf.wpos(putMessageStrLenPosHere);
-		m_buf << uint32(messageStrLenPos);
-	}
-	~WhisperMsg()
-	{
-
-	}
+	WhisperMsg(string sender, string message);
+	~WhisperMsg();
 };
 
 class SystemMsg : public StaticMsg
@@ -220,13 +185,10 @@ public:
 			m_buf << uint8(0);
 
 		size_t messageStrLenPos = m_buf.wpos();
-		uint16 messageStrLen = message.length()+1;
-		m_buf << uint16(messageStrLen);
-		m_buf.append(message.c_str(),messageStrLen);
+		m_buf.writeString(message);
 
 		//go back and put position there
-		m_buf.wpos(putMessageStrLenPosHere);
-		m_buf << uint32(messageStrLenPos);
+		m_buf.put(putMessageStrLenPosHere,uint32(messageStrLenPos));
 	}
 	~SystemMsg() {}
 };
@@ -262,27 +224,24 @@ public:
 		m_buf << swap16(0x2E10);
 		m_buf << uint8(0); //could be 1 as well ?
 		m_buf << uint32(swap32(0x12610200)); //some id, different, ill just use something
+
 		size_t injectHandleLenPosHere = m_buf.wpos();
-		size_t handleLenPos=0;
-		m_buf << handleLenPos; //will come back here and overwrite later
+		m_buf << uint32(0); //will come back here and overwrite later
 		size_t injectMessageLenPosHere = m_buf.wpos();
-		size_t messageLenPos=0;
-		m_buf << messageLenPos;
-		m_buf.wpos(m_buf.wpos()+0x15);
-		handleLenPos=m_buf.wpos();
-		uint16 handleLen=charHandle.length()+1;
-		m_buf << handleLen;
-		m_buf.append(charHandle.c_str(),handleLen);
-		messageLenPos = m_buf.wpos();
-		uint16 messageLen=theChatMsg.length()+1;
-		m_buf << messageLen;
-		m_buf.append(theChatMsg.c_str(),messageLen);
+		m_buf << uint32(0); //also placeholder
+
+		//0x15 0s
+		vector<byte> fifteen(0x15,0);
+		m_buf.append(fifteen);
+
+		size_t handleLenPos=m_buf.wpos();
+		m_buf.writeString(charHandle);
+		size_t messageLenPos = m_buf.wpos();
+		m_buf.writeString(theChatMsg);
 
 		//overwrite the pos we didnt before
-		m_buf.wpos(injectHandleLenPosHere);
-		m_buf << uint32(handleLenPos);
-		m_buf.wpos(injectMessageLenPosHere);
-		m_buf << uint32(messageLenPos);
+		m_buf.put(injectHandleLenPosHere,uint32(handleLenPos));
+		m_buf.put(injectMessageLenPosHere,uint32(messageLenPos));
 	}
 	~PlayerChatMsg() {}
 };
@@ -298,14 +257,11 @@ public:
 		size_t insertBackgroundStrLenPosHere = m_buf.wpos();
 		m_buf << uint16(0); //placeholder
 		m_buf << uint8(0);
-		uint16 backgroundStrLenPos = m_buf.wpos();
-		uint16 backgroundStrLen = playerBackground.length()+1;
-		m_buf << uint16(backgroundStrLen);
-		m_buf.append(playerBackground.c_str(),backgroundStrLen);
+		size_t backgroundStrLenPos = m_buf.wpos();
+		m_buf.writeString(playerBackground);
 
 		//go back and put position there
-		m_buf.wpos(insertBackgroundStrLenPosHere);
-		m_buf << uint16(backgroundStrLenPos);
+		m_buf.put(insertBackgroundStrLenPosHere,uint16(backgroundStrLenPos));
 	}
 	~BackgroundResponseMsg() {}
 };
@@ -328,14 +284,11 @@ public:
 		size_t insertBackgroundStrLenPosHere = m_buf.wpos();
 		m_buf << uint16(0); //placeholder
 		m_buf << uint8(1);
-		uint16 backgroundStrLenPos = m_buf.wpos();
-		uint16 backgroundStrLen = playerBackground.length()+1;
-		m_buf << uint16(backgroundStrLen);
-		m_buf.append(playerBackground.c_str(),backgroundStrLen);
+		size_t backgroundStrLenPos = m_buf.wpos();
+		m_buf.writeString(playerBackground);
 
 		//go back and put position there
-		m_buf.wpos(insertBackgroundStrLenPosHere);
-		m_buf << uint16(backgroundStrLenPos);
+		m_buf.put(insertBackgroundStrLenPosHere,uint16(backgroundStrLenPos));
 	}
 	~PlayerBackgroundMsg() {}
 };
@@ -422,11 +375,7 @@ public:
 		if (stringVal.length() < 1)
 			m_buf << uint16(0);
 		else
-		{
-			uint16 stringValLen = stringVal.length()+1;
-			m_buf << uint16(stringValLen);
-			m_buf.append(stringVal.c_str(),stringValLen);
-		}
+			m_buf.writeString(stringVal);
 	}
 	SetOptionCmd(string optionName,vector<string> stringVals)
 	{
@@ -447,11 +396,7 @@ public:
 		if (stringVal.length() < 1)
 			m_buf << uint16(0);
 		else
-		{
-			uint16 stringValLen = stringVal.length()+1;
-			m_buf << uint16(stringValLen);
-			m_buf.append(stringVal.c_str(),stringValLen);
-		}
+			m_buf.writeString(stringVal);
 	}
 	~SetOptionCmd() {}
 private:
@@ -469,9 +414,7 @@ private:
 		m_buf << uint16(swap16(0x3A05));
 		m_buf << uint8(0);
 		m_buf << uint16(theType);
-		uint16 optionNameStrLen = optionName.length()+1;
-		m_buf << uint16(optionNameStrLen);
-		m_buf.append(optionName.c_str(),optionNameStrLen);
+		m_buf.writeString(optionName);
 	}
 };
 
@@ -510,9 +453,7 @@ public:
 			  << uint16(0)
 			  << uint16(7)
 			  << uint8(5);
-		uint16 eventURLSize = (uint16)eventURL.length()+1;
-		m_buf << uint16(eventURLSize);
-		m_buf.append(eventURL.c_str(),eventURLSize);
+		m_buf.writeString(eventURL);
 	}
 	~EventURLCmd() {}
 };
@@ -591,8 +532,7 @@ struct MsgBlock
 	{
 		destination << uint16(swap16(sequenceId));
 
-		uint8 numSubPackets = subPackets.size();
-		destination << uint8(numSubPackets);
+		destination << uint8(subPackets.size());
 		for (list<ByteBuffer>::iterator it=subPackets.begin();it!=subPackets.end();++it)
 		{
 			uint16 packetSize = it->size();

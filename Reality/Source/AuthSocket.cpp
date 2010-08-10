@@ -207,7 +207,7 @@ void AuthSocket::HandleAuthRequest( ByteBuffer &packet )
 	{
 		decryptedBlob = sAuth.Decrypt(string((const char*)&encryptedBlob[0],encryptedBlob.size()));
 	}
-	catch (CryptoPP::InvalidCiphertext &ciphExcept)
+	catch (CryptoPP::InvalidCiphertext)
 	{
 		ERROR_LOG("Invalid RSA ciphertext, client used bad pubkey.dat, disconnecting.");
 		SetCloseAndDelete(true);
@@ -560,11 +560,7 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 			characterDatas.append((const byte*)&currCharacter,sizeof(currCharacter));
 
 			string characterString = field[3].GetString();
-			uint16 characterStringLen = strlen(characterString.c_str())+1;
-
-			//add the string to character strings
-			characterStrings << uint16(characterStringLen);
-			characterStrings.append(characterString.c_str(),characterStringLen);
+			characterStrings.writeString(characterString);
 
 			//fetch next row
 			if (result->NextRow() == false)
@@ -646,11 +642,8 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 	//key data ended, now starts username data
 	packetHeader.offsetUsername = worldPacket.wpos();
 
-	//then the size of username including null end character
-	uint16 userNameLength = uint16(strlen(m_username.c_str())+1);
-	worldPacket << userNameLength;
-	//then the username including null end character
-	worldPacket.append((const byte*)m_username.c_str(),userNameLength);
+	//then the username string as mxo string
+	worldPacket.writeString(m_username);
 
 	//we need to rewrite the header back to the front now
 	worldPacket.put(0,(const byte*)&packetHeader,sizeof(packetHeader));

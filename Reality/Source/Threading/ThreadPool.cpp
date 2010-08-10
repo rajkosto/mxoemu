@@ -138,8 +138,8 @@ void CThreadPool::ShowStats()
 {
 	_mutex.Acquire();
 	DEBUG_LOG("============ ThreadPool Status =============");
-	DEBUG_LOG(format("Active Threads: %u") % m_activeThreads.size());
-	DEBUG_LOG(format("Suspended Threads: %u") % m_freeThreads.size());
+	DEBUG_LOG(format("Active Threads: %u") % (int)m_activeThreads.size());
+	DEBUG_LOG(format("Suspended Threads: %u") % (int)m_freeThreads.size());
 	DEBUG_LOG(format("Requested-To-Freed Ratio: %.3f%% (%u/%u)") % float( float(_threadsRequestedSinceLastCheck+1) / float(_threadsExitedSinceLastCheck+1) * 100.0f ) % _threadsRequestedSinceLastCheck % _threadsExitedSinceLastCheck);
 	DEBUG_LOG(format("Eaten Count: %d (negative is bad!)") % _threadsEaten);
 	DEBUG_LOG("============================================");
@@ -233,7 +233,7 @@ void CThreadPool::Shutdown()
 		_mutex.Acquire();
 		if(m_activeThreads.size() || m_freeThreads.size())
 		{
-			DEBUG_LOG(format("ThreadPool %1% threads remaining...") % (m_activeThreads.size() + m_freeThreads.size()) );
+			DEBUG_LOG(format("ThreadPool %1% threads remaining...") % (int)(m_activeThreads.size() + m_freeThreads.size()) );
 			_mutex.Release();
 			Sleep(1000);
 			continue;

@@ -52,7 +52,7 @@ public:
 	}
 	uint32 GetWorldCharId() { return m_charWorldId; }
 
-	void HandlePacket(const char *pData, uint16 nLength);
+	void HandlePacket(const char *pData, size_t nLength);
 	void HandleEncrypted(ByteBuffer &srcData);
 	void HandleOther(ByteBuffer &otherData);
 	void HandleOrdered(ByteBuffer &orderedData);
@@ -91,7 +91,7 @@ public:
 	void ReconnectBeat();
 private:
 	bool SendSequencedPacket(msgBaseClassPtr jumboPacket);
-	SequencedPacket Decrypt(const char *pData, uint16 nLength);
+	SequencedPacket Decrypt(const char *pData, size_t nLength);
 	void FlagsChanged(uint8 oldFlags,uint8 newFlags);
 	bool PacketReceived(uint16 clientSeq);
 	uint32 AcknowledgePacket(uint16 serverSeq);
@@ -194,8 +194,8 @@ private:
 	uint16 m_lastClientSequence;
 	inline bool isSequenceMoreRecent( uint16 biggerSequence, uint16 smallerSequence, uint32 max_sequence=4096 )
 	{
-		return	( (biggerSequence > smallerSequence) && (biggerSequence-smallerSequence <= max_sequence/2) )
-				|| ( (smallerSequence > biggerSequence) && (smallerSequence-biggerSequence > max_sequence/2) );
+		return	( (biggerSequence > smallerSequence) && (biggerSequence-smallerSequence <= int32(max_sequence/2)) )
+				|| ( (smallerSequence > biggerSequence) && (smallerSequence-biggerSequence > int32(max_sequence/2)) );
 	}
 	uint32 m_playerGoId;
 

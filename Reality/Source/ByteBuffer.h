@@ -405,6 +405,14 @@ public:
 		(*this) << uint16(str.length()+1);
 		this->append(str.c_str(),str.length()+1);
 	}
+	void writeString(const uint8* data, size_t dataLen)
+	{
+		writeString(string((const char*)data,dataLen));
+	}
+	void writeString(const char* str)
+	{
+		writeString(string(str));
+	}
 
 protected:
 	// read and write positions

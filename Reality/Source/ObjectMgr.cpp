@@ -190,8 +190,8 @@ void ObjectMgr::OpenDoor( uint32 doorId, GameClient* requester)
 		
 	}
 
-	string msg2 = (format("{c:0FFFF0}Door:%1%{/c}") % (int)doorId).str();
-	sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(msg2));
+	format msg2 = format("{c:0FFFF0}Door:0x%08x{/c}") % (int)doorId;
+	sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(msg2.str()));
 
 	if (doorOpenCount > 30) //if 10+ doors, then we want to close one
 	{
@@ -209,16 +209,10 @@ void ObjectMgr::OpenDoor( uint32 doorId, GameClient* requester)
 	uint16 viewId = allocateViewId(requester);
 	viewIdsMap &viewsOfClient = m_views[requester];
 	viewsOfClient[viewId]=doorId;
-	m_openDoors[viewId]=doorId;
-	
+	m_openDoors[viewId]=doorId;	
 
-	std::string s;
-	std::stringstream out;
-	out << "Door Opened With ViewId: ";
-	out << int(viewId);
-	s = out.str();
-
-	sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(s));
+	format s = format("Door Opened With ViewId: %1%") % int(viewId);
+	sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(s.str()));
 
 	//sGame.AnnounceStateUpdate(NULL,make_shared<DeleteDoorMsg>(doorId));	
 	string sqlDoor = (format("Select X,Y,Z,ROT,DoorType from Doors Where `DoorId` = '%1%' Limit 1") % (int)doorId).str();

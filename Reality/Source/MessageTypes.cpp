@@ -25,6 +25,7 @@
 #include "GameServer.h"
 #include "ObjectMgr.h"
 #include "LocationVector.h"
+#include "Config.h"
 
 ObjectUpdateMsg::ObjectUpdateMsg( uint32 objectId ):m_objectId(objectId),m_toWho(NULL)
 {
@@ -139,8 +140,6 @@ void CloseDoorMsg::setReceiver( class GameClient *toWho )
 	memcpy(&doorCloseMsg[7],&byteDoorId,2);   //uint16
 
 	//03 03 00 01 80 02 38 08 00 00 00 00 
-
-
 
 	m_buf.append(doorCloseMsg,sizeof(doorCloseMsg));
 
@@ -742,7 +741,6 @@ DoorAnimationMsg::DoorAnimationMsg( uint32 doorId, uint16 viewId, double X, doub
 		rotation = 0xbf;  //facing east
 	}
 
-
 	/*
 
 	03 01 00 08 da 19 19 00 50 30 ef cd ab 03 84 00 00 00 00 f2 04 35 bf 00 00 00 00 f3 04 35 3f 
@@ -756,7 +754,6 @@ DoorAnimationMsg::DoorAnimationMsg( uint32 doorId, uint16 viewId, double X, doub
 
 	if (doorType == 0) // inside (white hallsays slums)
 	{
-
 		byte insideDoor[65] =
 		{
 			0x03, 0x01, 0x00, 0x08, 0xda, 0x19, 
@@ -805,20 +802,16 @@ DoorAnimationMsg::DoorAnimationMsg( uint32 doorId, uint16 viewId, double X, doub
 		bufferBytesCoords.read(byteCoords, bufferBytesCoords.size());
 
 
-
 		memcpy(&insideDoor[32],&byteCoords,sizeof(byteCoords));   //uint16
 
 		//Rotation
 		insideDoor[22] = rotation;
-
-
 
 		m_buf.clear();
 		m_buf.append(insideDoor,sizeof(insideDoor));
 	}
 	else if (doorType == 1) //outside
 	{
-
 		byte OutsideDoor[65] =
 		{
 			0x03, 0x01, 0x00, 0x08, 0x33, 0x1b, 
@@ -828,8 +821,6 @@ DoorAnimationMsg::DoorAnimationMsg( uint32 doorId, uint16 viewId, double X, doub
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x62, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7e, 0xcd, 
 			0x40, 0x34, 0x08, 0x00, 0x00, 0xBB, 0xBB, 0x00, 0x00, 0x00, 
 		};
-
-
 
 		memcpy(&OutsideDoor[6],&doorId,sizeof(doorId));   //uint32
 		memcpy(&OutsideDoor[60],&viewId,sizeof(viewId));   //uint16
@@ -846,17 +837,12 @@ DoorAnimationMsg::DoorAnimationMsg( uint32 doorId, uint16 viewId, double X, doub
 		//Put new coords in
 		bufferBytesCoords.read(byteCoords, bufferBytesCoords.size());
 
-
-
 		memcpy(&OutsideDoor[32],&byteCoords,sizeof(byteCoords));   //uint16
 
 		//Rotation
 		OutsideDoor[22] = rotation;
 
-
-
 		//ROT
-
 
 		m_buf.clear();
 		m_buf.append(OutsideDoor,sizeof(OutsideDoor));
@@ -897,6 +883,39 @@ WhereAmIResponse::~WhereAmIResponse()
 
 }
 
+WhisperMsg::WhisperMsg( string sender, string message )
+{
+	m_buf << uint16(swap16(0x2E11));
+	m_buf << uint8(0);
+	m_buf << uint32(0);
+
+	size_t putSenderStrLenPosHere = m_buf.wpos();
+	m_buf << uint32(0); //will overwrite this later
+	size_t putMessageStrLenPosHere = m_buf.wpos();
+	m_buf << uint32(0); //will overwrite this later
+
+	//0x15 bytes of 0s
+	for (int i=0;i<0x15;i++)
+		m_buf << uint8(0);
+
+	size_t senderStrLenPos = m_buf.wpos();
+
+	sender = sConfig.GetStringDefault("Server.ChatPrefix", "SOE+MXO+Reality") + string("+") + sender;
+	m_buf.writeString(sender);
+
+	size_t messageStrLenPos = m_buf.wpos();
+	m_buf.writeString(message);
+
+	//go back and put positions there
+	m_buf.put(putSenderStrLenPosHere,uint32(senderStrLenPos));
+	m_buf.put(putMessageStrLenPosHere,uint32(messageStrLenPos));
+}
+
+WhisperMsg::~WhisperMsg()
+{
+
+}
+
 PlayerDetailsMsg::PlayerDetailsMsg( PlayerObject *thePlayer )
 {
 	m_buf.clear();
@@ -931,48 +950,25 @@ PlayerDetailsMsg::PlayerDetailsMsg( PlayerObject *thePlayer )
 
 	m_buf << uint32(9001); //CQ points
 
-	uint16 handleStrLenPos = m_buf.wpos();
-	uint16 handleStrLen = thePlayer->getHandle().length()+1;
-	m_buf << uint16(handleStrLen);
-	m_buf.append(thePlayer->getHandle().c_str(),handleStrLen);
-
-	uint16 firstNameStrLenPos = m_buf.wpos();
-	uint16 firstNameStrLen = thePlayer->getFirstName().length()+1;
-	m_buf << uint16(firstNameStrLen);
-	m_buf.append(thePlayer->getFirstName().c_str(),firstNameStrLen);
-
-	uint16 lastNameStrLenPos = m_buf.wpos();
-	uint16 lastNameStrLen = thePlayer->getLastName().length()+1;
-	m_buf << uint16(lastNameStrLen);
-	m_buf.append(thePlayer->getLastName().c_str(),lastNameStrLen);
+	size_t handleStrLenPos = m_buf.wpos();
+	m_buf.writeString(thePlayer->getHandle());
+	size_t firstNameStrLenPos = m_buf.wpos();
+	m_buf.writeString(thePlayer->getFirstName());
+	size_t lastNameStrLenPos = m_buf.wpos();
+	m_buf.writeString(thePlayer->getLastName());
 
 	string crewName,factionName;
-
-	uint16 crewNameStrLenPos = m_buf.wpos();
-	uint16 crewNameStrLen = crewName.length()+1;
-	m_buf << uint16(crewNameStrLen);
-	m_buf.append(crewName.c_str(),crewNameStrLen);
-
-	uint16 factionNameStrLenPos = m_buf.wpos();
-	uint16 factionNameStrLen = factionName.length()+1;
-	m_buf << uint16(factionNameStrLen);
-	m_buf.append(factionName.c_str(),factionNameStrLen);
+	size_t crewNameStrLenPos = m_buf.wpos();
+	m_buf.writeString(crewName);
+	size_t factionNameStrLenPos = m_buf.wpos();
+	m_buf.writeString(factionName);
 
 	//go back and put position there
-	m_buf.wpos(putHandleStrLenPosHere);
-	m_buf << uint16(handleStrLenPos);
-
-	m_buf.wpos(putFirstNameStrLenPosHere);
-	m_buf << uint16(firstNameStrLenPos);
-
-	m_buf.wpos(putLastNameStrLenPosHere);
-	m_buf << uint16(lastNameStrLenPos);
-
-	m_buf.wpos(putCrewStrLenPosHere);
-	m_buf << uint16(crewNameStrLenPos);
-
-	m_buf.wpos(putFactionStrLenPosHere);
-	m_buf << uint16(factionNameStrLenPos);
+	m_buf.put(putHandleStrLenPosHere,uint16(handleStrLenPos));
+	m_buf.put(putFirstNameStrLenPosHere,uint16(firstNameStrLenPos));
+	m_buf.put(putLastNameStrLenPosHere,uint16(lastNameStrLenPos));
+	m_buf.put(putCrewStrLenPosHere,uint16(crewNameStrLenPos));
+	m_buf.put(putFactionStrLenPosHere,uint16(factionNameStrLenPos));
 }
 
 PlayerDetailsMsg::~PlayerDetailsMsg()
@@ -1009,15 +1005,13 @@ LoadWorldCmd::LoadWorldCmd( mxoLocation theLoc,string theSky )
 		<< uint32(theLoc)
 		<< uint32(sGame.GetSimTime())
 		<< uint8(1);
-	uint16 bytesSoFar = (uint16)m_buf.wpos();
 	string metrFile = locs[theLoc];
-	uint16 metrFileLen = (uint16)metrFile.length()+1;
-	m_buf << uint16(bytesSoFar+sizeof(uint16)+sizeof(uint16)+metrFileLen) //offset to sky length byte
-		<< uint16(metrFileLen); //length of string (including null term)
-	m_buf.append(metrFile.c_str(),metrFileLen); //string itself (including null term)
-	uint16 skyLen = (uint16)theSky.length()+1;
-	m_buf << uint16(skyLen);
-	m_buf.append(theSky.c_str(),skyLen);
+	size_t putSkyStrLenOffsetHere = m_buf.wpos();
+	m_buf << uint16(0); //will replace later
+	m_buf.writeString(metrFile);
+	size_t skyStrLenOffset = m_buf.wpos();
+	m_buf.writeString(theSky);
+	m_buf.put(putSkyStrLenOffsetHere,uint16(skyStrLenOffset));
 }
 
 LoadWorldCmd::~LoadWorldCmd()

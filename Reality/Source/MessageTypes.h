@@ -27,14 +27,6 @@
 #include "Util.h"
 #include "Crypto.h"
 
-#include "Log.h"
-#include "Config.h"
-#include "Database/DatabaseEnv.h"
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338327
-#endif
-
 class MsgBaseClass
 {
 public:
@@ -155,182 +147,8 @@ class DoorAnimationMsg : public StaticMsg
 {
 public:
 
-	DoorAnimationMsg(uint32 doorId, uint16 viewId, double X, double Y, double Z, double ROT, int doorType)
-	{
-				
-
-		Y += 50;
-
-		double distanceToGo = 6; //This will be 1/2 of 1 unit
-		double sAngle = sin(ROT);
-		double xInc = distanceToGo * sAngle; 
-		double zInc = sqrt(distanceToGo * distanceToGo - xInc * xInc);
-		xInc *= 10;
-		zInc *= 10;
-		X -= xInc;
-		if (abs(ROT) > M_PI/2)
-		{
-			Z += zInc;
-		}
-		else
-		{
-			Z -= zInc;
-		}
-
-		byte rotation = 0xbf;
-		//Rotation
-		if (abs(ROT) > 2.3) // facing North
-		{
-			rotation = 0x03; //0xbf;
-		}
-		else if (abs(ROT) < .78) // facing South
-		{
-			rotation = 0x03;  //gave up and am having u facing south hve doors open same as u facing north..
-		}
-		else if (ROT < 0) // facing west
-		{
-			rotation = 0x3f;
-		}
-		else 
-		{
-			rotation = 0xbf;  //facing east
-		}
-
-		
-/*
-
-03 01 00 08 da 19 19 00 50 30 ef cd ab 03 84 00 00 00 00 f2 04 35 bf 00 00 00 00 f3 04 35 3f 
-41 00 00 00 00 00 c1 06 41 00 00 00 00 00 b8 8a c0 00 00 00 00 80 da e8 40 34 08 00 00 03 00 00 
-00 00 
-
-*/
-		//Get door type
-	
-		//int doorType = 1;
-
-		if (doorType == 0) // inside (white hallsays slums)
-		{
-
-			byte insideDoor[65] =
-			{
-				0x03, 0x01, 0x00, 0x08, 0xda, 0x19, 
-				
-				0xAA, 0xAA, 0xAA, 0xAA, 
-
-				0xef, 
-				
-				0xcd, 0xab, 0x03, 0x84, 0x00, 0x00, 0x00, 0x00, 
-				0xf2, 0x04,	
-				//rotatation?
-				0x35, 0xbf, 
-			    
-				0x00, 0x00, 0x00, 0x00, 
-				//??        ??    
-				0xf3, 0x04, 0x35, 
-				//width 
-				  0x3f, 
-				//?? (not 41 breaks door openin)
-				0x41, 
-				0x00, 0x00, 0x00, 0x00,0xBB, 0xBB, 0xBB, 0xBB,  //X
-				0x00, 0x00, 0x00, 0x00,0xCC, 0xCC, 0xCC, 0xCC,  //Y
-				0x00, 0x00, 0x00, 0x00,0xDD, 0xDD, 0xDD, 0xDD,  //Z
-
-				0x34, 0x08, 0x00, 0x00, 
-				0xBB, 0xBB, 0x00, 0x00, 0x00, 
-			};
-			//03 03 00 01 80 02 38 08 00 00 00 00 
-
-			//uint2 clientDoorId = rand() % 255;
-			//insideDoor[22] = rand() % 128 + 63;
-
-			memcpy(&insideDoor[6],&doorId,sizeof(doorId));   //uint32
-			memcpy(&insideDoor[60],&viewId,sizeof(viewId));   //uint16
-
-
-			ByteBuffer bufferBytesCoords;
-			bufferBytesCoords << double(X) << double(Y) << double(Z);
-			
-			byte byteCoords[24] = {
-				0x00, 0x00, 0x00, 0x00,0x00, 0xc1, 0x06, 0x41,  //X
-				0x00, 0x00, 0x00, 0x00,0x00, 0xb8, 0x8a, 0xc0,  //Y
-				0x00, 0x00, 0x00, 0x00,0x80, 0xda, 0xe8, 0x40,  //Z			
-			};
-			//Put new coords in
-			bufferBytesCoords.read(byteCoords, bufferBytesCoords.size());
-
-			
-			
-			memcpy(&insideDoor[32],&byteCoords,sizeof(byteCoords));   //uint16
-
-			//Rotation
-			insideDoor[22] = rotation;
-
-
-
-			m_buf.clear();
-			m_buf.append(insideDoor,sizeof(insideDoor));
-		}
-		else if (doorType == 1) //outside
-		{
-
-			byte OutsideDoor[65] =
-			{
-				0x03, 0x01, 0x00, 0x08, 0x33, 0x1b, 
-				0xAA, 0xAA, 0xAA, 0xAA,  
-				0xbc, 0xcd, 0xab, 0x03, 0x84, 0x00, 0x00, 0x00, 0x00, 0xf3, 0x04, 0x35, 0xbf, 0x00, 0x00, 
-				0x00, 0x00, 0xf3, 0x04, 0x35, 0x3f, 0x41, 0x00, 0x00, 0x00, 0x00, 0x20, 0xf4, 0xea, 0x40, 
-				0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x62, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7e, 0xcd, 
-				0x40, 0x34, 0x08, 0x00, 0x00, 0xBB, 0xBB, 0x00, 0x00, 0x00, 
-			};
-
-			
-
-			memcpy(&OutsideDoor[6],&doorId,sizeof(doorId));   //uint32
-			memcpy(&OutsideDoor[60],&viewId,sizeof(viewId));   //uint16
-
-
-			ByteBuffer bufferBytesCoords;
-			bufferBytesCoords << double(X) << double(Y) << double(Z);
-			
-			byte byteCoords[24] = {
-				0x00, 0x00, 0x00, 0x00,0x00, 0xc1, 0x06, 0x41,  //X
-				0x00, 0x00, 0x00, 0x00,0x00, 0xb8, 0x8a, 0xc0,  //Y
-				0x00, 0x00, 0x00, 0x00,0x80, 0xda, 0xe8, 0x40,  //Z			
-			};
-			//Put new coords in
-			bufferBytesCoords.read(byteCoords, bufferBytesCoords.size());
-
-			
-			
-			memcpy(&OutsideDoor[32],&byteCoords,sizeof(byteCoords));   //uint16
-
-			//Rotation
-			OutsideDoor[22] = rotation;
-
-
-			
-			//ROT
-
-
-			m_buf.clear();
-			m_buf.append(OutsideDoor,sizeof(OutsideDoor));
-		}
-		//memcpy(&doorX[6],&doorId,sizeof(doorId));   //uint32
-		//memcpy(&doorX[55],&viewId,sizeof(viewId));   //uint16
-		//m_buf.append(doorX,sizeof(insideDoor));
-
-
-
-			/*uint32 theDoorId = doorId;
-			memcpy(&rawData[6],&theDoorId,sizeof(theDoorId));
-			uint16 theViewId = viewId;
-			memcpy(&rawData[0x2C],&theViewId,sizeof(theViewId));
-			m_buf.clear();
-			m_buf.append(rawData,sizeof(rawData));*/
-
-		
-	}
-	~DoorAnimationMsg() {}
+	DoorAnimationMsg(uint32 doorId, uint16 viewId, double X, double Y, double Z, double ROT, int doorType);
+	~DoorAnimationMsg();
 };
 
 class WhereAmIResponse : public StaticMsg
@@ -547,21 +365,21 @@ public:
 		SLUMS = 0x01,
 		DOWNTOWN = 0x02,
 		INTERNATIONAL = 0x03,
-		ARCHIVE01 = 0X04,
-		ARCHIVE02 = 0X05,
-		ASHENCOURT = 0X06,
-		DATAMINE = 0X07,
-		SAKURA = 0X08,
-		SATI = 0X09,
-		WIDOWSMOOR = 0X0A,
-		YUKI = 0X0B,
-		LARGE01 = 0X0C,
-		LARGE02 = 0X0D,
-		MEDIUM01 = 0X0E,
-		MEDIUM02 = 0X0F,
-		MEDIUM03 = 0X10,
-		SMALL03 = 0X11,
-		CAVES = 0X12,
+		ARCHIVE01 = 0x04,
+		ARCHIVE02 = 0x05,
+		ASHENCOURT = 0x06,
+		DATAMINE = 0x07,
+		SAKURA = 0x08,
+		SATI = 0x09,
+		WIDOWSMOOR = 0x0A,
+		YUKI = 0x0B,
+		LARGE01 = 0x0C,
+		LARGE02 = 0x0D,
+		MEDIUM01 = 0x0E,
+		MEDIUM02 = 0x0F,
+		MEDIUM03 = 0x10,
+		SMALL03 = 0x11,
+		CAVES = 0x12,
 	} mxoLocation;
 
 	LoadWorldCmd(mxoLocation theLoc,string theSky);

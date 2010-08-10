@@ -330,8 +330,6 @@ void PlayerObject::Update()
 		m_spawnedInWorld = false;
 		this->SpawnSelf();
 		this->PopulateWorld();
-		this->getClient().QueueCommand(make_shared<WhisperMsg>("{c:00FF00}M a T r X{/c}","{c:FF0000}Since you just teleported, things will be alittly wonky.. Jacking out and back in fixes this usually{/c}"));
-
 }
 
 void PlayerObject::GoDownTown()
@@ -1235,7 +1233,6 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 				//sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
 				m_parent.QueueState(make_shared<PositionStateMsg>(m_goId));
 				this->PopulateWorld();
-				this->getClient().QueueCommand(make_shared<WhisperMsg>("{c:00FF00}M a T r X{/c}","{c:FF0000}Since you just teleported, things will be alittly wonky.. Jacking out and back in fixes this usually{/c}"));
 
 				//this->Update();
 
@@ -1766,7 +1763,6 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 		//sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
 		m_parent.QueueState(make_shared<PositionStateMsg>(m_goId));
 		this->PopulateWorld();
-		this->getClient().QueueCommand(make_shared<WhisperMsg>("{c:00FF00}M a T r X{/c}","{c:FF0000}Since you just teleported, things will be alittly wonky.. Jacking out and back in fixes this usually{/c}"));
 
 		//this->Update();
 		return;
@@ -1807,7 +1803,6 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 			//sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
 			m_parent.QueueState(make_shared<PositionStateMsg>(m_goId));
 			this->PopulateWorld();
-			this->getClient().QueueCommand(make_shared<WhisperMsg>("{c:00FF00}M a T r X{/c}","{c:FF0000}Since you just teleported, things will be alittly wonky.. Jacking out and back in fixes this usually{/c}"));
 
 			//this->Update();
 

@@ -74,7 +74,7 @@ void GameClient::Reconnect()
 	
 
 	
-	m_lastServerMS = getMSTime();
+	m_lastServerMS = getMSTime32();
 
 	try
 	{		
@@ -173,11 +173,11 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 		return;
 
 	m_lastActivity = getTime();
-	m_lastPacketReceivedMS = getMSTime();
+	m_lastPacketReceivedMS = getMSTime32();
 
 	if (m_encryptionInitialized == false && pData[0] == 0 && nLength == 43)
 	{
-		m_lastServerMS = getMSTime();
+		m_lastServerMS = getMSTime32();
 
 		ByteBuffer packetData;
 		packetData.append(pData,nLength);
@@ -526,7 +526,7 @@ void GameClient::FlagsChanged( uint8 oldFlags,uint8 newFlags )
 	}
 	else
 	{   //break on nonhandled
-		ERROR_LOG(format("Unhandled Client Flag: %1%") % m_clientFlags);
+		ERROR_LOG(format("Unhandled Client Flag: 0x%02x") % uint32(m_clientFlags));
 	}
 
 }
@@ -645,10 +645,10 @@ bool GameClient::SendSequencedPacket( msgBaseClassPtr jumboPacket )
 
 	ByteBuffer outputData;
 	//we send simtime synchronization only in the first packet (anything else seems to break the game)
-	uint32 currTimeMS = getMSTime();
+	uint32 currTimeMS = getMSTime32();
 	if ( /*currTimeMS-m_lastSimTimeMS>1000 && serializedData.size() > 0*/ m_lastSimTimeMS==0)
 	{
-		m_lastSimTimeMS = getMSTime();
+		m_lastSimTimeMS = getMSTime32();
 		outputData << uint8(0x82);
 		//theirs ticks at 64hz, ours ticks at 1000
 /*		double preciseInterval = double(m_lastSimTimeMS)/double(1000/64);

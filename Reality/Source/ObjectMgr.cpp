@@ -22,6 +22,7 @@
 #include "ObjectMgr.h"
 #include "PlayerObject.h"
 #include "GameClient.h"
+#include "Database/DatabaseEnv.h"
 
 uint32 ObjectMgr::constructPlayer( GameClient* requester, uint64 charUID )
 {

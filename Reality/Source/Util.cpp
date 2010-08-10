@@ -49,6 +49,45 @@ int random(int low,int high)
 	return rand() % (high - low + 1) + low;
 }
 
+
+string Bin2Str(const byte *data,size_t count)
+{
+	if (data != NULL && count > 0)
+	{
+		ostringstream myStream;
+
+		//if no spaces, then only one 0x at the start
+			
+		for (unsigned int j = 0;j < count;j++)
+		{
+			byte n = data[j];
+
+			if (n < 32) n = 46;  //anything below 32 is a .
+			myStream << n;
+			
+		}
+		myStream.flush();
+
+		return myStream.str();
+	}
+
+	return string();
+}
+
+string Bin2Str(const char *data,size_t count)
+{
+	return Bin2Str((const byte*)data,count);
+}
+
+string Bin2Str(const ByteBuffer &sourceBuf)
+{
+	return Bin2Str((const byte*)sourceBuf.contents(),sourceBuf.size());
+}
+string Bin2Str(const string &sourceStr)
+{
+	return Bin2Str(sourceStr.data(),sourceStr.size());
+}
+
 string Bin2Hex(const byte *data,size_t count,uint32 flags)
 {
 	if (data != NULL && count > 0)

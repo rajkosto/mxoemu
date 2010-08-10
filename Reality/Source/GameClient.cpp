@@ -50,6 +50,108 @@ GameClient::GameClient(sockaddr_in inc_addr, GameSocket *sock):m_address(inc_add
 	m_calculatedInitialLatency = false;
 }
 
+void GameClient::Reconnect()
+{
+	m_validClient = false;
+
+	uint64 characterUID = m_characterUID;
+	m_clientCommandsReceived.clear();
+	uint32 playergoId = m_playerGoId;
+	
+	//delete sObjMgr.getGOPtr(m_playerGoId)->getClient();
+
+	m_serverSequence = 1;
+	m_serverCommandsSent = 1;
+	m_clientFlags = 0;
+	m_lastClientSequence = 0;
+	//m_validClient = true;
+	m_worldLoaded = false;
+	m_characterSpawned = false;
+	//m_encryptionInitialized = false;
+	m_lastSimTimeMS = 0;
+	//m_playerGoId=0;
+	m_calculatedInitialLatency = false;
+	
+
+	
+	m_lastServerMS = getMSTime();
+
+	try
+	{		
+		m_playerGoId = sObjMgr.constructPlayer(this,characterUID);		
+	}
+	catch (ObjectMgr::ObjectNotAvailable)
+	{
+		ERROR_LOG(format("InitialUDPPacket(%1%): Character doesn't exist") % Address() );
+		m_validClient = false;
+		return;
+	}
+	
+	/*vector<MarginSocket*> marginConns = sMargin.GetSocketsForCharacterUID(m_characterUID);
+	if (marginConns.size() != 1)
+	{
+		ERROR_LOG(format("InitialUDPPacket(%1%): Margin session not found") % Address() );
+		m_validClient = false;
+		return;
+	}
+	MarginSocket *marginConn = marginConns[0];
+	m_sessionId = marginConn->GetSessionId();
+	m_charWorldId = marginConn->GetWorldCharId();*/
+
+
+	//m_sessionId = m_marginConn->GetSessionId();
+	//m_charWorldId = m_marginConn->GetWorldCharId();
+
+	//initialize encryptors with key from margin
+	/*vector<byte> twofishKey = m_marginConn->GetTwofishKey();
+	m_tfEngine.Initialize(&twofishKey[0], twofishKey.size());
+
+	*/
+	//send latency/loss calibration heartbeats
+	/*const int numberOfBeats = 5;
+	for (int i=0;i<numberOfBeats;i++)
+	{
+		ByteBuffer beatPacket;
+		for (int j=0;j<numberOfBeats;j++)
+		{
+			beatPacket << uint8(0);
+		}
+		beatPacket << uint16(swap16(numberOfBeats));
+
+		m_sock->SendToBuf(m_address, beatPacket.contents(), beatPacket.size(), 0);
+	}*/
+
+	//notify margin that udp session is established
+	/*if (m_marginConn->UdpReady(this) == false)
+	{
+		ERROR_LOG(format("InitialUDPPacket(%1%): Margin not ready for UDP connection") % Address() );
+		m_encryptionInitialized=false;
+		m_validClient = false;
+		m_marginConn->ForceDisconnect();
+		return;
+	}*/
+	sObjMgr.getGOPtr(m_playerGoId)->InitializeWorld();
+	FlushQueue();
+	sObjMgr.destroyObject(playergoId);
+	//m_sock->RemoveCharacter(IPAddr);
+}
+
+void GameClient::ReconnectBeat()
+{
+	const int numberOfBeats = 1;
+	for (int i=0;i<numberOfBeats;i++)
+	{
+		ByteBuffer beatPacket;
+		for (int j=0;j<numberOfBeats;j++)
+		{
+			beatPacket << uint8(2);
+		}
+		//beatPacket << uint16(swap16(numberOfBeats));
+
+		m_sock->SendToBuf(m_address, beatPacket.contents(), beatPacket.size(), 0);
+	}
+}
+
 GameClient::~GameClient()
 {
 	if (m_playerGoId != 0)
@@ -71,10 +173,11 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 		return;
 
 	m_lastActivity = getTime();
+	m_lastPacketReceivedMS = getMSTime();
 
 	if (m_encryptionInitialized == false && pData[0] == 0 && nLength == 43)
 	{
-		m_lastServerMS = getMSTime32();
+		m_lastServerMS = getMSTime();
 
 		ByteBuffer packetData;
 		packetData.append(pData,nLength);
@@ -421,6 +524,11 @@ void GameClient::FlagsChanged( uint8 oldFlags,uint8 newFlags )
 			m_characterSpawned = true;
 		}
 	}
+	else
+	{   //break on nonhandled
+		ERROR_LOG(format("Unhandled Client Flag: %1%") % m_clientFlags);
+	}
+
 }
 
 

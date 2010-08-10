@@ -43,6 +43,11 @@ std::string Bin2Hex(const char *data,size_t count,uint32 flags = BIN2HEX_SPACES 
 std::string Bin2Hex(const class ByteBuffer &sourceBuf,uint32 flags = BIN2HEX_SPACES | BIN2HEX_NEWLINES);
 std::string Bin2Hex(const std::string &sourceStr,uint32 flags = BIN2HEX_SPACES | BIN2HEX_NEWLINES);
 
+std::string Bin2Str(const byte *data,size_t count);
+std::string Bin2Str(const char *data,size_t count);
+std::string Bin2Str(const class ByteBuffer &sourceBuf);
+std::string Bin2Str(const std::string &sourceStr);
+
 std::string ClientVersionString(uint32 theVersion);
 
 

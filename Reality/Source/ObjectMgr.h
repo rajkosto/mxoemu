@@ -53,8 +53,10 @@ public:
 		}
 		return tempVect;
 	}
-	void OpenDoor(uint32 doorId);
-	vector<msgBaseClassPtr> GetAllOpenDoors();
+	void OpenDoor(uint32 doorId, class GameClient *requester);
+	vector<msgBaseClassPtr> GetAllOpenDoors(class GameClient *requester);
+
+	void RandomObject( uint32 randomObjectId, GameClient* requester, double X, double Y, double Z, double ROT);
 private:
 	typedef shared_ptr<PlayerObject> objectPtr;
 	typedef map<uint32,objectPtr> objectsMap;

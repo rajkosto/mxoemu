@@ -74,6 +74,20 @@ void GameSocket::PruneDeadClients()
 	}
 }
 
+void GameSocket::RemoveCharacter(string IPAddr)
+{
+	
+	GClientList::iterator it = m_clients.find(IPAddr);
+	if (it != m_clients.end())
+	{
+		GameClient *Client = it->second;
+		DEBUG_LOG( format("Removing XXX dead client [%1%]") % IPAddr );
+		m_clients.erase(it);
+		delete Client;		
+	}
+
+}
+
 GameClient * GameSocket::GetClientWithSessionId( uint32 sessionId )
 {
 	for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();++it)

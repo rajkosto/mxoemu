@@ -75,8 +75,20 @@ public:
 		m_queuedCommands.push_back(queuedMsg(m_serverCommandsSent,realPtr));
 		m_serverCommandsSent++;
 	}
+	void QueueRaw(msgBaseClassPtr theCmd)
+	{
+		msgBaseClassPtr &realPtr = theCmd;
+		shared_ptr<ObjectUpdateMsg> amIObjectUpdate = dynamic_pointer_cast<ObjectUpdateMsg>(realPtr);
+		if (amIObjectUpdate != NULL)
+			amIObjectUpdate->setReceiver(this);
+
+		m_queuedCommands.push_back(queuedMsg(m_serverCommandsSent,realPtr));
+		m_serverCommandsSent++;
+	}
 	void FlushQueue(bool alsoResend=false);
 	void CheckAndResend();
+	void Reconnect();
+	void ReconnectBeat();
 private:
 	bool SendSequencedPacket(msgBaseClassPtr jumboPacket);
 	SequencedPacket Decrypt(const char *pData, uint16 nLength);
@@ -137,6 +149,7 @@ private:
 
 	uint32 m_lastSimTimeMS;
 
+
 	// client states
 	bool m_validClient;
 	bool m_worldLoaded;
@@ -146,6 +159,7 @@ private:
 	class GameSocket *m_sock;
 	Ipv4Address m_address;
 	uint32 m_lastActivity;
+	uint32 m_lastPacketReceivedMS;
 	bool m_calculatedInitialLatency;
 	uint32 m_lastServerMS;
 

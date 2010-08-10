@@ -132,7 +132,7 @@ uint16 ObjectMgr::allocateViewId( GameClient* requester)
 	//get the views map for current client
 	const viewIdsMap &viewsOfClient = m_views[requester];
 	//go through all possible viewIds, when we find one thats not in the list, return it
-	for (uint16 i=2;i<0xFFFF;i++) //we start from 2 because 1 is the object manager id, it spawns and deletes objects
+	for (uint16 i=3;i<0xFFFF;i++) //we start from 2 because 1 is the object manager id, it spawns and deletes objects  // we start from 3, cuz 2 doesnt work
 	{
 		if (viewsOfClient.find(i)==viewsOfClient.end())
 			return i;
@@ -142,27 +142,129 @@ uint16 ObjectMgr::allocateViewId( GameClient* requester)
 
 #include "GameServer.h"
 
-void ObjectMgr::OpenDoor( uint32 doorId )
+void ObjectMgr::RandomObject( uint32 randomObjectId, GameClient* requester, double X, double Y, double Z, double ROT)
 {
-/*	for (map<uint16,uint32>::iterator it=m_openDoors.begin();it!=m_openDoors.end();++it)
-	{
-		if (it->second == doorId)
-			return;
-	}
-	uint16 viewId = allocateViewId(NULL);
-	viewIdsMap &viewsOfClient = m_views[NULL];
-	viewsOfClient[viewId]=doorId;
-	m_openDoors[viewId]=doorId;
+	//uint32 randObjId = rand() % 0xFFFFFFFF;
 
-	sGame.AnnounceStateUpdate(NULL,make_shared<DoorAnimationMsg>(doorId,viewId));*/
+	string msg1 = (format("{c:0FFFF0}Object :%1%{/c}") % (int)randomObjectId).str();
+	sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(msg1));
+
+	
+	uint16 randViewId = rand() % 0xFFFF;
+
+	std::string s;
+	std::stringstream out;
+	out << "Do Object With ViewId: ";
+	out << int(randViewId);
+	s = out.str();
+
+	sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(s));
+	sGame.AnnounceStateUpdate(NULL,make_shared<DoorAnimationMsg>(randomObjectId, randViewId, X, Y, Z, ROT, 1));	
 }
 
-vector<msgBaseClassPtr> ObjectMgr::GetAllOpenDoors()
+
+void ObjectMgr::OpenDoor( uint32 doorId, GameClient* requester)
+{
+	//Does this work?
+	int doorOpenCount = 0;
+	for (map<uint16,uint32>::iterator it=m_openDoors.begin();it!=m_openDoors.end();++it)
+	{
+		doorOpenCount++;
+		if (it->second == doorId)
+		{
+			//Didnt work first time, lets change door type
+			string sqlUpdateDoorType = (format("Update Doors Set DoorType = 0, `DoorId` = '%1%' Limit 1") % (int)doorId).str();
+			if (sDatabase.Execute(sqlUpdateDoorType))
+			{
+				string msg1 = (format("{c:0FFFF0}Door:%1% Set to Indoors since u tried to open it but I think it is open, try again.{/c}") % (int)doorId).str();
+				
+				//Close Doors not working
+				//sGame.AnnounceStateUpdate(NULL,make_shared<CloseDoorMsg>(it->first));	
+
+				sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(msg1));
+			}
+			m_openDoors.erase(it);
+			return;
+		}
+		
+	}
+
+	string msg2 = (format("{c:0FFFF0}Door:%1%{/c}") % (int)doorId).str();
+	sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(msg2));
+
+	if (doorOpenCount > 30) //if 10+ doors, then we want to close one
+	{
+		for (map<uint16,uint32>::iterator it=m_openDoors.begin();it!=m_openDoors.end();++it)
+		{
+			//Close Doors not working
+			//sGame.AnnounceStateUpdate(NULL,make_shared<CloseDoorMsg>(it->first));						
+			m_openDoors.erase(it);						
+			break; //exit loop we just wanted the first one
+		}
+		
+		
+	}
+
+	uint16 viewId = allocateViewId(requester);
+	viewIdsMap &viewsOfClient = m_views[requester];
+	viewsOfClient[viewId]=doorId;
+	m_openDoors[viewId]=doorId;
+	
+
+	std::string s;
+	std::stringstream out;
+	out << "Door Opened With ViewId: ";
+	out << int(viewId);
+	s = out.str();
+
+	sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(s));
+
+	//sGame.AnnounceStateUpdate(NULL,make_shared<DeleteDoorMsg>(doorId));	
+	string sqlDoor = (format("Select X,Y,Z,ROT,DoorType from Doors Where `DoorId` = '%1%' Limit 1") % (int)doorId).str();
+
+	scoped_ptr<QueryResult> resultDoor(sDatabase.Query(sqlDoor));
+	if (resultDoor != NULL)
+	{
+		Field *field = resultDoor->Fetch();
+		double X = field[0].GetDouble();
+		double Y = field[1].GetDouble();
+		double Z = field[2].GetDouble();
+		double O = field[3].GetDouble();
+		int doorType = field[4].GetUInt16();
+		//int doorType = 1;
+
+		sGame.AnnounceStateUpdate(NULL,make_shared<DoorAnimationMsg>(doorId, viewId, X, Y, Z, O, doorType));
+	}
+
+}
+
+vector<msgBaseClassPtr> ObjectMgr::GetAllOpenDoors( GameClient* requester )
 {
 	vector<msgBaseClassPtr> tempVec;
-/*	for (map<uint16,uint32>::iterator it=m_openDoors.begin();it!=m_openDoors.end();++it)
+
+	//Does this work?
+
+	//Set cleitn views to current views.. (so we know which doors are open)
+	viewIdsMap &viewsOfClient = m_views[requester];
+
+	for (map<uint16,uint32>::iterator it=m_openDoors.begin();it!=m_openDoors.end();++it)
 	{
-		tempVec.push_back(make_shared<DoorAnimationMsg>(it->second,it->first));
-	}*/
+		viewsOfClient[it->first] = it->second;
+
+		string sqlDoor = (format("Select X,Y,Z,ROT,DoorType from Doors Where `DoorId` = '%1%' Limit 1") % (int)it->second).str();
+		scoped_ptr<QueryResult> resultDoor(sDatabase.Query(sqlDoor));
+		if (resultDoor != NULL)
+		{
+			Field *field = resultDoor->Fetch();
+			double X = field[0].GetDouble();
+			double Y = field[1].GetDouble();
+			double Z = field[2].GetDouble();
+			double O = field[3].GetDouble();
+			int doorType = field[4].GetUInt16();
+			//int doorType = 1;
+			
+			tempVec.push_back(make_shared<DoorAnimationMsg>(it->second,it->first, X, Y, Z, O, doorType));
+		}
+	}
 	return tempVec;
 }

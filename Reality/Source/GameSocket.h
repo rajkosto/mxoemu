@@ -21,6 +21,7 @@ public:
 	void Broadcast(const ByteBuffer &message);
 	void AnnounceStateUpdate(class GameClient* clFrom,msgBaseClassPtr theMsg, bool immediateOnly=false);
 	void AnnounceCommand(class GameClient* clFrom,msgBaseClassPtr theCmd);
+	void RemoveCharacter(string IPAddr);
 private:
 	// Client List
 	typedef map<string, class GameClient*> GClientList;

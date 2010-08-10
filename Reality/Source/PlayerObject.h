@@ -56,6 +56,7 @@ public:
 	uint8 getRsiData(byte* outputBuf,uint32 maxBufLen) const ;
 	uint16 getCurrentHealth() const {return m_healthC;}
 	uint16 getMaximumHealth() const {return m_healthM;}
+	uint16 getCharacterUID() const {return m_characterUID;}
 	uint16 getCurrentIS() const {return m_innerStrC;}
 	uint16 getMaximumIS() const {return m_innerStrM;}
 	uint32 getProfession() const {return m_prof;}
@@ -96,6 +97,8 @@ private:
 	bool m_spawnedInWorld;
 	uint32 m_lastStore;
 
+	uint32 m_lastTestedCommand;
+
 	uint8 m_currAnimation;
 	uint8 m_currMood;
 
@@ -104,6 +107,9 @@ private:
 	bool m_isAdmin;
 	void ParseAdminCommand(string theCmd);
 	void ParsePlayerCommand(string theCmd);
+	void GoAhead(double distanceToGo);
+	void GoDownTown();
+	void Update();
 };
 
 #endif

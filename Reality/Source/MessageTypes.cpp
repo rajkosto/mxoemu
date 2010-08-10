@@ -80,6 +80,133 @@ void DeletePlayerMsg::setReceiver( class GameClient *toWho )
 	m_buf << uint16(viewId);
 }
 
+
+CloseDoorMsg::CloseDoorMsg( uint32 objectId) :ObjectUpdateMsg(objectId)
+{
+
+}
+
+CloseDoorMsg::~CloseDoorMsg()
+{
+
+}
+
+const ByteBuffer& CloseDoorMsg::toBuf()
+{
+	return m_buf;
+}
+
+void CloseDoorMsg::setReceiver( class GameClient *toWho )
+{
+	m_toWho = toWho;
+	m_buf.clear();
+
+	uint16 clientDoorId = m_objectId;  //This is a unique number given to the client for each door that is currently opened (it is used again when the door needs to be closed)
+	
+	
+	string msg1 = (format("Door %1% Close command") % clientDoorId).str();
+	m_toWho->QueueCommand(make_shared<SystemChatMsg>(msg1));
+
+	DEBUG_LOG(format("Door %1% Close command") % clientDoorId);
+
+	//03 01 00 01 01 00 <OBJECT ID:2bytes>
+/*
+
+03 01 00 08 da 19 19 00 50 30 ef cd ab 03 84 00 00 00 00 f2 04 35 bf 00 00 00 00 f3 04 35 3f 
+41 00 00 00 00 00 c1 06 41 00 00 00 00 00 b8 8a c0 00 00 00 00 80 da e8 40 34 08 00 00 03 00 00 
+00 00 
+
+*/
+
+	byte doorCloseMsg[12] =
+	{
+		0x03, 0x03, 0x00, 0x01, 0x80, 0x02, 0x38, 0x08, 0x00, 0x00, 0x00, 0x00, 
+	};
+
+	ByteBuffer bufferBytesDoorId;
+	bufferBytesDoorId << clientDoorId;
+			
+	byte byteDoorId[24] = {
+		0x00, 0x00, 0x00, 0x00,0x00, 0xc1, 0x06, 0x41,  //X
+		0x00, 0x00, 0x00, 0x00,0x00, 0xb8, 0x8a, 0xc0,  //Y
+		0x00, 0x00, 0x00, 0x00,0x80, 0xda, 0xe8, 0x40,  //Z			
+	};
+	//Put new coords in
+	bufferBytesDoorId.read(byteDoorId, bufferBytesDoorId.size());
+
+	//Rotation
+	//insideDoor[22] = 0xbf;
+
+	memcpy(&doorCloseMsg[7],&byteDoorId,2);   //uint16
+
+	//03 03 00 01 80 02 38 08 00 00 00 00 
+
+
+
+	m_buf.append(doorCloseMsg,sizeof(doorCloseMsg));
+
+}
+
+
+
+
+
+
+
+
+
+
+SitDownMsg::SitDownMsg( uint32 objectId ) :ObjectUpdateMsg(objectId)
+{
+
+}
+
+SitDownMsg::~SitDownMsg()
+{
+
+}
+
+const ByteBuffer& SitDownMsg::toBuf()
+{
+	return m_buf;
+}
+
+void SitDownMsg::setReceiver( class GameClient *toWho )
+{
+	m_toWho = toWho;
+	m_buf.clear();
+
+	uint16 viewId = 0;
+	try
+	{
+		//viewId = sObjMgr.getViewForGO(m_toWho,m_objectId);
+	}
+	catch (ObjectMgr::ClientNotAvailable)
+	{
+		throw PacketNoLongerValid();		
+	}
+	DEBUG_LOG(format("Sit DOWN %1% delete packet serializing for client %2% with viewID %3%") % m_objectId % m_toWho->Address() % viewId);
+
+	//03 01 00 01 01 00 <OBJECT ID:2bytes>
+	const byte rawData[211] =
+	{
+		0x03, 0x02, 0x00, 0x03, 0x28, 0x01, 0x43, 0x01, 0x00, 0x00, 0x10, 0x00, 0x00, 0x01, 0x00, 0x60, 0x8f, 0xe0, 0xc0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x98, 0x9d, 0x40, 0xd8, 0xd9, 0xfe, 0xff, 
+		0xff, 0x11, 0xe6, 0xc0, 0xda, 0x0f, 0xc9, 0x3f, 0x00, 0x7b, 0x04, 0xc7, 0x00, 0xc0, 0xec, 0x44, 0x00, 0x90, 0x30, 0xc7, 0xc0, 0xe0, 0x9d, 0x00, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01, 
+		0x00, 0x00, 0x20, 0x01, 0x00, 0x00, 0x04, 0x01, 0x01, 0x3d, 0x06, 0x16, 0x80, 0xbc, 0x15, 0x00, 0xb3, 0x0a, 0x00, 0x9f, 0x02, 0x00, 0x00, 0xf1, 0x03, 0x38, 0xff, 0xff, 0xff, 0x00, 0x00, 
+		0x00, 0x00, 0x00, 0x16, 0x80, 0xbc, 0x15, 0x00, 0xb4, 0x0a, 0x00, 0x9f, 0x02, 0x00, 0x00, 0x72, 0x00, 0xc8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x80, 0xbc, 0x15, 0x00, 
+		0xb5, 0x0a, 0x00, 0x9f, 0x02, 0x00, 0x00, 0xf2, 0x03, 0x38, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x80, 0xbc, 0x15, 0x00, 0xb6, 0x0a, 0x00, 0x9f, 0x02, 0x00, 0x00, 0x70, 
+		0x00, 0x2c, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x80, 0xbc, 0x15, 0x00, 0xb7, 0x0a, 0x00, 0x9f, 0x02, 0x00, 0x00, 0xf3, 0x03, 0x38, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x16, 0x80, 0xbc, 0x15, 0x00, 0xb8, 0x0a, 0x00, 0x9f, 0x02, 0x00, 0x00, 0xb7, 0x00, 0x38, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	};
+
+	m_buf.append(rawData,sizeof(rawData));
+	//m_buf << uint32(m_objectId);
+	//m_buf.append(rawdata2,sizeof(rawdata2));
+}
+
+
+
+
 PlayerSpawnMsg::PlayerSpawnMsg( uint32 objectId ) :ObjectUpdateMsg(objectId)
 {
 
@@ -688,10 +815,26 @@ PlayerDetailsMsg::~PlayerDetailsMsg()
 LoadWorldCmd::LoadWorldCmd( mxoLocation theLoc,string theSky )
 {
 	m_buf.clear();
+	locs[TUTORIAL] = "resource/worlds/final_world/tutorial_v2/tutorial_v2.metr";
 	locs[SLUMS] = "resource/worlds/final_world/slums_barrens_full.metr";
 	locs[DOWNTOWN] = "resource/worlds/final_world/downtown/dt_world.metr";
-	locs[INTERNATIONAL] = "resource/worlds/final_world/international/it.metr";
-	locs[LOADINGAREA] = "resource/worlds/loading_area/la.metr";
+	locs[INTERNATIONAL] = "resource/worlds/final_world/international/it.metr";		
+	locs[ARCHIVE01] = "resource/worlds/final_world/constructs/archive/archive01/archive01.metr";
+	locs[ARCHIVE02] = "resource/worlds/final_world/constructs/archive/archive02/archive02.metr";
+	locs[ASHENCOURT] = "resource/worlds/final_world/constructs/archive/archive_ashencourte/archive_ashencourte.metr";
+	locs[DATAMINE] = "resource/worlds/final_world/constructs/archive/archive_datamine/datamine.metr";
+	locs[SAKURA] = "resource/worlds/final_world/constructs/archive/archive_sakura/archive_sakura.metr";
+	locs[SATI] = "resource/worlds/final_world/constructs/archive/archive_sati/sati.metr";
+	locs[WIDOWSMOOR] = "resource/worlds/final_world/constructs/archive/archive_widowsmoor/archive_widowsmoor.metr";
+	locs[YUKI] = "resource/worlds/final_world/constructs/archive/archive_yuki/archive_yuki.metr";
+	locs[LARGE01] = "resource/worlds/final_world/constructs/large/large01/large01.metr";
+	locs[LARGE02] = "resource/worlds/final_world/constructs/large/large02/large02.metr";
+	locs[MEDIUM01] = "resource/worlds/final_world/constructs/medium/medium01/medium01.metr";
+	locs[MEDIUM02] = "resource/worlds/final_world/constructs/medium/medium02/medium02.metr";
+	locs[MEDIUM03] = "resource/worlds/final_world/constructs/medium/medium03/medium03.metr";
+	locs[SMALL03] = "resource/worlds/final_world/constructs/small/small03/small03.metr";
+	locs[CAVES] = "resource/worlds/final_world/zion_caves.metr";
+
 
 	m_buf << uint16(swap16(0x060E))
 		<< uint8(0)

@@ -177,12 +177,12 @@ void ObjectMgr::OpenDoor( uint32 doorId, GameClient* requester)
 			string sqlUpdateDoorType = (format("Update Doors Set DoorType = 0, `DoorId` = '%1%' Limit 1") % (int)doorId).str();
 			if (sDatabase.Execute(sqlUpdateDoorType))
 			{
-				string msg1 = (format("{c:0FFFF0}Door:%1% Set to Indoors since u tried to open it but I think it is open, try again.{/c}") % (int)doorId).str();
+				format msg1 = format("{c:0FFFF0}Door:0x%08x Set to Indoors since u tried to open it but I think it is open, try again.{/c}") % (int)doorId;
 				
 				//Close Doors not working
 				//sGame.AnnounceStateUpdate(NULL,make_shared<CloseDoorMsg>(it->first));	
 
-				sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(msg1));
+				sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(msg1.str()));
 			}
 			m_openDoors.erase(it);
 			return;

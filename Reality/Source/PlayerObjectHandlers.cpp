@@ -649,21 +649,17 @@ void PlayerObject::RPC_HandleStaticObjInteraction( ByteBuffer &srcCmd )
 	uint32 staticObjId = srcCmd.read<uint32>();
 	uint16 interaction = srcCmd.read<uint16>();
 
-	INFO_LOG(format("(%1%) %2%:%3% interacting with object id %4% interaction %5%")
+	format debugStr = 
+		format("(%s) %s:%d interacting with object id 0x%08x interaction %d")
 		% m_parent.Address()
 		% m_handle
 		% m_goId
-		% Bin2Hex((const byte*)&staticObjId,sizeof(staticObjId),0)
-		% uint32(interaction) );
+		% staticObjId
+		% uint32(interaction);
 
-	string debugStr = (format("(%1%) %2%:%3% interacting with object id %4% interaction %5%")
-		% m_parent.Address()
-		% m_handle
-		% m_goId
-		% Bin2Hex((const byte*)&staticObjId,sizeof(staticObjId),0)
-		% uint32(interaction)).str();
+	INFO_LOG( debugStr );
 
-	m_parent.QueueCommand(make_shared<SystemChatMsg>(debugStr));
+	m_parent.QueueCommand(make_shared<SystemChatMsg>(debugStr.str()));
 
 	if (interaction == 0x03) //open door
 	{
@@ -684,7 +680,7 @@ void PlayerObject::RPC_HandleStaticObjInteraction( ByteBuffer &srcCmd )
 			if (sDatabase.Execute(sqlDoorInsert))
 			{
 				format msg1 = 
-					format("{c:00FF00}Door:%1% in District %2% Set to Location X:%3% Y:%4% Z:%5% O:%6%{/c}")
+					format("{c:00FF00}Door:0x%08x in District %d Set to Location X:%f Y:%f Z:%f O:%f{/c}")
 					% staticObjId 
 					% (int)m_district 
 					% loc.x	% loc.y	% loc.z	% loc.rot;

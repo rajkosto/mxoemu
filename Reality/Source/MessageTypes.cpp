@@ -684,3 +684,32 @@ PlayerDetailsMsg::~PlayerDetailsMsg()
 {
 
 }
+
+LoadWorldCmd::LoadWorldCmd( mxoLocation theLoc,string theSky )
+{
+	m_buf.clear();
+	locs[SLUMS] = "resource/worlds/final_world/slums_barrens_full.metr";
+	locs[DOWNTOWN] = "resource/worlds/final_world/downtown/dt_world.metr";
+	locs[INTERNATIONAL] = "resource/worlds/final_world/international/it.metr";
+	locs[LOADINGAREA] = "resource/worlds/loading_area/la.metr";
+
+	m_buf << uint16(swap16(0x060E))
+		<< uint8(0)
+		<< uint32(theLoc)
+		<< uint32(sGame.GetSimTime())
+		<< uint8(1);
+	uint16 bytesSoFar = (uint16)m_buf.wpos();
+	string metrFile = locs[theLoc];
+	uint16 metrFileLen = (uint16)metrFile.length()+1;
+	m_buf << uint16(bytesSoFar+sizeof(uint16)+sizeof(uint16)+metrFileLen) //offset to sky length byte
+		<< uint16(metrFileLen); //length of string (including null term)
+	m_buf.append(metrFile.c_str(),metrFileLen); //string itself (including null term)
+	uint16 skyLen = (uint16)theSky.length()+1;
+	m_buf << uint16(skyLen);
+	m_buf.append(theSky.c_str(),skyLen);
+}
+
+LoadWorldCmd::~LoadWorldCmd()
+{
+
+}

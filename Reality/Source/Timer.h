@@ -89,13 +89,20 @@ inline uint32 getTime()
 }
 
 #ifdef WIN32
-__forceinline uint32 getMSTime() { return GetTickCount(); }
+__forceinline uint32 getMSTime32() { return GetTickCount(); }
+__forceinline uint64 getMSTime64() { return GetTickCount64(); }
 #else
-inline uint32 getMSTime()
+inline uint64 getMSTime32()
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+}
+inline uint64 getMSTime64()
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return (uint64(tv.tv_sec) * 1000) + (uint64(tv.tv_usec) / 1000);
 }
 #endif
 

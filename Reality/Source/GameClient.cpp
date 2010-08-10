@@ -46,10 +46,8 @@ GameClient::GameClient(sockaddr_in inc_addr, GameSocket *sock):m_address(inc_add
 	m_characterSpawned = false;
 	m_encryptionInitialized = false;
 	m_lastSimTimeMS = 0;
-	m_lastOrderedFlush = 0;
 	m_playerGoId=0;
 	m_calculatedInitialLatency = false;
-	m_latency = 200;
 }
 
 GameClient::~GameClient()
@@ -73,11 +71,10 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 		return;
 
 	m_lastActivity = getTime();
-	m_lastPacketReceivedMS = getMSTime();
 
 	if (m_encryptionInitialized == false && pData[0] == 0 && nLength == 43)
 	{
-		m_lastServerMS = getMSTime();
+		m_lastServerMS = getMSTime32();
 
 		ByteBuffer packetData;
 		packetData.append(pData,nLength);
@@ -119,7 +116,7 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 		if (packetData.remaining() < TwofishCryptMethod::BLOCKSIZE)
 		{
 			//wat
-			m_validClient=false;
+			m_validClient = false;
 			marginConn->ForceDisconnect();
 			return;
 		}
@@ -188,11 +185,9 @@ void GameClient::HandlePacket( const char *pData, uint16 nLength )
 
 			if (m_calculatedInitialLatency == false)
 			{
-				int32 clientLatency = int64(getMSTime())-int64(m_lastServerMS);
+				uint64 clientLatency = getMSTime32()-m_lastServerMS;
 				DEBUG_LOG(format("CLIENT LATENCY: %1%")%clientLatency);
 				m_calculatedInitialLatency=true;
-				m_latency = abs(clientLatency);
-				this->QueueCommand(make_shared<SystemChatMsg>( (format("Your latency to the server is %1%ms")%m_latency).str() ));
 			}
 
 			uint32 pktsAcked = AcknowledgePacket(packetData.getRemoteSeq());
@@ -392,6 +387,8 @@ void GameClient::SendEncrypted(SequencedPacket withSequences)
 
 void GameClient::FlagsChanged( uint8 oldFlags,uint8 newFlags )
 {
+//	DEBUG_LOG(format("flags changed from %02x to %02x")%uint32(oldFlags)%uint32(newFlags));
+
 	m_clientFlags = newFlags;
 	if (m_clientFlags == 0x01)
 	{
@@ -581,7 +578,7 @@ void GameClient::FlushQueue( bool alsoResend )
 		{
 			if (it->packetsItsIn.size() > 0 && (currBlock.subPackets.size() == 0 || currBlock.sequenceId+currBlock.subPackets.size() != it->sequenceId))
 			{
-				if (getMSTime() - it->msLastSent < 200 || alsoResend == false) //200ms resend
+				if (getMSTime32() - it->msLastSent < 200 || alsoResend == false) //200ms resend
 				{
 					++it;
 					continue;
@@ -618,7 +615,7 @@ void GameClient::FlushQueue( bool alsoResend )
 			}
 
 			it->packetsItsIn.push_back(m_serverSequence);
-			it->msLastSent = getMSTime();
+			it->msLastSent = getMSTime32();
 			currBlock.subPackets.push_back(packetStaticBuf);
 
 			++it;
@@ -638,7 +635,7 @@ void GameClient::FlushQueue( bool alsoResend )
 	//03 next
 	for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();)
 	{
-		if ((getMSTime() - it->msLastSent < 1000 || alsoResend == false) && it->packetsItsIn.size() > 0) //1000ms resend
+		if ((getMSTime32() - it->msLastSent < 500 || alsoResend == false) && it->packetsItsIn.size() > 0) //500ms resend
 		{
 			++it;
 			continue;
@@ -664,7 +661,7 @@ void GameClient::FlushQueue( bool alsoResend )
 			}
 		}
 		it->packetsItsIn.push_back(m_serverSequence);
-		it->msLastSent=getMSTime();
+		it->msLastSent=getMSTime32();
 		SendSequencedPacket(it->stateData);
 		if (it->noResend==true)
 			it = m_queuedStates.erase(it);

@@ -212,7 +212,7 @@ void PlayerObject::saveDataToDB()
 
 void PlayerObject::InitializeWorld()
 {
-	m_parent.QueueCommand(make_shared<LoadWorldCmd>((LoadWorldCmd::mxoLocation)m_district,"SatiSky"));
+	m_parent.QueueCommand(make_shared<LoadWorldCmd>((LoadWorldCmd::mxoLocation)m_district,"WinterSky3"));
 	m_parent.QueueCommand(make_shared<SetExperienceCmd>(m_exp));
 	m_parent.QueueCommand(make_shared<SetInformationCmd>(m_cash));
 	m_parent.QueueCommand(make_shared<HexGenericMsg>("80b24e0008000802"));
@@ -234,6 +234,20 @@ void PlayerObject::InitializeWorld()
 	m_parent.QueueCommand(make_shared<HexGenericMsg>("80865220060000000000000000000000000000000000000000210000000000230000000000"));
 	m_parent.QueueCommand(make_shared<EventURLCmd>("http://mxoemu.info/forum/index.php"));
 	m_parent.QueueCommand(make_shared<SystemChatMsg>("COME ON CHECK THIS OUT"));
+
+/*	m_parent.QueueCommand(make_shared<SetOptionCmd>("PvPServer",bool(true)));
+	m_parent.QueueCommand(make_shared<SetOptionCmd>("PvPMaxSafeLevel",uint32(15)));
+
+	vector<string> theEvents;
+	theEvents.push_back("Halloween_Event");
+	theEvents.push_back("Winter3HalloweenFlyEyeTSEC");
+
+	m_parent.QueueCommand(make_shared<SetOptionCmd>("WR_RezEvents",theEvents));
+
+	m_parent.QueueCommand(make_shared<SetOptionCmd>("EventSlot1_Effect",string()));
+	m_parent.QueueCommand(make_shared<SetOptionCmd>("EventSlot2_Effect",string("flyman_idle3")));
+	m_parent.QueueCommand(make_shared<SetOptionCmd>("EventSlot3_Effect",string("fly_virus")));
+	m_parent.QueueCommand(make_shared<SetOptionCmd>("FixedBinkIDOverride",uint16(0x20)));*/
 }
 
 void PlayerObject::SpawnSelf()
@@ -251,27 +265,28 @@ void PlayerObject::SpawnSelf()
 void PlayerObject::PopulateWorld()
 {
 	//we need to get all other world entities and populate our client with it
-	vector<uint32> allWorldObjects = sObjMgr.getAllGOIds();
-	for (vector<uint32>::iterator it=allWorldObjects.begin();it!=allWorldObjects.end();++it)
+	foreach(uint32 theGoId, sObjMgr.getAllGOIds())
 	{
+		//we already spawned
+		if (theGoId == m_goId)
+			continue;
+
 		PlayerObject *theOtherObject = NULL;
 		try
 		{
-			theOtherObject = sObjMgr.getGOPtr(*it);;
+			theOtherObject = sObjMgr.getGOPtr(theGoId);;
 		}
 		catch (ObjectMgr::ObjectNotAvailable)
 		{
 			continue;
 		}
 
-		//we self spawned already, so no
-		if (theOtherObject!=this)
+		if (theOtherObject == this)
+			continue;
+
+		foreach(const msgBaseClassPtr &thePacket, theOtherObject->getCurrentStatePackets())
 		{
-			vector<msgBaseClassPtr> objectsPackets = theOtherObject->getCurrentStatePackets();
-			for (vector<msgBaseClassPtr>::iterator it2=objectsPackets.begin();it2!=objectsPackets.end();++it2)
-			{
-				m_parent.QueueState(*it2);
-			}
+			m_parent.QueueState(thePacket);
 		}
 	}
 
@@ -710,7 +725,22 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 			return;
 		srcCmd >> secondByte;
 
-		if (secondByte == 0x54) //whereami
+		if (secondByte == 0x08) //readyforworldchange
+		{
+			uint32 shouldBeZero;
+			if (srcCmd.remaining() < sizeof(shouldBeZero))
+				return;
+			srcCmd >> shouldBeZero;
+
+			if (shouldBeZero != 0)
+				DEBUG_LOG(format("ReadyForWorldChange uint32 is %1%")%shouldBeZero);
+
+			m_district = 0x03;
+			InitializeWorld();
+			SpawnSelf();
+			return;
+		}
+		else if (secondByte == 0x54) //whereami
 		{
 			LocationVector clientSidePos;
 			if (clientSidePos.fromFloatBuf(srcCmd) == false)
@@ -747,6 +777,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 				% byte3Valid % uint32(byte3) );
 
 			m_parent.QueueCommand(make_shared<WhereAmIResponse>(m_pos));
+			//m_parent.QueueCommand(make_shared<HexGenericMsg>("8107"));
 			return;
 		}
 		else if (secondByte == 0x92) //get player details

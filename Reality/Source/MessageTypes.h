@@ -368,35 +368,101 @@ public:
 	{
 		SLUMS = 0x01,
 		DOWNTOWN = 0x02,
-		INTERNATIONAL = 0x03
+		INTERNATIONAL = 0x03,
+		LOADINGAREA = 901
 	} mxoLocation;
 
-	LoadWorldCmd(mxoLocation theLoc,string theSky)
-	{
-		m_buf.clear();
-		locs[SLUMS] = "resource/worlds/final_world/slums_barrens_full.metr";
-		locs[DOWNTOWN] = "resource/worlds/final_world/downtown/dt_world.metr";
-		locs[INTERNATIONAL] = "resource/worlds/final_world/international/it.metr";
-
-		m_buf << uint16(swap16(0x060E))
-			  << uint8(0)
-			  << uint32(theLoc)
-			  //<< uint32(swap32(0x4B61BD47)) //dunno lol
-			  << uint32(swap32(0xd868c847))
-			  << uint8(1);
-		uint16 bytesSoFar = (uint16)m_buf.wpos();
-		string metrFile = locs[theLoc];
-		uint16 metrFileLen = (uint16)metrFile.length()+1;
-		m_buf << uint16(bytesSoFar+sizeof(uint16)+sizeof(uint16)+metrFileLen) //offset to sky length byte
-			  << uint16(metrFileLen); //length of string (including null term)
-		m_buf.append(metrFile.c_str(),metrFileLen); //string itself (including null term)
-		uint16 skyLen = (uint16)theSky.length()+1;
-		m_buf << uint16(skyLen);
-		m_buf.append(theSky.c_str(),skyLen);
-	}
-	~LoadWorldCmd() {}
+	LoadWorldCmd(mxoLocation theLoc,string theSky);
+	~LoadWorldCmd();
 private:
 	map<mxoLocation,string> locs;
+};
+
+class SetOptionCmd : public StaticMsg
+{
+public:
+	SetOptionCmd(string optionName,bool booleanVal)
+	{
+		InitialSetUp(optionName,TYPE_BOOL);
+		uint32 intermediaryVal = 2;
+		if (booleanVal)
+			intermediaryVal=1;
+
+		m_buf << sizeof(intermediaryVal);
+		m_buf << intermediaryVal;
+	}
+	SetOptionCmd(string optionName,uint16 shortIntVal)
+	{
+		InitialSetUp(optionName,TYPE_UINT16);
+
+		m_buf << sizeof(shortIntVal);
+		m_buf << shortIntVal;
+	}
+	SetOptionCmd(string optionName,uint32 intVal)
+	{
+		InitialSetUp(optionName,TYPE_UINT32);
+
+		m_buf << sizeof(intVal);
+		m_buf << intVal;
+	}
+	SetOptionCmd(string optionName,string stringVal)
+	{
+		InitialSetUp(optionName,TYPE_STRING);
+
+		if (stringVal.length() < 1)
+			m_buf << uint16(0);
+		else
+		{
+			uint16 stringValLen = stringVal.length()+1;
+			m_buf << uint16(stringValLen);
+			m_buf.append(stringVal.c_str(),stringValLen);
+		}
+	}
+	SetOptionCmd(string optionName,vector<string> stringVals)
+	{
+		InitialSetUp(optionName,TYPE_STRING);
+
+		stringstream cummulative;
+
+		foreach(const string &theStr,stringVals)
+		{
+			if (cummulative.str().length() > 1)
+				cummulative << ",";
+
+			cummulative << theStr;
+		}
+
+		string stringVal = cummulative.str();
+
+		if (stringVal.length() < 1)
+			m_buf << uint16(0);
+		else
+		{
+			uint16 stringValLen = stringVal.length()+1;
+			m_buf << uint16(stringValLen);
+			m_buf.append(stringVal.c_str(),stringValLen);
+		}
+	}
+	~SetOptionCmd() {}
+private:
+	typedef enum
+	{
+		TYPE_BOOL = 0x11,
+		TYPE_UINT16 = 0x1B,
+		TYPE_UINT32 = 0x17,
+		TYPE_STRING = 0x19,
+		TYPE_STRINGLIST = 0x14,
+	} varType;
+	void InitialSetUp(string optionName,varType theType)
+	{
+		m_buf.clear();
+		m_buf << uint16(swap16(0x3A05));
+		m_buf << uint8(0);
+		m_buf << uint16(theType);
+		uint16 optionNameStrLen = optionName.length()+1;
+		m_buf << uint16(optionNameStrLen);
+		m_buf.append(optionName.c_str(),optionNameStrLen);
+	}
 };
 
 class SetExperienceCmd : public StaticMsg

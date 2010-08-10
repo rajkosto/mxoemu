@@ -146,9 +146,6 @@ private:
 	class GameSocket *m_sock;
 	Ipv4Address m_address;
 	uint32 m_lastActivity;
-	uint32 m_lastPacketReceivedMS;
-	uint32 m_lastOrderedFlush;
-	uint32 m_latency;
 	bool m_calculatedInitialLatency;
 	uint32 m_lastServerMS;
 

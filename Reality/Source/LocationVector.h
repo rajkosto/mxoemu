@@ -94,37 +94,37 @@ public:
 	double Distance2DSq(const LocationVector & comp)
 	{
 		double delta_x = comp.x - x;
-		double delta_y = comp.y - y;
-		return (delta_x*delta_x + delta_y*delta_y);
+		double delta_z = comp.z - z;
+		return (delta_x*delta_x + delta_z*delta_z);
 	}
 
-	double Distance2DSq(const double & X, const double & Y)
+	double Distance2DSq(const double & X, const double & Z)
 	{
 		double delta_x = X - x;
-		double delta_y = Y - y;
-		return (delta_x*delta_x + delta_y*delta_y);
+		double delta_z = Z - z;
+		return (delta_x*delta_x + delta_z*delta_z);
 	}
 
 	double Distance2D(LocationVector & comp)
 	{
 		double delta_x = comp.x - x;
-		double delta_y = comp.y - y;
-		return sqrt(delta_x*delta_x + delta_y*delta_y);
+		double delta_z = comp.y - z;
+		return sqrt(delta_x*delta_x + delta_z*delta_z);
 	}
 
-	double Distance2D(const double & X, const double & Y)
+	double Distance2D(const double & X, const double & Z)
 	{
 		double delta_x = X - x;
-		double delta_y = Y - y;
-		return sqrt(delta_x*delta_x + delta_y*delta_y);
+		double delta_z = Z - z;
+		return sqrt(delta_x*delta_x + delta_z*delta_z);
 	}
-	// atan2(dx / dy)
+	// atan2(dx / dz)
 	double CalcAngTo(const LocationVector & dest)
 	{
 		double dx = dest.x - x;
-		double dy = dest.y - y;
-		if(dy != 0.0f)
-			return atan2(dy, dx);
+		double dz = dest.z - z;
+		if(dz != 0.0f)
+			return atan2(dz, dx);
 		else 
 			return 0.0f;
 	}
@@ -135,9 +135,9 @@ public:
 	double CalcAngFrom(const LocationVector & src)
 	{
 		double dx = x - src.x;
-		double dy = y - src.y;
-		if(dy != 0.0f)
-			return atan2(dy, dx);
+		double dz = z-  src.z;
+		if(dz != 0.0f)
+			return atan2(dz, dx);
 		else
 			return 0.0f;
 	}

@@ -51,6 +51,8 @@ public:
 	uint64 getInformation() const {return m_cash;}
 	LocationVector getPosition() const {return m_pos;}
 	void setPosition(const LocationVector& newPos) {m_pos = newPos;}
+	uint8 getDistrict() const {return m_district;}
+	void setDistrict(uint8 newDistrict) {m_district = newDistrict;}
 	uint8 getRsiData(byte* outputBuf,uint32 maxBufLen) const ;
 	uint16 getCurrentHealth() const {return m_healthC;}
 	uint16 getMaximumHealth() const {return m_healthM;}

@@ -28,6 +28,7 @@
 #include "ObjectMgr.h"
 #include <Sockets/SocketHandler.h>
 #include "MessageTypes.h"
+#include "Timer.h"
 
 #include <boost/timer.hpp>
 
@@ -44,21 +45,17 @@ public:
 	void Broadcast(const ByteBuffer &message);
 	void AnnounceStateUpdate(class GameClient* clFrom,msgBaseClassPtr theMsg, bool immediateOnly=false);
 	void AnnounceCommand(class GameClient* clFrom,msgBaseClassPtr theCmd);
-	uint32 GetSimTime() 
+	uint32 GetSimTime() const
 	{
-		if (m_timer.elapsed() >= double(1/15))
-		{
-			m_simTime+=uint32(double(m_timer.elapsed())/double(1/30));
-			m_timer.restart();
-		}
-		return m_simTime;
+		uint64 timeDiff = getMSTime64() - m_serverStartMS;
+		timeDiff = (timeDiff*64)/1000;
+		return uint32(timeDiff);
 	}
 private:	
 	ObjectMgr m_objMgr;
 	SocketHandler m_udpHandler;
 	shared_ptr<class GameSocket> m_mainSocket;
-	uint32 m_simTime;
-	boost::timer m_timer;
+	uint64 m_serverStartMS;
 };
 
 

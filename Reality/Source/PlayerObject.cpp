@@ -30,9 +30,6 @@
 #include "Timer.h"
 #include <boost/algorithm/string.hpp>
 
-using namespace std;
-using namespace boost;
-
 PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent),m_characterUID(charUID),m_spawnedInWorld(false)
 {
 	//grab data from characters table
@@ -187,8 +184,6 @@ PlayerObject::~PlayerObject()
 		m_parent.QueueCommand(make_shared<SystemChatMsg>((format("Player %1% with object id %2% disconnected")%m_handle%m_goId).str()));
 		
 		m_spawnedInWorld=false;
-
-		
 	}
 }
 
@@ -639,613 +634,65 @@ using boost::iequals;
 
 void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 {
-	DEBUG_LOG(format(" HandleCommand: %1%")% Bin2Hex(srcCmd) );
-
+//	DEBUG_LOG(format(" HandleCommand: %1%")% Bin2Hex(srcCmd) );
 	checkAndStore();
 
-	uint8 firstByte;
-	if (srcCmd.remaining() < sizeof(firstByte) )
+	//set up handler ptrs
+	if (!m_RPCbyte.size())
+	{
+		m_RPCbyte[0x33] = &PlayerObject::RPC_HandleStopAnimation;
+		m_RPCbyte[0x34] = &PlayerObject::RPC_HandleStartAnimtion;
+		m_RPCbyte[0x35] = &PlayerObject::RPC_HandleChangeMood;
+		m_RPCbyte[0x30] = &PlayerObject::RPC_HandlePerformEmote;
+	}
+	if (!m_RPCshort.size())
+	{
+		m_RPCshort[0x2810] = &PlayerObject::RPC_HandleChat;
+		m_RPCshort[0x2907] = &PlayerObject::RPC_HandleWhisper;
+		m_RPCshort[0x80c8] = &PlayerObject::RPC_HandleStaticObjInteraction;
+		m_RPCshort[0x80c2] = &PlayerObject::RPC_HandleJump;
+		m_RPCshort[0x80c9] = &PlayerObject::RPC_HandleRegionLoadedNotification;
+		m_RPCshort[0x8108] = &PlayerObject::RPC_HandleReadyForWorldChange;
+		m_RPCshort[0x8154] = &PlayerObject::RPC_HandleWhereAmI;
+		m_RPCshort[0x8192] = &PlayerObject::RPC_HandleGetPlayerDetails;
+		m_RPCshort[0x8194] = &PlayerObject::RPC_HandleGetBackground;
+		m_RPCshort[0x8196] = &PlayerObject::RPC_HandleSetBackground;
+		m_RPCshort[0x818e] = &PlayerObject::RPC_HandleHardlineTeleport;
+		m_RPCshort[0x8151] = &PlayerObject::RPC_HandleObjectSelected;
+	}
+
+	uint8 firstByte = srcCmd.read<uint8>();
+
+	try
+	{
+		if (m_RPCbyte.count(firstByte))
+		{
+			CALL_METHOD_PTR(this,m_RPCbyte[firstByte])(srcCmd);
+			return;
+		}
+		else
+		{
+			if (srcCmd.remaining())
+			{
+				uint8 secondByte = srcCmd.read<uint8>();
+				uint16 shortCommand = (uint16(firstByte) << 8) | (secondByte & 0xFF);
+				if (m_RPCshort.count(shortCommand))
+				{
+					CALL_METHOD_PTR(this,m_RPCshort[shortCommand])(srcCmd);
+					return;
+				}
+			}
+		}
+	}
+	catch ( ByteBuffer::out_of_range )
+	{
+		srcCmd.rpos(0);
+		DEBUG_LOG(format("(%1%) Out of range error processing RPC data: %2%") % m_parent.Address() % Bin2Hex(srcCmd) );
 		return;
-	srcCmd >> firstByte;
-	if (firstByte == 0x28)
-	{
-		uint8 secondByte;
-		if (srcCmd.remaining() < sizeof(secondByte))
-			return;
-		srcCmd >> secondByte;
-
-		if (secondByte == 0x10)
-		{
-			uint16 stringLenPos;
-			if (srcCmd.remaining() < sizeof(stringLenPos))
-				return;
-			srcCmd >> stringLenPos;
-			stringLenPos=swap16(stringLenPos);
-			if (stringLenPos != 8)
-			{
-				WARNING_LOG(format("(%1%) Chat packet stringLenPos not 8 but %2%, packet %3%") % m_parent.Address() % stringLenPos % Bin2Hex(srcCmd));
-				return;
-			}
-			if (srcCmd.size() < stringLenPos)
-				return;
-
-			srcCmd.rpos(stringLenPos);
-			uint16 messageLen;
-			if (srcCmd.remaining() < sizeof(messageLen))
-				return;
-			srcCmd >> messageLen;
-			if (srcCmd.remaining() < messageLen)
-				return;
-			vector<byte> messageBuf(messageLen);
-			srcCmd.read(&messageBuf[0],messageBuf.size());
-			string theMessage((const char*)&messageBuf[0],messageBuf.size()-1);
-
-			if (m_isAdmin && theMessage[0] == '!')
-			{
-				ParseAdminCommand(theMessage.substr(1));
-				return;
-			}
-			else if (theMessage[0] == '&')
-			{
-				ParsePlayerCommand(theMessage.substr(1));
-				return;
-			}
-
-			INFO_LOG(format("%1% says %2%") % m_handle % theMessage);
-			m_parent.QueueCommand(make_shared<SystemChatMsg>((format("You said %1%") % theMessage).str()));
-			sGame.AnnounceCommand(&m_parent,make_shared<PlayerChatMsg>(m_handle,theMessage));
-			//m_parent.QueueCommand(make_shared<PlayerChatMsg>(m_handle,theMessage));
-			return;
-		}
-	}
-	else if (firstByte == 0x29)
-	{
-		uint8 secondByte;
-		if (srcCmd.remaining() < sizeof(secondByte))
-			return;
-		srcCmd >> secondByte;
-
-		if (secondByte == 0x07) //whisper
-		{
-			uint8 thirdByte;
-			if (srcCmd.remaining() < sizeof(thirdByte))
-				return;
-			srcCmd >> thirdByte;
-
-			if (thirdByte != 0)
-				WARNING_LOG(format("(%1%) Whisper packet third byte not 0 but %2%, packet %3%") % m_parent.Address() % uint32(thirdByte) % Bin2Hex(srcCmd));
-
-			uint16 messageLenPos;
-			if (srcCmd.remaining() < sizeof(messageLenPos))
-				return;
-			srcCmd >> messageLenPos;
-
-			if (srcCmd.size() < messageLenPos)
-				return;
-
-			uint16 whisperCount;
-			if (srcCmd.remaining() < sizeof(whisperCount))
-				return;
-			srcCmd >> whisperCount;
-			whisperCount = swap16(whisperCount); //big endian in packet
-
-			uint16 recipientStrLen;
-			if (srcCmd.remaining() < sizeof(recipientStrLen))
-				return;
-			srcCmd >> recipientStrLen;
-
-			if (srcCmd.remaining() < recipientStrLen)
-				return;
-			vector<byte> tempBuf(recipientStrLen);
-			srcCmd.read(&tempBuf[0],tempBuf.size());
-
-			string theRecipient = string((const char*)&tempBuf[0],tempBuf.size()-1);
-			string serverPrefix = "SOE+MXO+Reality+";
-			string::size_type prefixPos = theRecipient.find_first_of(serverPrefix);
-			if (prefixPos != string::npos)
-			{
-				theRecipient = theRecipient.substr(prefixPos+serverPrefix.length());
-			}
-
-			if (srcCmd.rpos() != messageLenPos)
-				WARNING_LOG(format("(%1%) Whisper packet size byte mismatch, packet %2%") % m_parent.Address() % Bin2Hex(srcCmd));
-
-			uint16 messageStrLen;
-			if (srcCmd.remaining() < sizeof(messageStrLen))
-				return;
-			srcCmd >> messageStrLen;
-
-			if (srcCmd.remaining() < messageStrLen)
-				return;
-			tempBuf.resize(messageStrLen);
-			srcCmd.read(&tempBuf[0],tempBuf.size());
-			string theMessage = string((const char*)&tempBuf[0],tempBuf.size()-1);
-
-			bool sentProperly=false;
-			vector<uint32> objectLists = sObjMgr.getAllGOIds();
-			for (int i=0;i<objectLists.size();i++)
-			{
-				PlayerObject* targetPlayer = NULL;
-				try
-				{
-					targetPlayer = sObjMgr.getGOPtr(objectLists[i]);
-				}
-				catch (ObjectMgr::ObjectNotAvailable)
-				{
-					continue;
-				}
-				
-				if (targetPlayer == NULL)
-					continue;
-
-				if (iequals(targetPlayer->getHandle(),theRecipient))
-				{
-					targetPlayer->getClient().QueueCommand(make_shared<WhisperMsg>(m_handle,theMessage));
-					sentProperly=true;
-				}
-			}
-			if (sentProperly)
-			{
-				INFO_LOG(format("%1% whispered to %2%: %3%") % m_handle % theRecipient % theMessage);
-				m_parent.QueueCommand(make_shared<SystemChatMsg>((format("You whispered %1% to %2%")%theMessage%theRecipient).str()));
-			}
-			else
-			{
-				INFO_LOG(format("%1% sent whisper to disconnected player %2%: %3%") % m_handle % theRecipient % theMessage);
-				m_parent.QueueCommand(make_shared<SystemChatMsg>((format("%1% is not online")%theRecipient).str()));
-			}
-			return;
-		}
-	}
-	else if (firstByte == 0x33) //stop animation
-	{
-		m_currAnimation = 0;
-		sGame.AnnounceStateUpdate(NULL,make_shared<AnimationStateMsg>(m_goId));
-		return;
-	}
-	else if (firstByte == 0x34) //start animation
-	{
-		uint8 newAnimation;
-		if (srcCmd.size() < sizeof(newAnimation))
-			return;
-		srcCmd >> newAnimation;
-		m_currAnimation = newAnimation;
-		sGame.AnnounceStateUpdate(NULL,make_shared<AnimationStateMsg>(m_goId));
-		return;
-	}
-	else if (firstByte == 0x35) //change mood
-	{
-		uint8 newMood;
-		if (srcCmd.size() < sizeof(newMood))
-			return;
-		srcCmd >> newMood;
-		m_currMood = newMood;	
-		sGame.AnnounceStateUpdate(NULL,make_shared<AnimationStateMsg>(m_goId));
-		return;
-	}
-	else if (firstByte == 0x30) //perform emote
-	{
-		uint32 emoteId;
-		uint32 emoteTarget;
-		if (srcCmd.size() < sizeof(emoteId))
-			return;
-		srcCmd >> emoteId;
-		if (srcCmd.size() < sizeof(emoteTarget))
-			return;
-		srcCmd >> emoteTarget;
-
-		m_emoteCounter++;
-		sGame.AnnounceStateUpdate(NULL,make_shared<EmoteMsg>(m_goId,emoteId,m_emoteCounter));
-
-		DEBUG_LOG(format("(%1%) %2%:%3% doing emote %4% on target %5% at coords %6%,%7%,%8%")
-			% m_parent.Address()
-			% m_handle
-			% m_goId
-			% Bin2Hex((const byte*)&emoteId,sizeof(emoteId),0)
-			% Bin2Hex((const byte*)&emoteTarget,sizeof(emoteTarget),0)
-			% m_pos.x % m_pos.y % m_pos.z );
-		return;
-	}
-	else if (firstByte == 0x80)
-	{
-		uint8 secondByte;
-		if (srcCmd.remaining() < sizeof(secondByte))
-			return;
-		srcCmd >> secondByte;
-
-		if (secondByte == 0xc8) //interact with static object
-		{
-			uint32 staticObjId;
-			uint16 interaction;
-
-			if (srcCmd.remaining() < sizeof(staticObjId))
-				return;
-			srcCmd >> staticObjId;
-
-			if (srcCmd.remaining() < sizeof(interaction))
-				return;
-			srcCmd >> interaction;
-
-			INFO_LOG(format("(%1%) %2%:%3% interacting with object id %4% interaction %5%")
-				% m_parent.Address()
-				% m_handle
-				% m_goId
-				% Bin2Hex((const byte*)&staticObjId,sizeof(staticObjId),0)
-				% uint32(interaction) );
-
-			string debugStr = (format("(%1%) %2%:%3% interacting with object id %4% interaction %5%")
-				% m_parent.Address()
-				% m_handle
-				% m_goId
-				% Bin2Hex((const byte*)&staticObjId,sizeof(staticObjId),0)
-				% uint32(interaction)).str();
-
-				m_parent.QueueCommand(make_shared<SystemChatMsg>(debugStr));
-
-			if (interaction == 0x03) //open door
-			{
-				//this->GoAhead(2);
-#pragma region Add door if it isnt in the DB.. for now just use clients position soon we will add 1 U based on rotation to it..
-			double X,Y,Z,O;
-			X = this->getPosition().x;
-			Y = this->getPosition().y;
-			Z = this->getPosition().z;
-			O = this->getPosition().rot;
-
-			string sqlDoorExists = (format("Select * from Doors Where `DistrictId` = '%1%' And `DoorId` = '%2%' Limit 1") % (int)m_district % (int)staticObjId ).str();
-			
-			scoped_ptr<QueryResult> resultDoorExists(sDatabase.Query(sqlDoorExists));
-			if (resultDoorExists == NULL)
-			{
-				m_parent.QueueCommand(make_shared<SystemChatMsg>("{c:FFFF00}You are using a door not in the database yet, lets add it{/c}"));	
-				string sqlDoorInsert = (format("INSERT INTO `Doors` SET  `DistrictId` = '%1%', `DoorId` = '%2%', X = '%3%', Y = '%4%', Z = '%5%', ROT = '%6%', FirstUser = '%7%'") % (int)m_district % (int)staticObjId % X % Y % Z % O % this->getHandle()).str();
-				if (sDatabase.Execute(sqlDoorInsert))
-				{
-					string msg1 = (format("{c:00FF00}Door:%1% in District %2% Set to Location X:%3% Y:%4% Z:%5% O:%6%{/c}") % (int)staticObjId % (int)m_district % X % Y % Z % O).str();
-					m_parent.QueueCommand(make_shared<SystemChatMsg>(msg1));
-				}
-				else
-				{
-					m_parent.QueueCommand(make_shared<SystemChatMsg>("{c:FF00FF}New Door location set, FAILED On INSERT.{/c}"));
-				}
-
-			}			
-#pragma endregion
-
-
-				sObjMgr.OpenDoor(staticObjId, &m_parent);		
-				//sGame.AnnounceStateUpdate(NULL,make_shared<DeleteDoorMsg>(staticObjId));
-				//sGame.AnnounceStateUpdate(NULL,make_shared<DeleteDoorMsg>(staticObjId));
-				//uint16 viewId = m_goId;// sObjMgr.getViewForGO(&m_parent,staticObjId);
-				//sGame.AnnounceStateUpdate(&m_parent,make_shared<DoorAnimationMsg>(staticObjId, viewId));
-				this->GoAhead(1);
-				return;
-			}
-			else if (interaction == 0x00) //sit
-			{
-				sGame.AnnounceStateUpdate(NULL,make_shared<SitDownMsg>(staticObjId));
-				//m_parent.QueueState(make_shared<HexGenericMsg>("0311000108044044b5124700208ac47db717c60300020e045eccf1f846008098c3371d5ac60000"));
-				//saiking siting response?
-				//"03 11 00 01 08 04 40 44 b5 12 47 00 20 8a c4 7d b7 17 c6 03 00 02 0e 04 5e cc f1 f8 46 00 80 98 c3 37 1d 5a c6 00 00 ";
-				return;
-			}
-		}
-		else if (secondByte == 0xc2) //jump
-		{
-			LocationVector endPos;
-			if (endPos.fromDoubleBuf(srcCmd) == false)
-			{
-				WARNING_LOG(format("(%1%) %2%:%3% jump packet doesn't have endPos: %4%")
-					% m_parent.Address()
-					% m_handle
-					% m_goId
-					% Bin2Hex(srcCmd) );
-				return;
-			}
-
-			vector<byte> extraData(0x0B);
-			if (srcCmd.remaining() < extraData.size())
-			{
-				WARNING_LOG(format("(%1%) %2%:%3% jump packet doesn't have extraData: %4%")
-					% m_parent.Address()
-					% m_handle
-					% m_goId
-					% Bin2Hex(srcCmd) );
-				return;
-			}
-			srcCmd.read(&extraData[0],extraData.size());
-
-			uint32 theTimeStamp = 0;
-			if (srcCmd.remaining() < sizeof(theTimeStamp))
-			{
-				WARNING_LOG(format("(%1%) %2%:%3% jump packet doesn't have timestamp: %4%")
-					% m_parent.Address()
-					% m_handle
-					% m_goId
-					% Bin2Hex(srcCmd) );
-				return;				
-			}
-			srcCmd >> theTimeStamp;
-
-			DEBUG_LOG(format("(%1%) %2%:%3% jumping to %4%,%5%,%6% extra data %7% timestamp %8%")
-				% m_parent.Address()
-				% m_handle
-				% m_goId
-				% endPos.x % endPos.y % endPos.z
-				% Bin2Hex(&extraData[0],extraData.size())
-				% theTimeStamp );
-
-			this->setPosition(endPos);
-			sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
-			return;
-		}
-		else if (secondByte == 0xc9)
-		{
-			//some weird coords inside ?
-			return;
-		}
-	}
-	else if (firstByte == 0x81)
-	{
-		uint8 secondByte;
-		if (srcCmd.remaining() < sizeof(secondByte))
-			return;
-		srcCmd >> secondByte;
-
-		if (secondByte == 0x08) //readyforworldchange
-		{
-			uint32 shouldBeZero;
-			if (srcCmd.remaining() < sizeof(shouldBeZero))
-				return;
-			srcCmd >> shouldBeZero;
-
-			if (shouldBeZero != 0)
-				DEBUG_LOG(format("ReadyForWorldChange uint32 is %1%")%shouldBeZero);
-
-			m_district = 0x03;
-			InitializeWorld();
-			SpawnSelf();
-			return;
-		}
-		else if (secondByte == 0x54) //whereami
-		{
-			LocationVector clientSidePos;
-			if (clientSidePos.fromFloatBuf(srcCmd) == false)
-				return;
-
-			bool byte1Valid = false;
-			bool byte2Valid = false;
-			bool byte3Valid = false;
-			uint8 byte1,byte2,byte3;
-			
-			if (srcCmd.remaining() >= sizeof(byte1))
-			{
-				byte1Valid=true;
-				srcCmd >> byte1;
-			}
-			if (srcCmd.remaining() >= sizeof(byte2))
-			{
-				byte2Valid=true;
-				srcCmd >> byte2;
-			}
-			if (srcCmd.remaining() >= sizeof(byte3))
-			{
-				byte3Valid=true;
-				srcCmd >> byte3;
-			}
-
-			INFO_LOG(format("(%1%) %2%:%3% requesting whereami clientPos %4%,%5%,%6% %7%:%8% %9%:%10% %11%:%12%")
-				% m_parent.Address()
-				% m_handle
-				% m_goId
-				% clientSidePos.x % clientSidePos.y % clientSidePos.z
-				% byte1Valid % uint32(byte1)
-				% byte2Valid % uint32(byte2)
-				% byte3Valid % uint32(byte3) );
-
-			m_parent.QueueCommand(make_shared<WhereAmIResponse>(m_pos));
-			//m_parent.QueueCommand(make_shared<HexGenericMsg>("8107"));
-			return;
-		}
-		else if (secondByte == 0x92) //get player details
-		{
-			uint32 zeroInt;
-			if (srcCmd.remaining() < sizeof(zeroInt))
-				return;
-			srcCmd >> zeroInt;
-
-			if (zeroInt != 0)
-			{
-				WARNING_LOG(format("Get player details zero int is %1%") % zeroInt );
-				return;
-			}
-
-			uint16 playerNameStrLenPos;
-			if (srcCmd.remaining() < sizeof(playerNameStrLenPos))
-				return;
-			srcCmd >> playerNameStrLenPos;
-
-			if (playerNameStrLenPos != srcCmd.rpos())
-			{
-				WARNING_LOG(format("Get player details strlenpos not %1% but %2%") % srcCmd.rpos() % playerNameStrLenPos );
-				return;
-			}
-
-			srcCmd.rpos(playerNameStrLenPos);
-			uint16 playerNameStrLen;
-			if (srcCmd.remaining() < sizeof(playerNameStrLen))
-				return;
-			srcCmd >> playerNameStrLen;
-			if (playerNameStrLen < 1 || srcCmd.remaining() < playerNameStrLen)
-				return;
-			vector<byte> rawPlayerName(playerNameStrLen);
-			srcCmd.read(&rawPlayerName[0],rawPlayerName.size());
-			string thePlayerName = string((const char*)&rawPlayerName[0],rawPlayerName.size()-1);
-
-			vector<uint32> objectList = sObjMgr.getAllGOIds();
-			foreach(uint32 objId, objectList)
-			{
-				PlayerObject* targetPlayer = NULL;
-				try
-				{
-					targetPlayer = sObjMgr.getGOPtr(objId);
-				}
-				catch (ObjectMgr::ObjectNotAvailable)
-				{
-					continue;
-				}
-
-				if (targetPlayer == NULL)
-					continue;
-
-				if (targetPlayer->getHandle() == thePlayerName)
-				{
-					m_parent.QueueCommand(make_shared<PlayerDetailsMsg>(targetPlayer));
-					m_parent.QueueCommand(make_shared<PlayerBackgroundMsg>(targetPlayer->getBackground()));
-					break;
-				}
-			}
-			return;
-		}
-		else if (secondByte == 0x94) //get background
-		{
-			m_parent.QueueCommand(make_shared<BackgroundResponseMsg>(this->getBackground()));
-			return;
-		}
-		else if (secondByte == 0x96) //set background
-		{
-			uint16 backgroundStrLenPos = 0;
-			if (srcCmd.remaining() < sizeof(backgroundStrLenPos))
-				return;
-			srcCmd >> backgroundStrLenPos;
-
-			if (srcCmd.size() < backgroundStrLenPos)
-				return;
-			srcCmd.rpos(backgroundStrLenPos);
-			uint16 backgroundStrLen = 0;
-
-			if (srcCmd.remaining() < sizeof(backgroundStrLen))
-				return;
-			srcCmd >> backgroundStrLen;
-
-			if (backgroundStrLen < 1 || srcCmd.remaining() < backgroundStrLen)
-				return;
-			vector<byte> backgroundRawBuf(backgroundStrLen);
-			srcCmd.read(&backgroundRawBuf[0],backgroundRawBuf.size());
-			string theNewBackground = string((const char*)&backgroundRawBuf[0],backgroundRawBuf.size()-1);
-
-			bool success = this->setBackground(theNewBackground);
-			if (success)
-			{
-				INFO_LOG(format("(%1%) %2%:%3% changed background to |%4%|")
-					% m_parent.Address()
-					% m_handle
-					% m_goId
-					% this->getBackground() );
-			}
-			else
-			{
-				WARNING_LOG(format("(%1%) %2%:%3% background sql query update failed")
-					% m_parent.Address()
-					% m_handle
-					% m_goId );
-			}
-			return;
-		}
-		else if (secondByte == 0x8e) //hardline
-		{
-			uint8 hardlineYouAreUsing;
-			uint8 districtYouAreIn;
-			uint8 hardlineLocation;
-			uint8 hardlineDistrict;
-
-			//Get hardlineYouAreUsing
-			if (srcCmd.remaining() < sizeof(hardlineYouAreUsing)) return;
-			srcCmd >> hardlineYouAreUsing;
-
-			srcCmd.rpos(6);
-			//Get District you are currently in
-			if (srcCmd.remaining() < sizeof(districtYouAreIn)) return;
-			srcCmd >> districtYouAreIn;
-			
-			srcCmd.rpos(10);
-			//Get Hardline location
-			if (srcCmd.remaining() < sizeof(hardlineLocation)) return;
-			srcCmd >> hardlineLocation;
-
-			srcCmd.rpos(14);
-			//Get Hardline District
-			if (srcCmd.remaining() < sizeof(hardlineDistrict)) return;
-			srcCmd >> hardlineDistrict;
-
-			string debugMsg = (format("You want to go to Hardline:%1% District:%2% From District:%3% Hardline:%4%") % (int)hardlineLocation % (int)hardlineDistrict % (int)districtYouAreIn % (int)hardlineYouAreUsing).str();
-  			m_parent.QueueCommand(make_shared<SystemChatMsg>(debugMsg));
-
-			//See if we need to add this HL to the DB
-			double X,Y,Z,O;
-			X = this->getPosition().x;
-			Y = this->getPosition().y;
-			Z = this->getPosition().z;
-			O = this->getPosition().rot;
-
-			string sqlHLExists = (format("Select * from Hardlines Where `DistrictId` = '%1%' And `HardlineId` = '%2%' Limit 1") % (int)districtYouAreIn % (int)hardlineYouAreUsing ).str();
-			scoped_ptr<QueryResult> resultHLExists(sDatabase.Query(sqlHLExists));
-			if (resultHLExists == NULL)
-			{
-				m_parent.QueueCommand(make_shared<SystemChatMsg>("{c:FFFF00}You are at a hardline not in the database yet, lets add it so all can use it :){/c}"));	
-				string sqlHLInsert = (format("INSERT INTO `hardlines` SET `DistrictId` = '%1%', `HardlineId` = '%2%', X = '%3%', Y = '%4%', Z = '%5%', HardlineName = 'Tagged By %6%', ROT = '%7%'") % (int)districtYouAreIn % (int)hardlineYouAreUsing % X % Y % Z % this->getHandle() % O).str();
-				if (sDatabase.Execute(sqlHLInsert))
-				{
-					string msg1 = (format("{c:00FF00}HardlineId:%1% in District %7% Set to Tagged By %2% at X:%3% Y:%4% Z:%5% O:%6%{/c}") % (int)hardlineYouAreUsing % this->getHandle() % X % Y % Z % O % (int)districtYouAreIn).str();
-					m_parent.QueueCommand(make_shared<SystemChatMsg>(msg1));
-				}
-				else
-				{
-					m_parent.QueueCommand(make_shared<SystemChatMsg>("{c:FF00FF}New hardline set, FAILED On INSERT.{/c}"));
-				}
-
-			}			
-
-
-			string sql = (format("SELECT `X`,`Y`,`Z`, `ROT`, `HardlineName` FROM `hardlines` Where `DistrictId` = '%1%' And `HardlineId` = '%2%' LIMIT 1") % (int)hardlineDistrict % (int)hardlineLocation ).str();
-			scoped_ptr<QueryResult> result(sDatabase.Query(sql));
-			if (result == NULL)
-			{
-				m_parent.QueueCommand(make_shared<SystemChatMsg>("{c:FF0000}The hardline you selected is not in the database yet, go tag it...{/c}"));	
-
-			}
-			else
-			{
-				Field *field = result->Fetch();
-				double newX = field[0].GetDouble();
-				double newY = field[1].GetDouble();
-				double newZ = field[2].GetDouble();
-				double newRot = field[3].GetDouble();
-				string newlocationName = field[4].GetString();
-
-
-				string message1 = (format("{c:00FFFF}Welcome to %1%.{/c}") % newlocationName ).str();
-				m_parent.QueueCommand(make_shared<SystemChatMsg>("{c:00FFFF}You may have to wait a min or two for the client and server to sync if the area is complex...{/c}"));
-				
-				LocationVector derp(newX, newY, newZ);
-				derp.rot = newRot;
-				this->setPosition(derp);
-				//sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
-				m_parent.QueueState(make_shared<PositionStateMsg>(m_goId));
-				this->PopulateWorld();
-
-				//this->Update();
-
-				return;
-			}
-
-			//Pull new coords.
-
-		}
 	}
 
 	srcCmd.rpos(0);
-	DEBUG_LOG(format("(%1%) unknown 04 command: %2%") % m_parent.Address() % Bin2Hex(srcCmd) );
+	DEBUG_LOG(format("(%1%) unhandled RPC data: %2%") % m_parent.Address() % Bin2Hex(srcCmd) );
 }
 
 bool PlayerObject::setBackground(string newBackground)
@@ -1558,6 +1005,7 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 	if (cmdStream.fail())
 		return;
 
+	using boost::erase_all;
 	if (iequals(command, "gotoPos"))
 	{
 		double x,y,z;

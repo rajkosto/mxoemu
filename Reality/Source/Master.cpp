@@ -90,7 +90,7 @@ bool Master::Run()
 	}
 
 	DEBUG_LOG("Initializing random number generators...");
-	uint32 seed = time(NULL);
+	uint32 seed = uint32(time(NULL));
 	new MTRand(seed);
 	srand(seed);
 

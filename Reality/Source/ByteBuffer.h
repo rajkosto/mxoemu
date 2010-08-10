@@ -22,16 +22,22 @@
 #ifndef MXOSIM_BYTEBUFFER_H
 #define MXOSIM_BYTEBUFFER_H
 
+#include <string>
+#include <vector>
+#include <map>
+#include <list>
 #include <cstring>
+#include <stdexcept>
 
 class ByteBuffer
 {
 public:
-	class error
+	class out_of_range : public std::out_of_range
 	{
+	public:
+		out_of_range() : std::out_of_range("ByteBuffer") {}
+		out_of_range(const string& reason) : std::out_of_range(reason) {}
 	};
-
-	const static size_t DEFAULT_SIZE = 0x1000;
 
 	ByteBuffer() :
 		_rpos(0), _wpos(0)
@@ -233,13 +239,14 @@ public:
 		return _rpos;
 	}
 
-
 	size_t rpos(size_t rpos)
 	{
+		if (rpos > count())
+			throw out_of_range();
+
 		_rpos = rpos;
 		return _rpos;
 	}
-
 
 	size_t wpos() const
 	{
@@ -254,6 +261,9 @@ public:
 
 	template<typename T> T read()
 	{
+		if (_rpos + sizeof(T) > count())
+			throw out_of_range();
+
 		T r = read<T> (_rpos);
 		_rpos += sizeof(T);
 		return r;
@@ -261,62 +271,59 @@ public:
 
 	template<typename T> T read(size_t pos) const
 	{
-		assert(pos + sizeof(T) <= size());
+		if (pos + sizeof(T) > count())
+			throw out_of_range();
+
 		return *((T*) &_storage[pos]);
 	}
-	/*
-	 void read(unicode *dest, size_t len) {
-	 if (_rpos + len <= size()) {
-	 for(int i=0; i < len; i++)  dest[i] = (unicode)&_storage[(_rpos + i)];
-	 //wmemcpy(dest, &_storage[_rpos], len);
-	 } else {
-	 throw error();
-	 }
-	 _rpos += len;
-	 }
-	 */
-	void read(uint8 *dest, size_t len)
+
+	template<typename T> void read(T* dest, size_t cnt)
 	{
-		if (_rpos + len <= size())
+		size_t outSize = cnt*sizeof(T);
+		if (_rpos + outSize > count())
+			throw out_of_range();
+
+		if (outSize > 0)
 		{
-			memcpy(dest, &_storage[_rpos], len);
+			memcpy(dest, &_storage[_rpos], outSize );
+			_rpos += outSize;
 		}
-		else
-		{
-			throw error();
-		}
-		_rpos += len;
+	}
+
+	template<typename T> void read(vector<T> &dest)
+	{
+		this->read(&dest[0],dest.size());
 	}
 
 	uint8 *read(size_t len)
 	{
+		if (_rpos + len > count())
+			throw out_of_range();
+
 		uint8 *Temp = new uint8[len];
-		if (_rpos + len <= size())
-		{
-			memcpy(Temp, &_storage[_rpos], len);
-		}
-		else
-		{
-			throw error();
-		}
+		memcpy(Temp, &_storage[_rpos], len);
 		_rpos += len;
 		return Temp;
 	}
 
-	char *contents() const
+	inline char *contents() const
 	{
-		return (char*) &_storage[0];
+		return (char*)&_storage[0];
 	}
 
+	inline size_t count() const
+	{
+		return (uint16)_storage.size();
+	}
 
 	inline uint16 size() const
 	{
-		return (uint16) _storage.size();
+		return (uint16)count();
 	}
 
 	inline size_t remaining() const
 	{
-		return _storage.size() - this->rpos();
+		return this->count() - this->rpos();
 	}
 
 	// one should never use resize probably
@@ -324,20 +331,19 @@ public:
 	{
 		_storage.resize(newsize);
 		_rpos = 0;
-		_wpos = size();
+		_wpos = count();
 	}
 
 	void reserve(size_t ressize)
 	{
-		if (ressize > size())
+		if (ressize > count())
 			_storage.reserve(ressize);
 	}
-
 
 	// appending to the end of buffer
 	void append(const string& str)
 	{
-		append((uint8 *) str.data(), str.size());
+		append(str.data(),str.size());
 	}
 	void append(const vector<byte> &vect)
 	{
@@ -357,34 +363,55 @@ public:
 		// then think some more
 		// then use something else
 		// -- qz
-		assert(size() < 10000000);
+		assert(count() < 10000000);
 
-		if (_storage.size() < _wpos + cnt)
+		if (count() < _wpos + cnt)
 			_storage.resize(_wpos + cnt);
+
 		memcpy(&_storage[_wpos], src, cnt);
 		_wpos += cnt;
 	}
 	void append(const ByteBuffer& buffer)
 	{
-		if (buffer.size() > 0)
-			append(buffer.contents(), buffer.size());
+		if (buffer.count() > 0)
+			append(buffer.contents(), buffer.count());
 	}
 
 	void put(size_t pos, const uint8 *src, size_t cnt)
 	{
-		assert(pos + cnt <= size());
+		if (pos + cnt > count())
+			throw out_of_range();
+
 		memcpy(&_storage[pos], src, cnt);
 	}
 
-	//void insert(size_t pos, const uint8 *src, size_t cnt) {
-	//  std::copy(src, src + cnt, inserter(_storage, _storage.begin() + pos));
-	//}
+	//MXO specific data formats
+	string readString()
+	{
+		uint16 strLen=0;
+		(*this) >> strLen;
+		if(this->remaining() < strLen)
+			throw out_of_range();
+
+		vector<char> strBuf(strLen);
+		this->read(strBuf);
+		if (strBuf.back() == 0)
+			strBuf.pop_back();
+
+		return string(&strBuf[0],strBuf.size());
+	}
+	void writeString(const string& str)
+	{
+		(*this) << uint16(str.length()+1);
+		this->append(str.c_str(),str.length()+1);
+	}
 
 protected:
 	// read and write positions
 	size_t _rpos, _wpos;
 	std::vector<uint8> _storage;
-
+private:
+	const static size_t DEFAULT_SIZE = 0x1000;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

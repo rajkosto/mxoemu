@@ -73,7 +73,40 @@ public:
 	class GameClient& getClient() { return m_parent; }
 
 	vector<msgBaseClassPtr> getCurrentStatePackets();
+
+private: 
+	//RPC handler type
+	typedef void (PlayerObject::*RPCHandler)( ByteBuffer &srcCmd );
+
+	//RPC handlers
+	void RPC_NullHandle(ByteBuffer &srcCmd);
+	void RPC_HandleChat( ByteBuffer &srcCmd );
+	void RPC_HandleWhisper( ByteBuffer &srcCmd );
+	void RPC_HandleStopAnimation( ByteBuffer &srcCmd );
+	void RPC_HandleStartAnimtion( ByteBuffer &srcCmd );
+	void RPC_HandleChangeMood( ByteBuffer &srcCmd );
+	void RPC_HandlePerformEmote( ByteBuffer &srcCmd );
+	void RPC_HandleStaticObjInteraction( ByteBuffer &srcCmd );
+	void RPC_HandleJump( ByteBuffer &srcCmd );
+	void RPC_HandleRegionLoadedNotification( ByteBuffer &srcCmd );
+	void RPC_HandleReadyForWorldChange( ByteBuffer &srcCmd );
+	void RPC_HandleWhereAmI( ByteBuffer &srcCmd );
+	void RPC_HandleGetPlayerDetails( ByteBuffer &srcCmd );
+	void RPC_HandleGetBackground( ByteBuffer &srcCmd );
+	void RPC_HandleSetBackground( ByteBuffer &srcCmd );
+	void RPC_HandleHardlineTeleport( ByteBuffer &srcCmd );
+	void RPC_HandleObjectSelected( ByteBuffer &srcCmd );
+
+	//RPC Handler maps
+	map<uint8,RPCHandler> m_RPCbyte;
+	map<uint16,RPCHandler> m_RPCshort;
 private:
+	void ParseAdminCommand(string theCmd);
+	void ParsePlayerCommand(string theCmd);
+	void GoAhead(double distanceToGo);
+	void GoDownTown();
+	void Update();
+
 	class GameClient &m_parent;
 	
 	//Player info
@@ -105,11 +138,6 @@ private:
 	uint8 m_emoteCounter;
 
 	bool m_isAdmin;
-	void ParseAdminCommand(string theCmd);
-	void ParsePlayerCommand(string theCmd);
-	void GoAhead(double distanceToGo);
-	void GoDownTown();
-	void Update();
 };
 
 #endif

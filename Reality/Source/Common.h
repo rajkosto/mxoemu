@@ -178,6 +178,9 @@ static inline void xchg32 (void *a, void *b)
 #define BITS_TO_BYTES(x) (((x)+7)>>3)
 #define BYTES_TO_BITS(x) ((x)<<3)
 
+#define CALL_METHOD(object,ptrToMember)  ((object).*(ptrToMember))
+#define CALL_METHOD_PTR(object,ptrToMember) ((object)->*(ptrToMember))
+
 #include <string>
 #include <list>
 #include <map>

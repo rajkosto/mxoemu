@@ -136,7 +136,7 @@ string Bin2Hex(const char *data,size_t count,uint32 flags)
 
 string Bin2Hex(const ByteBuffer &sourceBuf,uint32 flags)
 {
-	return Bin2Hex((const byte*)sourceBuf.contents(),sourceBuf.size(),flags);
+	return Bin2Hex(sourceBuf.contents(),sourceBuf.size(),flags);
 }
 string Bin2Hex(const string &sourceStr,uint32 flags)
 {

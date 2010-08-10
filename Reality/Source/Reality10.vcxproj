@@ -168,6 +168,7 @@
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="MersenneTwister.cpp" />
+    <ClCompile Include="PlayerObjectHandlers.cpp" />
     <ClCompile Include="StackWalker.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="Database\Database.cpp" />

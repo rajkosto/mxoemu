@@ -167,23 +167,23 @@ public:
 		m_buf << uint8(0);
 		m_buf << uint32(0);
 
-		uint32 putSenderStrLenPosHere = m_buf.wpos();
+		size_t putSenderStrLenPosHere = m_buf.wpos();
 		m_buf << uint32(0); //will overwrite this later
-		uint32 putMessageStrLenPosHere = m_buf.wpos();
+		size_t putMessageStrLenPosHere = m_buf.wpos();
 		m_buf << uint32(0); //will overwrite this later
 
 		//0x15 bytes of 0s
 		for (int i=0;i<0x15;i++)
 			m_buf << uint8(0);
 
-		uint32 senderStrLenPos = m_buf.wpos();
+		size_t senderStrLenPos = m_buf.wpos();
 
 		sender = "SOE+MXO+Reality+" + sender;
 		uint16 senderStrLen = sender.length()+1;
 		m_buf << uint16(senderStrLen);
 		m_buf.append(sender.c_str(),senderStrLen);
 		
-		uint32 messageStrLenPos = m_buf.wpos();
+		size_t messageStrLenPos = m_buf.wpos();
 		uint16 messageStrLen = message.length()+1;
 		m_buf << uint16(messageStrLen);
 		m_buf.append(message.c_str(),messageStrLen);
@@ -212,14 +212,14 @@ public:
 		m_buf << uint32(0);
 
 		m_buf << uint32(0); //no sender
-		uint32 putMessageStrLenPosHere = m_buf.wpos();
+		size_t putMessageStrLenPosHere = m_buf.wpos();
 		m_buf << uint32(0); //we will overwrite this later
 
 		//0x15 bytes of 0s
 		for (int i=0;i<0x15;i++)
 			m_buf << uint8(0);
 
-		uint32 messageStrLenPos = m_buf.wpos();
+		size_t messageStrLenPos = m_buf.wpos();
 		uint16 messageStrLen = message.length()+1;
 		m_buf << uint16(messageStrLen);
 		m_buf.append(message.c_str(),messageStrLen);
@@ -263,10 +263,10 @@ public:
 		m_buf << uint8(0); //could be 1 as well ?
 		m_buf << uint32(swap32(0x12610200)); //some id, different, ill just use something
 		size_t injectHandleLenPosHere = m_buf.wpos();
-		uint32 handleLenPos=0;
+		size_t handleLenPos=0;
 		m_buf << handleLenPos; //will come back here and overwrite later
 		size_t injectMessageLenPosHere = m_buf.wpos();
-		uint32 messageLenPos=0;
+		size_t messageLenPos=0;
 		m_buf << messageLenPos;
 		m_buf.wpos(m_buf.wpos()+0x15);
 		handleLenPos=m_buf.wpos();
@@ -280,9 +280,9 @@ public:
 
 		//overwrite the pos we didnt before
 		m_buf.wpos(injectHandleLenPosHere);
-		m_buf << handleLenPos;
+		m_buf << uint32(handleLenPos);
 		m_buf.wpos(injectMessageLenPosHere);
-		m_buf << messageLenPos;
+		m_buf << uint32(messageLenPos);
 	}
 	~PlayerChatMsg() {}
 };
@@ -295,7 +295,7 @@ public:
 		m_buf.clear();
 
 		m_buf << uint16(swap16(0x8195));
-		uint32 insertBackgroundStrLenPosHere = m_buf.wpos();
+		size_t insertBackgroundStrLenPosHere = m_buf.wpos();
 		m_buf << uint16(0); //placeholder
 		m_buf << uint8(0);
 		uint16 backgroundStrLenPos = m_buf.wpos();
@@ -325,7 +325,7 @@ public:
 		m_buf.clear();
 
 		m_buf << uint16(swap16(0x8198));
-		uint32 insertBackgroundStrLenPosHere = m_buf.wpos();
+		size_t insertBackgroundStrLenPosHere = m_buf.wpos();
 		m_buf << uint16(0); //placeholder
 		m_buf << uint8(1);
 		uint16 backgroundStrLenPos = m_buf.wpos();

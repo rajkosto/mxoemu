@@ -1,23 +1,27 @@
-// *************************************************************************************************
-// --------------------------------------
+// ***************************************************************************
+//
+// Reality - The Matrix Online Server Emulator
 // Copyright (C) 2006-2010 Rajko Stojadinovic
+// http://mxoemu.info
 //
+// ---------------------------------------------------------------------------
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
-// *************************************************************************************************
+// ---------------------------------------------------------------------------
+//
+// ***************************************************************************
 
 #include "MessageTypes.h"
 #include "PlayerObject.h"
@@ -299,6 +303,54 @@ const ByteBuffer& PlayerSpawnMsg::toBuf()
 
 	m_buf.clear();
 	m_buf.append(sampleSpawnPacket,sizeof(sampleSpawnPacket));
+	return m_buf;
+}
+
+PlayerAppearanceMsg::PlayerAppearanceMsg( uint32 objectId ) :ObjectUpdateMsg(objectId)
+{
+
+}
+
+PlayerAppearanceMsg::~PlayerAppearanceMsg()
+{
+
+}
+
+const ByteBuffer& PlayerAppearanceMsg::toBuf()
+{
+	m_buf.clear();
+	m_buf << uint8(0x03);
+	
+	uint16 viewId = 0;
+	try
+	{
+		viewId = sObjMgr.getViewForGO(m_toWho,m_objectId);
+	}
+	catch (ObjectMgr::ClientNotAvailable)
+	{
+		m_buf.clear();
+		throw PacketNoLongerValid();		
+	}
+
+	m_buf << uint16(viewId);
+	m_buf << uint8(0x02);
+	m_buf << uint8(0x80);
+	m_buf << uint8(0x81);
+	vector<byte> rsiBuf(15);
+
+	PlayerObject *player = NULL;
+	try
+	{
+		player = sObjMgr.getGOPtr(m_objectId);
+	}
+	catch (ObjectMgr::ObjectNotAvailable)
+	{
+		m_buf.clear();
+		throw PacketNoLongerValid();
+	}
+
+	player->getRsiData(&rsiBuf[0],rsiBuf.size());
+	m_buf.append(rsiBuf);
 	return m_buf;
 }
 
@@ -900,7 +952,7 @@ WhisperMsg::WhisperMsg( string sender, string message )
 
 	size_t senderStrLenPos = m_buf.wpos();
 
-	sender = sConfig.GetStringDefault("Server.ChatPrefix", "SOE+MXO+Reality") + string("+") + sender;
+	sender = sConfig.GetStringDefault("GameServer.ChatPrefix", "SOE+MXO+Reality") + string("+") + sender;
 	m_buf.writeString(sender);
 
 	size_t messageStrLenPos = m_buf.wpos();

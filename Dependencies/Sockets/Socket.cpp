@@ -259,7 +259,6 @@ bool Socket::DeleteByHandler()
 	return m_bDel;
 }
 
-
 void Socket::SetCloseAndDelete(bool x)
 {
 	if (x != m_bClose)

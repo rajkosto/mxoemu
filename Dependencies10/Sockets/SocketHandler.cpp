@@ -816,6 +816,7 @@ DEB(						fprintf(stderr, " close(2) fd %d\n", nn);)
 DEB(						fprintf(stderr, "Close() before reconnect\n");)
 						p -> Close(); // dispose of old file descriptor (Open creates a new)
 						p -> OnDisconnect();
+						p -> OnDisconnect(0,0);
 						std::auto_ptr<SocketAddress> ad = p -> GetClientRemoteAddress();
 						if (ad.get())
 						{
@@ -851,7 +852,12 @@ DEB(						fprintf(stderr, " close(3) fd %d GetSocket() %d\n", nn, p -> GetSocket
 #endif // ENABLE_POOL
 						{
 							Set(p -> GetSocket(),false,false,false);
-DEB(							fprintf(stderr, "Close() before OnDelete\n");)
+							//close the socket (as we removed this from recv=0 case)
+							{
+								p->OnDisconnect();
+								p->OnDisconnect(0, 0);
+								p->SetCloseAndDelete(true);
+							}
 							p -> Close();
 						}
 						p -> OnDelete();

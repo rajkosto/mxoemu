@@ -1,9 +1,35 @@
+// ***************************************************************************
+//
+// Reality - The Matrix Online Server Emulator
+// Copyright (C) 2006-2010 Rajko Stojadinovic
+// http://mxoemu.info
+//
+// ---------------------------------------------------------------------------
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// ---------------------------------------------------------------------------
+//
+// ***************************************************************************
+
 #include "Common.h"
 #include "PlayerObject.h"
 #include "Log.h"
 #include "Database/Database.h"
 #include "GameServer.h"
 #include "GameClient.h"
+#include "Config.h"
 
 #include <boost/algorithm/string.hpp>
 using boost::iequals;
@@ -277,10 +303,7 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 		LocationVector derp(x,y,z);
 		this->setPosition(derp);
 
-		//m_parent.QueueCommand(make_shared<HexGenericMsg>("06"));
-		//m_spawnedInWorld = false;
-		//this->SpawnSelf();
-		m_parent.QueueState(make_shared<PositionStateMsg>(m_goId));
+		sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
 		return;
 	}
 	else if (iequals(command, "incX") || iequals(command, "incY") || iequals(command, "incZ"))
@@ -314,8 +337,7 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 
 		LocationVector newPos(newX,newY,newZ);
 		this->setPosition(newPos);
-		//sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
-		m_parent.QueueState(make_shared<PositionStateMsg>(m_goId));
+		sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId),true);
 		return;
 	}
 	else if (iequals(command, "goThru"))
@@ -330,74 +352,6 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 		this->GoAhead(incrementAmount);
 		return;
 	}
-	else if (iequals(command, "downtown"))
-	{
-		this->GoDownTown();
-		return;
-	}
-	else if (iequals(command, "state"))
-	{
-		string line;
-		ifstream myfile ("D:\\mxoTest.txt");
-		if (myfile.is_open())
-		{
-			while (! myfile.eof() )
-			{
-				getline (myfile,line);		
-				if (line.length() > 0)
-				{
-					erase_all(line, " ");
-					//line = line.replace(" ", "");
-					//m_parent.m_buf.
-					m_parent.QueueState(make_shared<HexGenericMsg>(line));
-					//m_parent.FlushQueue(true);
-				}	
-			}
-			myfile.close();
-		}
-	}
-	else if (iequals(command, "command"))
-	{
-		string line;
-		ifstream myfile ("D:\\mxoTest.txt");
-		if (myfile.is_open())
-		{
-			while (! myfile.eof() )
-			{
-				getline (myfile,line);		
-				if (line.length() > 0)
-				{
-					erase_all(line, " ");
-					//line = line.replace(" ", "");
-					//m_parent.m_buf.
-					m_parent.QueueCommand(make_shared<HexGenericMsg>(line));
-					//m_parent.FlushQueue(true);
-				}	
-			}
-			myfile.close();
-		}
-	}
-	else if (iequals(command, "announcestate"))
-	{
-		string line;
-		ifstream myfile ("D:\\mxoTest.txt");
-		if (myfile.is_open())
-		{
-			while (! myfile.eof() )
-			{
-				getline (myfile,line);		
-				if (line.length() > 0)
-				{
-					erase_all(line, " ");
-					//line = line.replace(" ", "");
-					//m_parent.m_buf.
-					sGame.AnnounceStateUpdate(NULL,make_shared<HexGenericMsg>(line));
-					//m_parent.FlushQueue(true);
-				}	
-			}
-			myfile.close();
-		}
-	}
 	else if (iequals(command, "random"))
 	{
 		//Random Object Id
@@ -406,17 +360,12 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 
 		//randObjId = 1310720002;   //mara church middle door
 
-		sObjMgr.RandomObject(randObjId, &m_parent,this->getPosition().x, this->getPosition().y, this->getPosition().z, this->getPosition().rot );	
-
-		//m_parent.QueueState(make_shared<DoorAnimationMsg>(randObjId, randViewId, this->getPosition().x, this->getPosition().y, this->getPosition().z, this->getPosition().rot, 1));
-
-
+		sObjMgr.RandomObject(randObjId, &m_parent,this->getPosition().x, this->getPosition().y, this->getPosition().z, this->getPosition().rot );
+		m_parent.QueueState(make_shared<DoorAnimationMsg>(randObjId, randViewId, this->getPosition().x, this->getPosition().y, this->getPosition().z, this->getPosition().rot, 1));
 		return;
 	}
 	else if (iequals(command, "update"))
 	{
-
-		//m_parent.Reconnect();
 		this->Update();
 		return;
 	}
@@ -458,11 +407,7 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 		}
 
 		this->setPosition(theTargetPlayer->getPosition());		
-		//sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
-		m_parent.QueueState(make_shared<PositionStateMsg>(m_goId));
-		this->PopulateWorld();
-
-		//this->Update();
+		sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
 		return;
 	}
 	else if (iequals(command, "go"))
@@ -473,18 +418,10 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 		if (cmdStream.fail()) //Get list and whisper it but for now we just fail
 			return;
 
-
-		std::string s;
-		std::stringstream out;
-		out << int(m_district);
-		s = out.str();
-
-		string sql = (format("SELECT `X`,`Y`,`Z` FROM `locations` Where `District` = '%1%' And `Command` = '%2%' LIMIT 1") % s % area ).str();
+		format sql = format("SELECT `X`,`Y`,`Z` FROM `locations` Where `District` = '%1%' And `Command` = '%2%' LIMIT 1") % int(getDistrict()) % area ;
 		scoped_ptr<QueryResult> result(sDatabase.Query(sql));
-		if (result == NULL)
-		{
+		if (!result)
 			return;
-		}
 		else
 		{
 			Field *field = result->Fetch();
@@ -498,18 +435,9 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 			LocationVector derp(newX,newY,newZ);
 			this->setPosition(derp);
 
-			//sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
-			m_parent.QueueState(make_shared<PositionStateMsg>(m_goId));
-			this->PopulateWorld();
-
-			//this->Update();
-
-
-
-
+			sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
 			return;
 		}
-
 	}	
 	else
 	{
@@ -561,7 +489,7 @@ void PlayerObject::RPC_HandleWhisper( ByteBuffer &srcCmd )
 	whisperCount = swap16(whisperCount); //big endian in packet
 
 	string theRecipient = srcCmd.readString();
-	string serverPrefix = "SOE+MXO+Reality+";
+	string serverPrefix = sConfig.GetStringDefault("GameServer.ChatPrefix", "SOE+MXO+Reality") + string("+");
 	string::size_type prefixPos = theRecipient.find_first_of(serverPrefix);
 	if (prefixPos != string::npos)
 		theRecipient = theRecipient.substr(prefixPos+serverPrefix.length());
@@ -644,6 +572,25 @@ void PlayerObject::RPC_HandlePerformEmote( ByteBuffer &srcCmd )
 		% m_pos.x % m_pos.y % m_pos.z );
 }
 
+void PlayerObject::RPC_HandleDynamicObjInteraction( ByteBuffer &srcCmd )
+{
+	uint16 viewId = srcCmd.read<uint16>();
+	uint16 objType = srcCmd.read<uint16>();
+	uint16 interaction = srcCmd.read<uint16>();
+
+	format debugStr = 
+		format("(%s) %s:%d interacting with dynamic view id 0x%04x object type 0x%04x interaction %d")
+		% m_parent.Address()
+		% m_handle
+		% m_goId
+		% viewId
+		% objType
+		% int(interaction);
+
+	INFO_LOG( debugStr );
+	m_parent.QueueCommand(make_shared<SystemChatMsg>(debugStr.str()));
+}
+
 void PlayerObject::RPC_HandleStaticObjInteraction( ByteBuffer &srcCmd )
 {
 	uint32 staticObjId = srcCmd.read<uint32>();
@@ -655,7 +602,7 @@ void PlayerObject::RPC_HandleStaticObjInteraction( ByteBuffer &srcCmd )
 		% m_handle
 		% m_goId
 		% staticObjId
-		% uint32(interaction);
+		% int(interaction);
 
 	INFO_LOG( debugStr );
 
@@ -663,7 +610,6 @@ void PlayerObject::RPC_HandleStaticObjInteraction( ByteBuffer &srcCmd )
 
 	if (interaction == 0x03) //open door
 	{
-		//this->GoAhead(2);
 		LocationVector loc = this->getPosition();
 
 		scoped_ptr<QueryResult> resultDoorExists(sDatabase.Query(format("Select * from Doors Where `DistrictId` = '%1%' And `DoorId` = '%2%' Limit 1") % (int)getDistrict() % staticObjId));
@@ -970,11 +916,7 @@ void PlayerObject::RPC_HandleHardlineTeleport( ByteBuffer &srcCmd )
 		LocationVector newLoc(newX, newY, newZ);
 		newLoc.rot = newRot;
 		this->setPosition(newLoc);
-		//sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
-		m_parent.QueueState(make_shared<PositionStateMsg>(m_goId));
-		this->PopulateWorld();
-
-		//this->Update();
+		sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
 	}
 }
 
@@ -983,10 +925,29 @@ void PlayerObject::RPC_HandleObjectSelected( ByteBuffer &srcCmd )
 	uint32 objectId = srcCmd.read<uint32>();
 	if (objectId)
 	{
-		DEBUG_LOG(format("(%s) %s:%d selected dynamic object data %08x")
+		format msg = 
+			format("(%s) %s:%d selected dynamic object data %08x")
 			% m_parent.Address()
 			% m_handle
 			% m_goId
-			% swap32(objectId));
+			% swap32(objectId);
+
+		DEBUG_LOG(msg);
+		m_parent.QueueCommand(make_shared<SystemChatMsg>(msg.str()));
 	}
+}
+
+void PlayerObject::RPC_HandleJackoutRequest( ByteBuffer &srcCmd )
+{
+	ByteBuffer extraData = ByteBuffer(&srcCmd.contents()[srcCmd.rpos()],srcCmd.remaining());
+	format msg = 
+		format("(%s) %s:%d wants to jackout with extra data %s")
+		% m_parent.Address()
+		% m_handle
+		% m_goId
+		% Bin2Hex(extraData,0);
+
+	DEBUG_LOG(msg);
+	m_parent.QueueCommand(make_shared<SystemChatMsg>("Have a nice day."));
+	m_parent.Invalidate();
 }

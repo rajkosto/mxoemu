@@ -190,9 +190,6 @@ int StreamSocket::GetShutdown()
 	return m_shutdown;
 }
 
-
-
-
 #ifdef SOCKETS_NAMESPACE
 } // namespace SOCKETS_NAMESPACE {
 #endif

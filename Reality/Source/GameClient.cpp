@@ -1,23 +1,27 @@
-// *************************************************************************************************
-// --------------------------------------
+// ***************************************************************************
+//
+// Reality - The Matrix Online Server Emulator
 // Copyright (C) 2006-2010 Rajko Stojadinovic
+// http://mxoemu.info
 //
+// ---------------------------------------------------------------------------
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
-// *************************************************************************************************
+// ---------------------------------------------------------------------------
+//
+// ***************************************************************************
 
 #include "Common.h"
 
@@ -50,108 +54,6 @@ GameClient::GameClient(sockaddr_in inc_addr, GameSocket *sock):m_address(inc_add
 	m_calculatedInitialLatency = false;
 }
 
-void GameClient::Reconnect()
-{
-	m_validClient = false;
-
-	uint64 characterUID = m_characterUID;
-	m_clientCommandsReceived.clear();
-	uint32 playergoId = m_playerGoId;
-	
-	//delete sObjMgr.getGOPtr(m_playerGoId)->getClient();
-
-	m_serverSequence = 1;
-	m_serverCommandsSent = 1;
-	m_clientFlags = 0;
-	m_lastClientSequence = 0;
-	//m_validClient = true;
-	m_worldLoaded = false;
-	m_characterSpawned = false;
-	//m_encryptionInitialized = false;
-	m_lastSimTimeMS = 0;
-	//m_playerGoId=0;
-	m_calculatedInitialLatency = false;
-	
-
-	
-	m_lastServerMS = getMSTime32();
-
-	try
-	{		
-		m_playerGoId = sObjMgr.constructPlayer(this,characterUID);		
-	}
-	catch (ObjectMgr::ObjectNotAvailable)
-	{
-		ERROR_LOG(format("InitialUDPPacket(%1%): Character doesn't exist") % Address() );
-		m_validClient = false;
-		return;
-	}
-	
-	/*vector<MarginSocket*> marginConns = sMargin.GetSocketsForCharacterUID(m_characterUID);
-	if (marginConns.size() != 1)
-	{
-		ERROR_LOG(format("InitialUDPPacket(%1%): Margin session not found") % Address() );
-		m_validClient = false;
-		return;
-	}
-	MarginSocket *marginConn = marginConns[0];
-	m_sessionId = marginConn->GetSessionId();
-	m_charWorldId = marginConn->GetWorldCharId();*/
-
-
-	//m_sessionId = m_marginConn->GetSessionId();
-	//m_charWorldId = m_marginConn->GetWorldCharId();
-
-	//initialize encryptors with key from margin
-	/*vector<byte> twofishKey = m_marginConn->GetTwofishKey();
-	m_tfEngine.Initialize(&twofishKey[0], twofishKey.size());
-
-	*/
-	//send latency/loss calibration heartbeats
-	/*const int numberOfBeats = 5;
-	for (int i=0;i<numberOfBeats;i++)
-	{
-		ByteBuffer beatPacket;
-		for (int j=0;j<numberOfBeats;j++)
-		{
-			beatPacket << uint8(0);
-		}
-		beatPacket << uint16(swap16(numberOfBeats));
-
-		m_sock->SendToBuf(m_address, beatPacket.contents(), beatPacket.size(), 0);
-	}*/
-
-	//notify margin that udp session is established
-	/*if (m_marginConn->UdpReady(this) == false)
-	{
-		ERROR_LOG(format("InitialUDPPacket(%1%): Margin not ready for UDP connection") % Address() );
-		m_encryptionInitialized=false;
-		m_validClient = false;
-		m_marginConn->ForceDisconnect();
-		return;
-	}*/
-	sObjMgr.getGOPtr(m_playerGoId)->InitializeWorld();
-	FlushQueue();
-	sObjMgr.destroyObject(playergoId);
-	//m_sock->RemoveCharacter(IPAddr);
-}
-
-void GameClient::ReconnectBeat()
-{
-	const int numberOfBeats = 1;
-	for (int i=0;i<numberOfBeats;i++)
-	{
-		ByteBuffer beatPacket;
-		for (int j=0;j<numberOfBeats;j++)
-		{
-			beatPacket << uint8(2);
-		}
-		//beatPacket << uint16(swap16(numberOfBeats));
-
-		m_sock->SendToBuf(m_address, beatPacket.contents(), beatPacket.size(), 0);
-	}
-}
-
 GameClient::~GameClient()
 {
 	if (m_playerGoId != 0)
@@ -160,16 +62,14 @@ GameClient::~GameClient()
 	}
 	sObjMgr.releaseRelevantSet(this);
 
-	vector<MarginSocket*> marginConns = sMargin.GetSocketsForCharacterUID(m_characterUID);
-	foreach(MarginSocket* it, marginConns)
-	{
-		it->ForceDisconnect();
-	}
+	MarginSocket* marginConn = sMargin.GetSocketBySessionId(m_sessionId);
+	if(marginConn)
+		marginConn->ForceDisconnect();
 }
 
 void GameClient::HandlePacket( const char *pData, size_t nLength )
 {
-	if (nLength < 1 || m_validClient == false)
+	if (nLength < 1 || !IsValid())
 		return;
 
 	m_lastActivity = getTime();
@@ -184,7 +84,7 @@ void GameClient::HandlePacket( const char *pData, size_t nLength )
 		packetData.rpos(0x0B);
 		if (packetData.remaining() < sizeof(m_characterUID))
 		{
-			m_validClient = false;
+			Invalidate();
 			return;
 		}
 		packetData >> m_characterUID;
@@ -195,45 +95,59 @@ void GameClient::HandlePacket( const char *pData, size_t nLength )
 		catch (ObjectMgr::ObjectNotAvailable)
 		{
 			ERROR_LOG(format("InitialUDPPacket(%1%): Character doesn't exist") % Address() );
-			m_validClient = false;
+			Invalidate();
 			return;
 		}
 
 		vector<MarginSocket*> marginConns = sMargin.GetSocketsForCharacterUID(m_characterUID);
-		if (marginConns.size() != 1)
+		if (marginConns.size() < 1)
 		{
-			ERROR_LOG(format("InitialUDPPacket(%1%): Margin session not found") % Address() );
-			m_validClient = false;
+			ERROR_LOG(format("InitialUDPPacket(%1%): Margin session for character not found") % Address() );
+			Invalidate();
 			return;
 		}
-		MarginSocket *marginConn = marginConns[0];
-		m_sessionId = marginConn->GetSessionId();
-		m_charWorldId = marginConn->GetWorldCharId();
-
-		//initialize encryptors with key from margin
-		vector<byte> twofishKey = marginConn->GetTwofishKey();
-		m_tfEngine.Initialize(&twofishKey[0], twofishKey.size());
-
-		//now we can verify if session key in this packet is correct
-		packetData.rpos(packetData.size()-TwofishCryptMethod::BLOCKSIZE);
-		if (packetData.remaining() < TwofishCryptMethod::BLOCKSIZE)
+		//we need to test every margin session that has the same charId, for a matching sessionId
+		MarginSocket* marginConn = NULL;
+		foreach(marginConn, marginConns)
 		{
-			//wat
-			m_validClient = false;
-			marginConn->ForceDisconnect();
-			return;
+			m_sessionId = marginConn->GetSessionId();
+			m_charWorldId = marginConn->GetWorldCharId();
+
+			//initialize encryptors with key from margin
+			vector<byte> twofishKey = marginConn->GetTwofishKey();
+			m_tfEngine.Initialize(&twofishKey[0], twofishKey.size());
+
+			//now we can verify if session key in this packet is correct
+			packetData.rpos(packetData.size()-TwofishCryptMethod::BLOCKSIZE);
+			if (packetData.remaining() < TwofishCryptMethod::BLOCKSIZE)
+			{
+				//wat, should never happen
+				Invalidate();
+				marginConn->ForceDisconnect();
+				return;
+			}
+			vector<byte> encryptedSessionId(packetData.remaining());
+			packetData.read(encryptedSessionId);
+			ByteBuffer decryptedData = m_tfEngine.Decrypt(&encryptedSessionId[0],encryptedSessionId.size(),false);
+			if (decryptedData.size() != TwofishCryptMethod::BLOCKSIZE)
+			{
+				//invalid key, try another connection
+				continue;
+			}
+			uint32 recoveredSessionId=0;
+			decryptedData >> recoveredSessionId;
+
+			if (recoveredSessionId != m_sessionId)
+			{
+				//invalid sessionId, try another connection
+				continue;
+			}
 		}
-		vector<byte> encryptedSessionId(packetData.remaining());
-		packetData.read(&encryptedSessionId[0],encryptedSessionId.size());
-		ByteBuffer decryptedData = m_tfEngine.Decrypt(&encryptedSessionId[0],encryptedSessionId.size(),false);
-		uint32 recoveredSessionId=0;
-		decryptedData >> recoveredSessionId;
 
-		if (recoveredSessionId != m_sessionId)
+		if (!marginConn)
 		{
-			ERROR_LOG(format("InitialUDPPacket(%1%): Session Key Mismatch") % Address() );
-			m_validClient = false;
-			marginConn->ForceDisconnect();
+			ERROR_LOG(format("InitialUDPPacket(%1%): Margin session for character not found") % Address() );
+			Invalidate();
 			return;
 		}
 
@@ -258,7 +172,7 @@ void GameClient::HandlePacket( const char *pData, size_t nLength )
 		{
 			ERROR_LOG(format("InitialUDPPacket(%1%): Margin not ready for UDP connection") % Address() );
 			m_encryptionInitialized=false;
-			m_validClient = false;
+			Invalidate();
 			marginConn->ForceDisconnect();
 			return;
 		}

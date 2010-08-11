@@ -1,3 +1,28 @@
+// ***************************************************************************
+//
+// Reality - The Matrix Online Server Emulator
+// Copyright (C) 2006-2010 Rajko Stojadinovic
+// http://mxoemu.info
+//
+// ---------------------------------------------------------------------------
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// ---------------------------------------------------------------------------
+//
+// ***************************************************************************
+
 #include "Common.h"
 #include "GameSocket.h"
 #include "Log.h"
@@ -59,9 +84,13 @@ void GameSocket::PruneDeadClients()
 		for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();)
 		{
 			GameClient *Client = it->second;
-			if (Client->IsValid() == false || (m_currTime - Client->LastActive()) >= 20)
+			if (!Client->IsValid() || (m_currTime - Client->LastActive()) >= 20)
 			{
-				DEBUG_LOG( format("Routine dead client removal [%1%]") % Client->Address() );
+				if (!Client->IsValid())
+					DEBUG_LOG( format("Removing invalidated client [%1%]") % Client->Address() );
+				else
+					DEBUG_LOG( format("Removing client due to time-out [%1%]") % Client->Address() );
+
 				m_clients.erase(it++);
 				delete Client;
 			}

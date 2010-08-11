@@ -1,23 +1,27 @@
-// *************************************************************************************************
-// --------------------------------------
+// ***************************************************************************
+//
+// Reality - The Matrix Online Server Emulator
 // Copyright (C) 2006-2010 Rajko Stojadinovic
+// http://mxoemu.info
 //
+// ---------------------------------------------------------------------------
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
-// *************************************************************************************************
+// ---------------------------------------------------------------------------
+//
+// ***************************************************************************
 
 #include "Common.h"
 #include "PlayerObject.h"
@@ -32,29 +36,31 @@
 
 PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent),m_characterUID(charUID),m_spawnedInWorld(false)
 {
+	LoadFromDB(true);
+
+	m_goId=0;
+	INFO_LOG(format("Player object for %1% constructed") % m_handle);
+	testCount=0;
+	m_lastStore = getTime();
+	m_currAnimation=0;
+	m_currMood=0;
+	m_emoteCounter=0;
+}
+
+void PlayerObject::LoadFromDB(bool updatePos)
+{
 	//grab data from characters table
 	{
-		std::string sql;
-		std::stringstream out;
-		
-
-		out << "SELECT `handle`,\
-													 `firstName`, `lastName`, `background`,\
-													 `x`, `y`, `z`, `rot`, \
-													 `healthC`, `healthM`, `innerStrC`, `innerStrM`,\
-													 `level`, `profession`, `alignment`, `pvpflag`, `exp`, `cash`, `district`, `adminFlags`\
-													 FROM `characters` WHERE `charId` = '";
-		out << m_characterUID;
-		out << "' LIMIT 1";
-
-		sql = out.str();
+		format sql = format("SELECT `handle`, `firstName`, `lastName`, `background`,\
+							`x`, `y`, `z`, `rot`, \
+							`healthC`, `healthM`, `innerStrC`, `innerStrM`,\
+							`level`, `profession`, `alignment`, `pvpflag`, `exp`, `cash`, `district`, `adminFlags`\
+							FROM `characters` WHERE `charId` = '%1%' LIMIT 1") % m_characterUID;
 
 		scoped_ptr<QueryResult> result(sDatabase.Query(sql));
 
-		if (result == NULL)
-		{
+		if (!result)
 			throw CharacterNotFound();
-		}
 
 		Field *field = result->Fetch();
 		if (field[0].GetString() != NULL)
@@ -77,11 +83,15 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 		else
 			m_background = "";
 
-		m_pos.ChangeCoords(	field[4].GetDouble(),
-			field[5].GetDouble(),
-			field[6].GetDouble());
-		m_pos.rot = field[7].GetDouble();
-		m_savedPos = m_pos;
+		if (updatePos)
+		{
+			m_pos.ChangeCoords(	field[4].GetDouble(),
+				field[5].GetDouble(),
+				field[6].GetDouble());
+			m_pos.rot = field[7].GetDouble();
+			m_savedPos = m_pos;
+		}
+
 		m_healthC = field[8].GetUInt16();
 		m_healthM = field[9].GetUInt16();
 		m_innerStrC = field[10].GetUInt16();
@@ -98,10 +108,10 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 	//grab data from rsi table
 	{
 		scoped_ptr<QueryResult> result(sDatabase.Query(format("SELECT `sex`, `body`, `hat`, `face`, `shirt`,\
-													 `coat`, `pants`, `shoes`, `gloves`, `glasses`,\
-													 `hair`, `facialdetail`, `shirtcolor`, `pantscolor`,\
-													 `coatcolor`, `shoecolor`, `glassescolor`, `haircolor`,\
-													 `skintone`, `tattoo`, `facialdetailcolor`, `leggings` FROM `rsivalues` WHERE `charId` = '%1%' LIMIT 1") % m_characterUID) );
+															  `coat`, `pants`, `shoes`, `gloves`, `glasses`,\
+															  `hair`, `facialdetail`, `shirtcolor`, `pantscolor`,\
+															  `coatcolor`, `shoecolor`, `glassescolor`, `haircolor`,\
+															  `skintone`, `tattoo`, `facialdetailcolor`, `leggings` FROM `rsivalues` WHERE `charId` = '%1%' LIMIT 1") % m_characterUID) );
 		if (result == NULL)
 		{
 			INFO_LOG(format("SpawnRSI(%1%): Character's RSI doesn't exist") % m_handle );
@@ -151,14 +161,6 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 				playerRef["Leggings"] =	field[21].GetUInt8();
 		}
 	}
-
-	m_goId=0;
-	INFO_LOG(format("Player object for %1% constructed") % m_handle);
-	testCount=0;
-	m_lastStore = getTime();
-	m_currAnimation=0;
-	m_currMood=0;
-	m_emoteCounter=0;
 }
 
 void PlayerObject::initGoId(uint32 theGoId)
@@ -166,8 +168,7 @@ void PlayerObject::initGoId(uint32 theGoId)
 	m_goId = theGoId;
 	INFO_LOG(format("Player name %1% has goid %2%") % m_handle % m_goId);
 	m_parent.QueueCommand(make_shared<SystemChatMsg>((format("Your Object Id is %1%")%m_goId).str()));
-	//sGame.AnnounceCommand(&m_parent,make_shared<SystemChatMsg>((format("Player %1% connected with object id %2%")%m_handle%m_goId).str()));
-	m_parent.QueueCommand(make_shared<SystemChatMsg>((format("Player %1% connected with object id %2%")%m_handle%m_goId).str()));
+	sGame.AnnounceCommand(&m_parent,make_shared<SystemChatMsg>((format("Player %1% connected with object id %2%")%m_handle%m_goId).str()));
 }
 
 PlayerObject::~PlayerObject()
@@ -187,7 +188,7 @@ PlayerObject::~PlayerObject()
 	}
 }
 
-uint8 PlayerObject::getRsiData( byte* outputBuf,uint32 maxBufLen ) const
+uint8 PlayerObject::getRsiData( byte* outputBuf, size_t maxBufLen ) const
 {
 	if (m_rsi == NULL)
 		return 0;
@@ -258,218 +259,15 @@ void PlayerObject::InitializeWorld()
 
 void PlayerObject::Update()
 {
-		bool storeSuccess = sDatabase.Execute(format("UPDATE `characters` SET `x` = '%1%', `y` = '%2%', `z` = '%3%', `rot` = '%4%' WHERE `charId` = '%5%'")
-		% double(this->getPosition().x)
-		% double(this->getPosition().y)
-		% double(this->getPosition().z)
-		% double(this->getPosition().rot)
-		% m_characterUID );
-//m_parent.QueueCommand(make_shared<SystemChatMsg>("{c:FF00}?update has been disabled cuz it crashes the server with too much use.  For now you have to log out and back in for each outfit change till I get it fixed -- TW{/c}"));
-
-		scoped_ptr<QueryResult> result(sDatabase.Query(format("SELECT `sex`, `body`, `hat`, `face`, `shirt`,\
-													 `coat`, `pants`, `shoes`, `gloves`, `glasses`,\
-													 `hair`, `facialdetail`, `shirtcolor`, `pantscolor`,\
-													 `coatcolor`, `shoecolor`, `glassescolor`, `haircolor`,\
-													 `skintone`, `tattoo`, `facialdetailcolor`, `leggings` FROM `rsivalues` WHERE `charId` = '%1%' LIMIT 1") % m_characterUID) );
-		if (result == NULL)
-		{
-			INFO_LOG(format("SpawnRSI(%1%): Character's RSI doesn't exist") % m_handle );
-			m_rsi.reset(new RsiDataMale);
-			const byte defaultRsiValues[] = {0x00,0x0C,0x71,0x48,0x18,0x0C,0xE2,0x00,0x23,0x00,0xB0,0x00,0x40,0x00,0x00};
-			m_rsi->FromBytes(defaultRsiValues,sizeof(defaultRsiValues));
-		}
-		else
-		{
-			Field *field = result->Fetch();
-			uint8 sex = field[0].GetUInt8();
-
-			if (sex == 0) //male
-				m_rsi.reset(new RsiDataMale);
-			else
-				m_rsi.reset(new RsiDataFemale);
-
-			RsiData &playerRef = *m_rsi;
-
-			if (sex == 0) //male
-				playerRef["Sex"]=0;
-			else
-				playerRef["Sex"]=1;
-
-			playerRef["Body"] =			field[1].GetUInt8();
-			playerRef["Hat"] =			field[2].GetUInt8();
-			playerRef["Face"] =			field[3].GetUInt8();
-			playerRef["Shirt"] =		field[4].GetUInt8();
-			playerRef["Coat"] =			field[5].GetUInt8();
-			playerRef["Pants"] =		field[6].GetUInt8();
-			playerRef["Shoes"] =		field[7].GetUInt8();
-			playerRef["Gloves"] =		field[8].GetUInt8();
-			playerRef["Glasses"] =		field[9].GetUInt8();
-			playerRef["Hair"] =			field[10].GetUInt8();
-			playerRef["FacialDetail"]=	field[11].GetUInt8();
-			playerRef["ShirtColor"] =	field[12].GetUInt8();
-			playerRef["PantsColor"] =	field[13].GetUInt8();
-			playerRef["CoatColor"] =	field[14].GetUInt8();
-			playerRef["ShoeColor"] =	field[15].GetUInt8();
-			playerRef["GlassesColor"]=	field[16].GetUInt8();
-			playerRef["HairColor"] =	field[17].GetUInt8();
-			playerRef["SkinTone"] =		field[18].GetUInt8();
-			playerRef["Tattoo"] =		field[19].GetUInt8();
-			playerRef["FacialDetailColor"] =	field[20].GetUInt8();
-
-			if (sex != 0)
-				playerRef["Leggings"] =	field[21].GetUInt8();
-		}
-			
-		m_parent.QueueCommand(make_shared<HexGenericMsg>("06"));
-		InitializeWorld();
-		m_spawnedInWorld = false;
-		this->SpawnSelf();
-		this->PopulateWorld();
-}
-
-void PlayerObject::GoDownTown()
-{
-	//InitializeWorld();
-	m_spawnedInWorld = false;
-	this->SpawnSelf();
-	this->PopulateWorld();
-
-	return;	
-	//announce our presence to others
-	sGame.AnnounceStateUpdate(&m_parent,make_shared<PlayerSpawnMsg>(m_goId));
-
-	//Update DB for character  Set District 
-	
-	m_spawnedInWorld = false;
-	m_district++; 
-	if (m_district > 17) m_district = 0;
-	m_parent.FlushQueue();
-	string SQL = (format("UPDATE `characters` SET `District`='%1%' WHERE `charId`='%2%' LIMIT 1")
-		% (int)m_district
-		% (int)m_characterUID).str();
-	sDatabase.Execute(SQL);
-	m_parent.QueueCommand(make_shared<SystemChatMsg>(SQL));
-	//m_parent.QueueCommand(make_shared<HexGenericMsg>("06"));
-	//sGame.AnnounceStateUpdate(&m_parent,make_shared<DeletePlayerMsg>(m_goId));
-	this->SpawnSelf();
-	//
-	//InitializeWorld();
-	//m_parent.Reconnect();
-	//m_parent.Reconnect();
-	
-	//m_parent.QueueCommand(make_shared<HexGenericMsg>("060e001200000022c3114901560046007265736f757263652f776f726c64732f66696e616c5f776f726c642f636f6e737472756374732f617263686976652f617263686976655f736174692f736174692e6d65747200280048616c6c6f7765656e5f4576656e742c57696e7465723348616c6c6f7765656e466c7954534543000a80e5e7cbc012000000000a80e43b6fda0000000000"));
-	
-/*
-	m_parent.QueueCommand(make_shared<LoadWorldCmd>((LoadWorldCmd::mxoLocation)m_district,"SatiSky"));
-	m_parent.QueueCommand(make_shared<SetExperienceCmd>(m_exp));
-	m_parent.QueueCommand(make_shared<SetInformationCmd>(m_cash));
-*/	
-
-	//m_parent.QueueCommand(make_shared<LoadWorldCmd>((LoadWorldCmd::mxoLocation)m_district,"SatiSky"));
-	//m_spawnedInWorld = false;
-	//m_parent.m_characterSpawned = false;
-	//m_parent.m_worldLoaded = false;
-	//
-	//m_parent.HandlePacket("0x038c9208", 43);
-	//m_clients[IPStr]->HandlePacket(pData, len);
-
-	
-	//m_parent.QueueCommand(make_shared<LoadWorldCmd>((LoadWorldCmd::mxoLocation)m_district,"SatiSky"));
-	//this->getClient().QueueCommand(make_shared<LoadWorldCmd>((LoadWorldCmd::mxoLocation)m_district,"SatiSky"));
-
-	//this->getClient().QueueCommand(make_shared<WhisperMsg>("TW","Pushing in Hex Test"));
-	/*
-	
-
-	
-	string hexString = "";
-	//_itoa(m_lastTestedCommand,hexString,16);
-	
-	int i = m_lastTestedCommand;
-	std::string s;
-	std::stringstream out;
-	std::stringstream outDec;
-	outDec << i;
-	out << hex << i;
-	s = out.str();
-
-	string debugMsg = "Dec:" + outDec.str();	
-	this->getClient().QueueCommand(make_shared<WhisperMsg>("TW",debugMsg));
-
-	bool odd = !!(s.length() & 1);
-
-	if (odd)
-	{
-		s = "0" + s;
-	}
-	debugMsg = "HEX:" + s;
-
-
-	this->getClient().QueueCommand(make_shared<WhisperMsg>("TW",debugMsg));
-
-	m_parent.QueueCommand(make_shared<HexGenericMsg>(s));
-
-	m_lastTestedCommand++;
-	if (m_lastTestedCommand == 6) m_lastTestedCommand++; //6 is part of world load stuff.. freezes..
-*/
-	//EventURLCmd("http://www.johnhasson.com");
-/*
-	string line;
-	ifstream myfile ("D:\\mxoTest.txt");
-	if (myfile.is_open())
-	{
-		while (! myfile.eof() )
-		{
-			getline (myfile,line);		
-			if (line.length() > 0)
-			{
-				erase_all(line, " ");
-				//line = line.replace(" ", "");
-				//m_parent.m_buf.
-				m_parent.QueueCommand(make_shared<HexGenericMsg>(line));
-				//m_parent.FlushQueue(true);
-			}	
-		}
-		myfile.close();
-	}*/
-	//this->getClient().QueueCommand(make_shared<WhisperMsg>("TW","Done"));
-	
-	//m_district = 5;
-	//m_parent.QueueCommand(make_shared<LoadWorldCmd>((LoadWorldCmd::mxoLocation)5,"SatiSky"));
-
-	
-	//m_parent.QueueCommand(make_shared<LoadWorldCmd>((LoadWorldCmd::mxoLocation)m_district,"SatiSky"));
-	
-	//m_parent.QueueCommand(make_shared<HexGenericMsg>("060e001200000022c3114901560046007265736f757263652f776f726c64732f66696e616c5f776f726c642f636f6e737472756374732f617263686976652f617263686976655f736174692f736174692e6d65747200280048616c6c6f7765656e5f4576656e742c57696e7465723348616c6c6f7765656e466c7954534543"));
-	//m_parent.QueueCommand(make_shared<SetExperienceCmd>(m_exp));
-	//m_parent.QueueCommand(make_shared<SetInformationCmd>(m_cash));
-	/*m_parent.QueueCommand(make_shared<HexGenericMsg>("42"));
-	m_parent.QueueCommand(make_shared<HexGenericMsg>("42"));
-	m_parent.QueueCommand(make_shared<HexGenericMsg>("42"));
-	m_parent.QueueCommand(make_shared<HexGenericMsg>("42"));
-	m_parent.QueueCommand(make_shared<HexGenericMsg>("42"));
-	m_parent.QueueCommand(make_shared<HexGenericMsg>("8222c3114904010000038080060e001200000022c3114901560046007265736f757263652f776f726c64732f66696e616c5f776f726c642f636f6e737472756374732f617263686976652f617263686976655f736174692f736174692e6d65747200280048616c6c6f7765656e5f4576656e742c57696e7465723348616c6c6f7765656e466c7954534543000a80e5e7cbc012000000000a80e43b6fda0000000000"));
-	m_parent.QueueCommand(make_shared<HexGenericMsg>("020401000302342e0700000000000000000000006400002e002400000000000000000000000000000000000e00416674657257686f72754e656f00418167170027001c2200c6011100000000000000370000080e00416674657257686f72754e656f000e00416674657257686f72754e656f0002004b00000000000000"));
-	m_parent.QueueCommand(make_shared<HexGenericMsg>("020301000c0c008acdab239b81ff71020000416e646572736f6e00000000000000000000000000000000000000000000000001d054686f6d617300000000000000000000000000000000000000000000000000006666e63e850ad72340ffd8280a2500000801ce81fff700315e000002c66700416674657257686f72754e656f00000000000000000000000000000000000000280afd64010000670075d401004bb100000000231ae99080b00402028e000000f700dd0000004806d4d9400000000000c0574000000000c0f7d0c081ff32125606002890001089b8ca9323e31c011100000067000200000000"));
-	m_parent.QueueCommand(make_shared<HexGenericMsg>("020301000c0c008acdab239b81ff71020000416e646572736f6e00000000000000000000000000000000000000000000000001d054686f6d617300000000000000000000000000000000000000000000000000006666e63e850ad72340ffd8280a2500000801ce81fff700315e000002c66700416674657257686f72754e656f00000000000000000000000000000000000000280afd64010000670075d401004bb100000000231ae99080b00402028e000000f700dd0000004806d4d9400000000000c0574000000000c0f7d0c081ff32125606002890001089b8ca9323e31c011100000067000200000000"));
-*/
-	//this->SpawnSelf();
-	//this->PopulateWorld();
-
-
-	
-
+	LoadFromDB(false);
+	sGame.AnnounceStateUpdate(NULL,make_shared<PlayerAppearanceMsg>(m_goId));
 }
 
 void PlayerObject::SpawnSelf()
 {
 	if (m_spawnedInWorld == false)
 	{
-
-		//first object spawn in world the client likes to control, so we have to self spawn first
-		m_parent.QueueState(make_shared<PlayerSpawnMsg>(m_goId));
-		
-		//sGame.AnnounceStateUpdate(NULL,make_shared<PlayerSpawnMsg>(m_goId));
+		sGame.AnnounceStateUpdate(NULL,make_shared<PlayerSpawnMsg>(m_goId));
 		m_spawnedInWorld=true;
 	}
 }
@@ -649,6 +447,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 	{
 		m_RPCshort[0x2810] = &PlayerObject::RPC_HandleChat;
 		m_RPCshort[0x2907] = &PlayerObject::RPC_HandleWhisper;
+		m_RPCshort[0x80c7] = &PlayerObject::RPC_HandleDynamicObjInteraction;
 		m_RPCshort[0x80c8] = &PlayerObject::RPC_HandleStaticObjInteraction;
 		m_RPCshort[0x80c2] = &PlayerObject::RPC_HandleJump;
 		m_RPCshort[0x80c9] = &PlayerObject::RPC_HandleRegionLoadedNotification;
@@ -659,6 +458,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 		m_RPCshort[0x8196] = &PlayerObject::RPC_HandleSetBackground;
 		m_RPCshort[0x818e] = &PlayerObject::RPC_HandleHardlineTeleport;
 		m_RPCshort[0x8151] = &PlayerObject::RPC_HandleObjectSelected;
+		m_RPCshort[0x80fc] = &PlayerObject::RPC_HandleJackoutRequest;
 	}
 
 	uint8 firstByte = srcCmd.read<uint8>();
@@ -715,8 +515,6 @@ vector<msgBaseClassPtr> PlayerObject::getCurrentStatePackets()
 	return tempVect;
 }
 
-
-
 void PlayerObject::GoAhead(double distanceToGo)
 {		
 	//double angle = this->getPosition().getMxoRot();
@@ -743,5 +541,5 @@ void PlayerObject::GoAhead(double distanceToGo)
 		newLoc.z -= zInc;
 	}
 	this->setPosition(newLoc);
-	m_parent.QueueState(make_shared<PositionStateMsg>(m_goId));
+	sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId),true);
 }

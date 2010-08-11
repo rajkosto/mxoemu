@@ -515,19 +515,16 @@ DEB(				fprintf(stderr, "SSL read problem, errcode = %d\n",n);)
 			SetLost();
 			return;
 		}
-		else
-		if (!n)
+		else if (!n) //half-close that MXO does on margin
 		{
-			OnDisconnect();
-			OnDisconnect(0, 0);
-			SetCloseAndDelete(true);
+			DisableRead(true);
 			SetFlushBeforeClose(false);
-			SetLost();
+			SetReconnect(false);
 			SetShutdown(SHUT_WR);
+			SetLost();
 			return;
 		}
-		else
-		if (n > 0 && n <= TCP_BUFSIZE_READ)
+		else if (n > 0 && n <= TCP_BUFSIZE_READ)
 		{
 			m_bytes_received += n;
 			if (GetTrafficMonitor())

@@ -1,23 +1,27 @@
-// *************************************************************************************************
-// --------------------------------------
+// ***************************************************************************
+//
+// Reality - The Matrix Online Server Emulator
 // Copyright (C) 2006-2010 Rajko Stojadinovic
+// http://mxoemu.info
 //
+// ---------------------------------------------------------------------------
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
-// *************************************************************************************************
+// ---------------------------------------------------------------------------
+//
+// ***************************************************************************
 
 #ifndef MXOEMU_PLAYEROBJECT_H
 #define MXOEMU_PLAYEROBJECT_H
@@ -31,6 +35,7 @@ public:
 	class CharacterNotFound {};
 
 	PlayerObject(class GameClient &parent,uint64 charUID);
+	void LoadFromDB(bool updatePos=false);
 	~PlayerObject();
 
 	void InitializeWorld();
@@ -53,10 +58,9 @@ public:
 	void setPosition(const LocationVector& newPos) {m_pos = newPos;}
 	uint8 getDistrict() const {return m_district;}
 	void setDistrict(uint8 newDistrict) {m_district = newDistrict;}
-	uint8 getRsiData(byte* outputBuf,uint32 maxBufLen) const ;
+	uint8 getRsiData(byte* outputBuf,size_t maxBufLen) const;
 	uint16 getCurrentHealth() const {return m_healthC;}
 	uint16 getMaximumHealth() const {return m_healthM;}
-	uint64 getCharacterUID() const {return m_characterUID;}
 	uint16 getCurrentIS() const {return m_innerStrC;}
 	uint16 getMaximumIS() const {return m_innerStrM;}
 	uint32 getProfession() const {return m_prof;}
@@ -86,6 +90,7 @@ private:
 	void RPC_HandleStartAnimtion( ByteBuffer &srcCmd );
 	void RPC_HandleChangeMood( ByteBuffer &srcCmd );
 	void RPC_HandlePerformEmote( ByteBuffer &srcCmd );
+	void RPC_HandleDynamicObjInteraction( ByteBuffer &srcCmd );
 	void RPC_HandleStaticObjInteraction( ByteBuffer &srcCmd );
 	void RPC_HandleJump( ByteBuffer &srcCmd );
 	void RPC_HandleRegionLoadedNotification( ByteBuffer &srcCmd );
@@ -96,6 +101,7 @@ private:
 	void RPC_HandleSetBackground( ByteBuffer &srcCmd );
 	void RPC_HandleHardlineTeleport( ByteBuffer &srcCmd );
 	void RPC_HandleObjectSelected( ByteBuffer &srcCmd );
+	void RPC_HandleJackoutRequest( ByteBuffer &srcCmd );
 
 	//RPC Handler maps
 	map<uint8,RPCHandler> m_RPCbyte;
@@ -104,7 +110,6 @@ private:
 	void ParseAdminCommand(string theCmd);
 	void ParsePlayerCommand(string theCmd);
 	void GoAhead(double distanceToGo);
-	void GoDownTown();
 	void Update();
 
 	class GameClient &m_parent;

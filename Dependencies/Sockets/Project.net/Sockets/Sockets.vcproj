@@ -83,7 +83,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="xcopy ..\..\*.h ..\Include /I /Y"
+				CommandLine="xcopy ..\..\*.h ..\Include\Sockets /I /Y"
 			/>
 		</Configuration>
 		<Configuration
@@ -149,7 +149,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="xcopy ..\..\*.h ..\Include /I /Y"
+				CommandLine="xcopy ..\..\*.h ..\Include\Sockets /I /Y"
 			/>
 		</Configuration>
 	</Configurations>

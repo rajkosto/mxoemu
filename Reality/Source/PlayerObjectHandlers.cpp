@@ -922,15 +922,14 @@ void PlayerObject::RPC_HandleHardlineTeleport( ByteBuffer &srcCmd )
 
 void PlayerObject::RPC_HandleObjectSelected( ByteBuffer &srcCmd )
 {
-	uint32 objectId = srcCmd.read<uint32>();
-	if (objectId)
+	uint16 viewId = srcCmd.read<uint16>();
+	uint16 objType = srcCmd.read<uint16>();
+	if (viewId || objType)
 	{
 		format msg = 
-			format("(%s) %s:%d selected dynamic object data %08x")
-			% m_parent.Address()
-			% m_handle
-			% m_goId
-			% swap32(objectId);
+			format("(%s) %s:%d selected dynamic object view id %04x objType %04x")
+			% m_parent.Address() % m_handle	% m_goId
+			% viewId % objType;
 
 		DEBUG_LOG(msg);
 		m_parent.QueueCommand(make_shared<SystemChatMsg>(msg.str()));

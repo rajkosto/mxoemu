@@ -37,8 +37,8 @@ public:
 
 	BitVarStream();
 	~BitVarStream() {}
-	void FromBytes(const byte* dataBuf,const uint32 dataLen);
-	uint8 ToBytes(byte *rsiDataBytes,const uint32 maxLen) const;
+	void FromBytes(const byte* dataBuf,const size_t dataLen);
+	uint8 ToBytes(byte *rsiDataBytes,const size_t maxLen) const;
 	uint8& operator[] (const string& nameIndex);
 	void ClearData();
 protected:

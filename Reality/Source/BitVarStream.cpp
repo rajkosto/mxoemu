@@ -32,7 +32,7 @@ BitVarStream::BitVarStream()
 	ClearVariableDefs();
 }
 
-void BitVarStream::FromBytes( const byte* dataBuf,const uint32 dataLen )
+void BitVarStream::FromBytes( const byte* dataBuf,const size_t dataLen )
 {
 	ClearData();
 
@@ -56,7 +56,7 @@ void BitVarStream::FromBytes( const byte* dataBuf,const uint32 dataLen )
 	}
 }
 
-uint8 BitVarStream::ToBytes( byte *rsiDataBytes,const uint32 maxLen ) const
+uint8 BitVarStream::ToBytes( byte *rsiDataBytes,const size_t maxLen ) const
 {
 	BitStream bits;
 	bits.ResetWritePointer();

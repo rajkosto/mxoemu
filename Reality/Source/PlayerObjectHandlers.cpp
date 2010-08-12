@@ -282,7 +282,29 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 		return;
 
 	using boost::erase_all;
-	if (iequals(command, "gotoPos"))
+	if (iequals(command, "send") || iequals(command, "sendCmd"))
+	{
+		stringstream restOfStream;
+		restOfStream << cmdStream.rdbuf();
+		string hexStream = restOfStream.str();
+		erase_all(hexStream," ");
+
+		msgBaseClassPtr thePacket = make_shared<HexGenericMsg>(hexStream);
+		const ByteBuffer& dataBuf = thePacket->toBuf();
+		if (!dataBuf.count())
+		{
+			m_parent.QueueCommand(make_shared<SystemChatMsg>("No bytes to send!"));
+			return;
+		}
+
+		m_parent.QueueCommand(make_shared<SystemChatMsg>((format("Sending %1% bytes to you")%dataBuf.count()).str()));
+
+		if (iequals(command,"send"))
+			m_parent.QueueState(thePacket,true);
+		else
+			m_parent.QueueCommand(thePacket);
+	}
+	else if (iequals(command, "gotoPos"))
 	{
 		double x,y,z;
 		cmdStream >> x;
@@ -366,7 +388,8 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 	}
 	else if (iequals(command, "update"))
 	{
-		this->Update();
+		this->UpdateAppearance();
+		m_parent.QueueCommand(make_shared<SystemChatMsg>("Your appearance has been refreshed."));
 		return;
 	}
 	else if (iequals(command, "gotoPlayer"))

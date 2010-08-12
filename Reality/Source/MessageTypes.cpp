@@ -76,13 +76,14 @@ void DeletePlayerMsg::setReceiver( class GameClient *toWho )
 	}
 	DEBUG_LOG(format("Player %1% delete packet serializing for client %2% with viewID %3%") % m_objectId % m_toWho->Address() % viewId);
 
-	//03 01 00 01 01 00 <OBJECT ID:2bytes>
+	//03 01 00 01 01 00 <OBJECT ID:2bytes> <nomoreAttribs (00 00)>
 	const byte rawData[6] =
 	{
 		0x03, 0x01, 0x00, 0x01, 0x01, 0x00, 
 	} ;
 	m_buf.append(rawData,sizeof(rawData));
 	m_buf << uint16(viewId);
+	m_buf << uint16(0);
 }
 
 CloseDoorMsg::CloseDoorMsg( uint32 objectId) :ObjectUpdateMsg(objectId)
@@ -336,7 +337,7 @@ const ByteBuffer& PlayerAppearanceMsg::toBuf()
 	m_buf << uint8(0x02);
 	m_buf << uint8(0x80);
 	m_buf << uint8(0x81);
-	vector<byte> rsiBuf(15);
+	vector<byte> rsiBuf(15,0);
 
 	PlayerObject *player = NULL;
 	try
@@ -351,6 +352,7 @@ const ByteBuffer& PlayerAppearanceMsg::toBuf()
 
 	player->getRsiData(&rsiBuf[0],rsiBuf.size());
 	m_buf.append(rsiBuf);
+	m_buf << uint16(0); //nomoreattribs
 	return m_buf;
 }
 
@@ -854,7 +856,7 @@ DoorAnimationMsg::DoorAnimationMsg( uint32 doorId, uint16 viewId, double X, doub
 		bufferBytesCoords.read(byteCoords, bufferBytesCoords.size());
 
 
-		memcpy(&insideDoor[32],&byteCoords,sizeof(byteCoords));   //uint16
+		memcpy(&insideDoor[32],&byteCoords,sizeof(byteCoords));
 
 		//Rotation
 		insideDoor[22] = rotation;

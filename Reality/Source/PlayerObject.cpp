@@ -36,7 +36,7 @@
 
 PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent),m_characterUID(charUID),m_spawnedInWorld(false)
 {
-	LoadFromDB(true);
+	loadFromDB(true);
 
 	m_goId=0;
 	INFO_LOG(format("Player object for %1% constructed") % m_handle);
@@ -45,9 +45,11 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 	m_currAnimation=0;
 	m_currMood=0;
 	m_emoteCounter=0;
+
+	setOnlineStatus(true);
 }
 
-void PlayerObject::LoadFromDB(bool updatePos)
+void PlayerObject::loadFromDB( bool updatePos )
 {
 	//grab data from characters table
 	{
@@ -177,12 +179,11 @@ PlayerObject::~PlayerObject()
 	{
 		//commit position changes
 		saveDataToDB();
+		setOnlineStatus(false);
 
 		INFO_LOG(format("Player object for %1%:%2% deconstructing") % m_handle % m_goId);
-		//sGame.AnnounceStateUpdate(&m_parent,make_shared<DeletePlayerMsg>(m_goId));
-		m_parent.QueueState(make_shared<DeletePlayerMsg>(m_goId));
-		//sGame.AnnounceCommand(&m_parent,make_shared<SystemChatMsg>((format("Player %1% with object id %2% disconnected")%m_handle%m_goId).str()));
-		m_parent.QueueCommand(make_shared<SystemChatMsg>((format("Player %1% with object id %2% disconnected")%m_handle%m_goId).str()));
+		sGame.AnnounceStateUpdate(&m_parent,make_shared<DeletePlayerMsg>(m_goId));
+		sGame.AnnounceCommand(&m_parent,make_shared<SystemChatMsg>((format("Player %1% with object id %2% disconnected")%m_handle%m_goId).str()));
 		
 		m_spawnedInWorld=false;
 	}
@@ -210,7 +211,7 @@ void PlayerObject::saveDataToDB()
 	if (m_savedPos == m_pos)
 		return;
 
-	bool storeSuccess = sDatabase.Execute(format("UPDATE `characters` SET `x` = '%1%', `y` = '%2%', `z` = '%3%', `rot` = '%4%' WHERE `charId` = '%5%'")
+	bool storeSuccess = sDatabase.Execute(format("UPDATE `characters` SET `x` = '%1%', `y` = '%2%', `z` = '%3%', `rot` = '%4%', `lastOnline` = NOW() WHERE `charId` = '%5%'")
 		% m_pos.x
 		% m_pos.y
 		% m_pos.z
@@ -224,6 +225,13 @@ void PlayerObject::saveDataToDB()
 		m_savedPos = m_pos;
 		m_parent.QueueCommand(make_shared<SystemChatMsg>( (format("Character data for %1% has been written to the database.") % m_handle).str() ));
 	}
+}
+
+void PlayerObject::setOnlineStatus( bool isOnline )
+{
+	sDatabase.Execute(format("UPDATE `characters` SET `lastOnline` = NOW(), `isOnline` = '%1%' WHERE `charId` = '%2%'")
+		% int(isOnline)
+		% m_characterUID );
 }
 
 void PlayerObject::InitializeWorld()
@@ -257,9 +265,9 @@ void PlayerObject::InitializeWorld()
 
 }
 
-void PlayerObject::Update()
+void PlayerObject::UpdateAppearance()
 {
-	LoadFromDB(false);
+	loadFromDB(false);
 	sGame.AnnounceStateUpdate(NULL,make_shared<PlayerAppearanceMsg>(m_goId));
 }
 

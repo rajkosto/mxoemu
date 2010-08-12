@@ -35,7 +35,6 @@ public:
 	class CharacterNotFound {};
 
 	PlayerObject(class GameClient &parent,uint64 charUID);
-	void LoadFromDB(bool updatePos=false);
 	~PlayerObject();
 
 	void InitializeWorld();
@@ -71,13 +70,8 @@ public:
 	uint8 getCurrentAnimation() const {return m_currAnimation;}
 	uint8 getCurrentMood() const {return m_currMood;}
 
-	void checkAndStore();
-	void saveDataToDB();
-
 	class GameClient& getClient() { return m_parent; }
-
 	vector<msgBaseClassPtr> getCurrentStatePackets();
-
 private: 
 	//RPC handler type
 	typedef void (PlayerObject::*RPCHandler)( ByteBuffer &srcCmd );
@@ -107,11 +101,15 @@ private:
 	map<uint8,RPCHandler> m_RPCbyte;
 	map<uint16,RPCHandler> m_RPCshort;
 private:
+	void loadFromDB(bool updatePos=false);
+	void checkAndStore();
+	void saveDataToDB();
+	void setOnlineStatus( bool isOnline );
+
 	void ParseAdminCommand(string theCmd);
 	void ParsePlayerCommand(string theCmd);
 	void GoAhead(double distanceToGo);
-	void Update();
-
+	void UpdateAppearance();
 	class GameClient &m_parent;
 	
 	//Player info

@@ -127,6 +127,14 @@ public:
 	const ByteBuffer& toBuf();
 };
 
+class JackoutEffectMsg : public ObjectUpdateMsg
+{
+public:
+	JackoutEffectMsg(uint32 objectId);
+	~JackoutEffectMsg();
+	const ByteBuffer& toBuf();
+};
+
 class StateUpdateMsg : public ObjectUpdateMsg
 {
 public:

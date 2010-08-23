@@ -39,8 +39,15 @@
 class GameServer : public Singleton <GameServer>
 {
 public:
-	GameServer() { };
-	~GameServer() { /* TODO: Add destructor code */ };
+	GameServer() 
+	{ 
+		m_serverUp=false; 
+	}
+	~GameServer() 
+	{ 
+		if (m_serverUp)
+			Stop();
+	}
 	bool Start();
 	void Stop();
 	void Loop();
@@ -55,11 +62,14 @@ public:
 		timeDiff = (timeDiff*64)/1000;
 		return uint32(timeDiff);
 	}
+	string GetName() const;
+	string GetChatPrefix() const;
 private:	
 	ObjectMgr m_objMgr;
 	SocketHandler m_udpHandler;
 	shared_ptr<class GameSocket> m_mainSocket;
 	uint64 m_serverStartMS;
+	bool m_serverUp;
 };
 
 

@@ -465,7 +465,7 @@ string AuthServer::GenerateSalt(uint32 length)
 	string theSalt;
 	for (int i=0;i<8;i++)
 	{
-		char charToAdd = random(33,126);
+		char charToAdd = random('!','~');
 		theSalt += string(&charToAdd,1);
 	}
 	return theSalt;

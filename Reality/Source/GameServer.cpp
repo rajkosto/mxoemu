@@ -31,6 +31,7 @@
 #include "Timer.h"
 #include "Config.h"
 #include "GameSocket.h"
+#include "Database/DatabaseEnv.h"
 #include <Sockets/Ipv4Address.h>
 
 initialiseSingleton( GameServer );
@@ -48,14 +49,27 @@ bool GameServer::Start()
 		return false;
 	}
 	m_udpHandler.Add(m_mainSocket.get());
-
 	m_serverStartMS = getMSTime64();
+
+	// Mark server as "up"
+	{
+		sDatabase.WaitExecute(format("UPDATE `worlds` SET `status`='1' WHERE `name`='%1%' LIMIT 1")
+			% this->GetName() );
+		m_serverUp=true;
+	}
+
 	return true;
 }
 
 void GameServer::Stop()
 {
 	m_mainSocket.reset();
+	// Mark server as "down"
+	{
+		sDatabase.WaitExecute(format("UPDATE `worlds` SET `status`='0' WHERE `name`='%1%' LIMIT 1")
+			% this->GetName() );
+		m_serverUp = false;
+	}
 	INFO_LOG("Game Server shutdown");
 }
 
@@ -96,4 +110,14 @@ void GameServer::AnnounceCommand( GameClient* clFrom,msgBaseClassPtr theCmd )
 	{
 		m_mainSocket->AnnounceCommand(clFrom,theCmd);
 	}
+}
+
+string GameServer::GetName() const
+{
+	return sConfig.GetStringDefault("GameServer.WorldName", "Reality");
+}
+
+string GameServer::GetChatPrefix() const
+{
+	return sConfig.GetStringDefault("GameServer.ChatPrefix", "SOE+MXO") + string("+") + GetName();
 }

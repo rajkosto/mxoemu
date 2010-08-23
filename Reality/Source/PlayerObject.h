@@ -72,6 +72,8 @@ public:
 
 	class GameClient& getClient() { return m_parent; }
 	vector<msgBaseClassPtr> getCurrentStatePackets();
+
+	void Update();
 private: 
 	//RPC handler type
 	typedef void (PlayerObject::*RPCHandler)( ByteBuffer &srcCmd );
@@ -89,6 +91,7 @@ private:
 	void RPC_HandleJump( ByteBuffer &srcCmd );
 	void RPC_HandleRegionLoadedNotification( ByteBuffer &srcCmd );
 	void RPC_HandleReadyForWorldChange( ByteBuffer &srcCmd );
+	void RPC_HandleWho( ByteBuffer &srcCmd );
 	void RPC_HandleWhereAmI( ByteBuffer &srcCmd );
 	void RPC_HandleGetPlayerDetails( ByteBuffer &srcCmd );
 	void RPC_HandleGetBackground( ByteBuffer &srcCmd );
@@ -96,6 +99,7 @@ private:
 	void RPC_HandleHardlineTeleport( ByteBuffer &srcCmd );
 	void RPC_HandleObjectSelected( ByteBuffer &srcCmd );
 	void RPC_HandleJackoutRequest( ByteBuffer &srcCmd );
+	void RPC_HandleJackoutFinished( ByteBuffer &srcCmd );
 
 	//RPC Handler maps
 	map<uint8,RPCHandler> m_RPCbyte;
@@ -139,6 +143,9 @@ private:
 	uint8 m_currMood;
 
 	uint8 m_emoteCounter;
+
+	bool m_jackoutRequested;
+	uint32 m_jackoutRequestedTime;
 
 	bool m_isAdmin;
 };

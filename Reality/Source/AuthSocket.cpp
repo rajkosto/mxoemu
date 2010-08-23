@@ -558,7 +558,7 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 			currCharacter.handleStrOffset = (numCharacters - i)*sizeof(CharacterData) + characterStrings.wpos();
 
 			string guidHex = Bin2Hex((const byte*)&currCharacter.charId,sizeof(currCharacter.charId));
-			WARNING_LOG(format("Character GUID: %1%") % guidHex );
+			DEBUG_LOG(format("Character GUID: %1%") % guidHex );
 
 			//add the character to character datas
 			characterDatas.append((const byte*)&currCharacter,sizeof(currCharacter));
@@ -580,8 +580,8 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 	packetHeader.offsetServerData = worldPacket.wpos();	
 
 	//fetch server list data
-	result.reset(sDatabase.Query("SELECT `worldId`, `name`, `type`, `status`, `load` FROM `worlds`"));
-	if(result == NULL)
+	result.reset(sDatabase.Query("SELECT `worldId`, `name`, `type`, `status`, `numPlayers` FROM `worlds`"));
+	if(result == NULL || result->GetRowCount() < 1)
 	{
 		ERROR_LOG("No worlds in db, disconnecting.");
 		SetCloseAndDelete(true);
@@ -620,7 +620,17 @@ void AuthSocket::HandleAuthChallengeResponse( ByteBuffer &packet )
 		currWorld.status = field[3].GetUInt8();
 		currWorld.clientVersion = matrixVersion;
 		currWorld.unknown4 = 1;
-		currWorld.load = field[4].GetUInt8();
+
+		//determine load
+		{
+			uint32 numPlayers = field[4].GetUInt32();
+			if (numPlayers < 50)
+				currWorld.load = 0x31; //low load
+			else if (numPlayers < 100)
+				currWorld.load = 0x32; //medium load
+			else 
+				currWorld.load = 0x33; //high load
+		}
 
 		worldPacket.append((const byte*)&currWorld,sizeof(currWorld));
 	}

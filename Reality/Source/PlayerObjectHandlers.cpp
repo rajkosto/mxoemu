@@ -512,7 +512,7 @@ void PlayerObject::RPC_HandleWhisper( ByteBuffer &srcCmd )
 	whisperCount = swap16(whisperCount); //big endian in packet
 
 	string theRecipient = srcCmd.readString();
-	string serverPrefix = sConfig.GetStringDefault("GameServer.ChatPrefix", "SOE+MXO+Reality") + string("+");
+	string serverPrefix = sGame.GetChatPrefix() + string("+");
 	string::size_type prefixPos = theRecipient.find_first_of(serverPrefix);
 	if (prefixPos != string::npos)
 		theRecipient = theRecipient.substr(prefixPos+serverPrefix.length());
@@ -731,6 +731,34 @@ void PlayerObject::RPC_HandleReadyForWorldChange( ByteBuffer &srcCmd )
 	m_district = 0x03;
 	InitializeWorld();
 	SpawnSelf();
+}
+
+void PlayerObject::RPC_HandleWho( ByteBuffer &srcCmd )
+{
+	stringstream playerList;
+	vector<uint32> objects = sObjMgr.getAllGOIds();
+	playerList << "Players(" << objects.size() << ")";
+	playerList << " [ ";
+	foreach (uint32 objId, objects)
+	{
+		PlayerObject* pObj = NULL;
+		try
+		{
+			pObj = sObjMgr.getGOPtr(objId);
+		}
+		catch (ObjectMgr::ObjectNotAvailable)
+		{
+			continue;
+		}
+
+		if (pObj->getDistrict() == this->getDistrict())
+		{
+			playerList << pObj->getHandle() << " ";
+		}
+	}
+	playerList << "]";
+
+	m_parent.QueueCommand(make_shared<WhisperMsg>("PlayersInYourDistrict",playerList.str()));
 }
 
 void PlayerObject::RPC_HandleWhereAmI( ByteBuffer &srcCmd )
@@ -970,6 +998,26 @@ void PlayerObject::RPC_HandleJackoutRequest( ByteBuffer &srcCmd )
 		% Bin2Hex(extraData,0);
 
 	DEBUG_LOG(msg);
-	m_parent.QueueCommand(make_shared<SystemChatMsg>("Have a nice day."));
+	//effect
+	m_parent.QueueState(make_shared<JackoutEffectMsg>(m_goId));
+	//chat msg
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("2E0700000000000000000000002300002E00000000000000000000000000000000000000"));
+	m_jackoutRequested = true;
+	m_jackoutRequestedTime = getTime();
+}
+
+void PlayerObject::RPC_HandleJackoutFinished( ByteBuffer &srcCmd )
+{
+	//this doesn't get sent by client, even though it does on real server
+
+	ByteBuffer extraData = ByteBuffer(&srcCmd.contents()[srcCmd.rpos()],srcCmd.remaining());
+	format msg = 
+		format("(%s) %s:%d jackout complete extra data %s")
+		% m_parent.Address()
+		% m_handle
+		% m_goId
+		% Bin2Hex(extraData,0);
+
+	DEBUG_LOG(msg);
 	m_parent.Invalidate();
 }

@@ -752,6 +752,52 @@ const ByteBuffer& PositionStateMsg::toBuf()
 	return m_buf;
 }
 
+JackoutEffectMsg::JackoutEffectMsg( uint32 objectId ):ObjectUpdateMsg(objectId)
+{
+}
+
+JackoutEffectMsg::~JackoutEffectMsg()
+{
+
+}
+
+const ByteBuffer& JackoutEffectMsg::toBuf()
+{
+	unsigned char rawData[] =
+	{
+		0x03, 0x02, 0x00, 0x03, 0x28, 0x03, 0xC0, 0x00, 0x74, 0x00, 0x10, 0xA1, 0x4B, 0x36, 0x48, 0x00, 
+		0x40, 0x62, 0xC4, 0x8A, 0x58, 0x43, 0x47, 0xBE, 0x65, 0x82, 0x21, 0x80, 0x80, 0x80, 0x80, 0x80, 
+		0x80, 0x10, 0x01, 0x00, 0x00
+	} ;
+
+	PlayerObject *m_player = NULL;
+	try
+	{
+		m_player = sObjMgr.getGOPtr(m_objectId);
+	}
+	catch (ObjectMgr::ObjectNotAvailable)
+	{
+		m_buf.clear();
+		throw PacketNoLongerValid();
+	}
+	uint16 viewId = 0;
+	try
+	{
+		viewId = sObjMgr.getViewForGO(m_toWho,m_objectId);
+	}
+	catch (ObjectMgr::ClientNotAvailable)
+	{
+		m_buf.clear();
+		throw PacketNoLongerValid();		
+	}
+
+	memcpy(&rawData[0x01],&viewId,sizeof(viewId));
+	m_player->getPosition().toFloatBuf(&rawData[0x0B],sizeof(float[3]));
+
+	m_buf = ByteBuffer(rawData,sizeof(rawData));
+	return m_buf;
+}
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
 #endif
@@ -954,7 +1000,7 @@ WhisperMsg::WhisperMsg( string sender, string message )
 
 	size_t senderStrLenPos = m_buf.wpos();
 
-	sender = sConfig.GetStringDefault("GameServer.ChatPrefix", "SOE+MXO+Reality") + string("+") + sender;
+	sender = sGame.GetChatPrefix() + string("+") + sender;
 	m_buf.writeString(sender);
 
 	size_t messageStrLenPos = m_buf.wpos();

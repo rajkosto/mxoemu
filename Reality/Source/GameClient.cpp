@@ -237,6 +237,12 @@ void GameClient::HandlePacket( const char *pData, size_t nLength )
 				FlagsChanged(m_clientFlags,packetData.getFlags());
 			}
 
+			//TODO: hack,we should update things irrespective of packets received
+			if (m_playerGoId != 0)
+			{
+				sObjMgr.getGOPtr(m_playerGoId)->Update();
+			}
+
 			if (dataToParse.size() > 0)
 			{
 				HandleEncrypted(dataToParse);

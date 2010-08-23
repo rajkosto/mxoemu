@@ -4,7 +4,7 @@ Source Host: localhost
 Source Database: reality
 Target Host: localhost
 Target Database: reality
-Date: 12.8.2010 20:59:04
+Date: 23.8.2010 17:12:26
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -59,7 +59,7 @@ CREATE TABLE `doors` (
   `DoorType` int(3) NOT NULL DEFAULT '1',
   `FirstUser` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13150 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=13156 DEFAULT CHARSET=latin1;
 
 -- ----------------------------
 -- Table structure for hardlines
@@ -149,7 +149,7 @@ CREATE TABLE `users` (
   PRIMARY KEY (`userId`),
   UNIQUE KEY `id` (`userId`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=MyISAM AUTO_INCREMENT=291 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=309 DEFAULT CHARSET=latin1;
 
 -- ----------------------------
 -- Table structure for worlds
@@ -159,7 +159,6 @@ CREATE TABLE `worlds` (
   `name` varchar(20) NOT NULL,
   `type` tinyint(3) unsigned NOT NULL DEFAULT '1' COMMENT '1 for no pvp, 2 for pvp',
   `status` tinyint(3) unsigned NOT NULL DEFAULT '1' COMMENT 'World Status (Down, Open etc.)',
-  `load` tinyint(3) unsigned NOT NULL DEFAULT '49',
   `numPlayers` int(10) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`worldId`),
   UNIQUE KEY `worldId` (`worldId`),
@@ -169,9 +168,9 @@ CREATE TABLE `worlds` (
 -- ----------------------------
 -- Records 
 -- ----------------------------
-INSERT INTO `characters` VALUES ('35', '60', '1', '0', 'TestCharacter', 'Test', 'Character', 'Just some dude', '64452.4', '694.999', '-32259.7', '-0.0981748', '500', '500', '200', '200', '50', '2', '0', '0', '1000000000', '10000', '1', '0', '2010-08-12 20:58:16', '0');
-INSERT INTO `characters` VALUES ('354', '60', '1', '0', 'TestChar2', 'Test2', 'Char2', 'Derperperper', '77832.5', '694.999', '-43093.7', '-0.245437', '500', '500', '200', '200', '50', '2', '0', '0', '1000000000', '10000', '1', '0', '2010-08-12 08:04:46', '0');
-INSERT INTO `doors` VALUES ('12849', '163577869', '1', '119700', '-505', '-50636', '0', '', null, '0', 'TestCharacter');
+INSERT INTO `characters` VALUES ('35', '60', '1', '0', 'TestCharacter', 'Test', 'Character', 'Just some dude', '63974.6', '694.999', '-25245.1', '2.40528', '500', '500', '200', '200', '50', '2', '0', '0', '1000000000', '10000', '1', '0', '2010-08-23 17:08:17', '0');
+INSERT INTO `characters` VALUES ('354', '60', '1', '0', 'TestChar2', 'Test2', 'Char2', 'Derperperper', '63602.3', '694.999', '-23176', '1.69351', '500', '500', '200', '200', '50', '2', '0', '0', '1000000000', '10000', '1', '0', '2010-08-23 16:35:09', '1');
+INSERT INTO `doors` VALUES ('12849', '163577862', '1', '119700', '-505', '-50636', '0', '', null, '0', 'TestCharacter');
 INSERT INTO `doors` VALUES ('12850', '211812355', '1', '115835', '-505', '-54298', '0', '', null, '1', 'TestCharacter');
 INSERT INTO `doors` VALUES ('12851', '211812359', '1', '115835', '-505', '-55088.3', '0', '', null, '1', 'TestCharacter');
 INSERT INTO `doors` VALUES ('12852', '211812358', '1', '115835', '-505', '-55292.1', '0', '', null, '1', 'TestCharacter');
@@ -472,6 +471,12 @@ INSERT INTO `doors` VALUES ('13146', '163579156', '1', '67703.3', '694.999', '-3
 INSERT INTO `doors` VALUES ('13147', '163577871', '1', '64305.2', '694.999', '-34060', '-3.11705', '', null, '1', 'TestCharacter');
 INSERT INTO `doors` VALUES ('13148', '163577866', '1', '64102.8', '694.999', '-34060', '-3.11705', '', null, '1', 'TestCharacter');
 INSERT INTO `doors` VALUES ('13149', '163577872', '1', '64508.4', '694.999', '-34060', '-3.11705', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13150', '163577861', '1', '67702.1', '694.999', '-26035', '3.11705', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13151', '163577859', '1', '67893.3', '694.999', '-25940', '-0.0981748', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13152', '163577862', '1', '67496.7', '694.999', '-25940', '-0.0490874', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13153', '430964742', '1', '83498.1', '694.999', '-34035', '-3.14159', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13154', '430964741', '1', '83703.9', '694.999', '-34035', '-3.11705', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13155', '430964739', '1', '83900.2', '694.999', '-34035', '-3.14159', '', null, '1', 'TestCharacter');
 INSERT INTO `hardlines` VALUES ('2', '49', 'MaraNorthWest', '7737.37', '95', '13801.5', '1.5708', '1');
 INSERT INTO `hardlines` VALUES ('3', '152', 'MaraCentral', '17043.1', '495', '2398.8', '-3.14159', '1');
 INSERT INTO `hardlines` VALUES ('6', '72', 'Tagged By Tastee Wheat', '39216.4', '95', '-21475.1', '2.03713', '1');
@@ -654,5 +659,5 @@ INSERT INTO `locations` VALUES ('60', 'TestTW', '186638.40625', '-905', '50007.6
 INSERT INTO `locations` VALUES ('61', 'LargeHalls1', '186638', '-905', '50007.7', '1');
 INSERT INTO `rsivalues` VALUES ('35', '0', '2', '2', '5', '4', '6', '10', '7', '5', '18', '4', '6', '4', '2', '3', '6', '5', '4', '15', '0', '0', '0');
 INSERT INTO `rsivalues` VALUES ('354', '1', '1', '1', '2', '7', '7', '1', '6', '7', '6', '1', '7', '0', '0', '1', '3', '5', '4', '3', '6', '2', '2');
-INSERT INTO `users` VALUES ('60', 'loluser', 'JLEwx;+?', '5824550e13f2f150c479e14f4c4d0b7c838fdca8', '17', 0xA8A95456F64A3948E0F94F7E441A861970D3D9E7947DF5054382170D9D770A1EFD6C730FEDB41EB05AC46100BE74B3CC76D9B2AF68761E99B99CAB5096231EAD08E5354F0857F1E98864DE9C5B1FB7AB1E823EC3FACD3D0B6B427D42493E2C23, 0x123060F047BCB5DD315C242E3E8F68D08C2AECD535A9310313D44DC7BE2872085C95BC184E57307C6E2E46B246BC4595DFF74C3EA73EA39D889D80B99FF79C561923994617428E166C410D98F6C56A5818E922F485B4A9C2EF44F5BF56FF8E25, '1265666869', '0', null);
-INSERT INTO `worlds` VALUES ('1', 'Reality', '1', '1', '49', '0');
+INSERT INTO `users` VALUES ('60', 'loluser', 'JLEwx;+?', '5824550e13f2f150c479e14f4c4d0b7c838fdca8', '17', 0xA8A95456F64A3948E0F94F7E441A861970D3D9E7947DF5054382170D9D770A1EFD6C730FEDB41EB05AC46100BE74B3CC76D9B2AF68761E99B99CAB5096231EAD08E5354F0857F1E98864DE9C5B1FB7AB1E823EC3FACD3D0B6B427D42493E2C23, 0x123060F047BCB5DD315C242E3E8F68D08C2AECD535A9310313D44DC7BE2872085C95BC184E57307C6E2E46B246BC4595DFF74C3EA73EA39D889D80B99FF79C561923994617428E166C410D98F6C56A5818E922F485B4A9C2EF44F5BF56FF8E25, '1265666869', '2', null);
+INSERT INTO `worlds` VALUES ('1', 'Reality', '1', '1', '0');

@@ -45,6 +45,7 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 	m_currAnimation=0;
 	m_currMood=0;
 	m_emoteCounter=0;
+	m_jackoutRequested=false;
 
 	setOnlineStatus(true);
 }
@@ -319,7 +320,6 @@ void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
 {
 /*	testCount++;
 	m_parent.QueueCommand(make_shared<SystemChatMsg>( (format("CMD %1%")%testCount).str() ));*/
-	checkAndStore();
 
 	uint8 zeroThree;
 	if (srcData.remaining() < sizeof(zeroThree))
@@ -441,7 +441,6 @@ using boost::iequals;
 void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 {
 //	DEBUG_LOG(format(" HandleCommand: %1%")% Bin2Hex(srcCmd) );
-	checkAndStore();
 
 	//set up handler ptrs
 	if (!m_RPCbyte.size())
@@ -460,6 +459,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 		m_RPCshort[0x80c2] = &PlayerObject::RPC_HandleJump;
 		m_RPCshort[0x80c9] = &PlayerObject::RPC_HandleRegionLoadedNotification;
 		m_RPCshort[0x8108] = &PlayerObject::RPC_HandleReadyForWorldChange;
+		m_RPCshort[0x8152] = &PlayerObject::RPC_HandleWho;
 		m_RPCshort[0x8154] = &PlayerObject::RPC_HandleWhereAmI;
 		m_RPCshort[0x8192] = &PlayerObject::RPC_HandleGetPlayerDetails;
 		m_RPCshort[0x8194] = &PlayerObject::RPC_HandleGetBackground;
@@ -467,6 +467,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 		m_RPCshort[0x818e] = &PlayerObject::RPC_HandleHardlineTeleport;
 		m_RPCshort[0x8151] = &PlayerObject::RPC_HandleObjectSelected;
 		m_RPCshort[0x80fc] = &PlayerObject::RPC_HandleJackoutRequest;
+		m_RPCshort[0x80fe] = &PlayerObject::RPC_HandleJackoutFinished;
 	}
 
 	uint8 firstByte = srcCmd.read<uint8>();
@@ -550,4 +551,17 @@ void PlayerObject::GoAhead(double distanceToGo)
 	}
 	this->setPosition(newLoc);
 	sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId),true);
+}
+
+void PlayerObject::Update()
+{
+	checkAndStore();
+	if (m_jackoutRequested && getTime() - m_jackoutRequestedTime >= 10) // 10 seconds for jackout
+	{
+		m_parent.QueueCommand(make_shared<HexGenericMsg>("80fd000000000000"));
+		m_parent.FlushQueue();
+		m_jackoutRequested=false;
+		//hack, should see why client doesnt send jackout complete msg, instead of invalidating here
+		m_parent.Invalidate();
+	}
 }

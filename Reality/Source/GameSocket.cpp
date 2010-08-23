@@ -28,11 +28,20 @@
 #include "Log.h"
 #include "GameClient.h"
 #include "Timer.h"
+#include "Database/DatabaseEnv.h"
+#include "GameServer.h"
 #include <Sockets/Ipv4Address.h>
 
 GameSocket::GameSocket( ISocketHandler& theHandler ) : UdpSocket(theHandler)
 {
 	m_lastCleanupTime = getTime();
+	// set player count to 0
+	{
+		sDatabase.Execute(format("UPDATE `worlds` SET `numPlayers`='0' WHERE `name`='%1%' LIMIT 1")
+			% sGame.GetName() );
+		m_lastPlayerCount = 0;
+	}
+
 }
 
 GameSocket::~GameSocket()
@@ -78,27 +87,39 @@ void GameSocket::OnRawData( const char *pData,size_t len,struct sockaddr *sa_fro
 void GameSocket::PruneDeadClients()
 {
 	m_currTime = getTime();
+
+	// Do client cleanup
+	for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();)
+	{
+		GameClient *Client = it->second;
+		if (!Client->IsValid() || (m_currTime - Client->LastActive()) >= 20)
+		{
+			if (!Client->IsValid())
+				DEBUG_LOG( format("Removing invalidated client [%1%]") % Client->Address() );
+			else
+				DEBUG_LOG( format("Removing client due to time-out [%1%]") % Client->Address() );
+
+			m_clients.erase(it++);
+			delete Client;
+		}
+		else
+		{
+			++it;
+		}
+	}
+
 	if ((m_currTime - m_lastCleanupTime) >= 5)
 	{
-		// Do client cleanup
-		for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();)
+		// Update player count
+		if (m_lastPlayerCount != this->Clients_Connected())
 		{
-			GameClient *Client = it->second;
-			if (!Client->IsValid() || (m_currTime - Client->LastActive()) >= 20)
-			{
-				if (!Client->IsValid())
-					DEBUG_LOG( format("Removing invalidated client [%1%]") % Client->Address() );
-				else
-					DEBUG_LOG( format("Removing client due to time-out [%1%]") % Client->Address() );
+			sDatabase.Execute(format("UPDATE `worlds` SET `numPlayers`='%1%' WHERE `name`='%2%' LIMIT 1")
+				% this->Clients_Connected()
+				% sGame.GetName() );
 
-				m_clients.erase(it++);
-				delete Client;
-			}
-			else
-			{
-				++it;
-			}
+			m_lastPlayerCount = this->Clients_Connected();
 		}
+
 		m_lastCleanupTime = m_currTime;
 	}
 }
@@ -139,10 +160,7 @@ void GameSocket::CheckAndResend()
 
 void GameSocket::Broadcast( const ByteBuffer &message )
 {
-	/*for (GClientList::iterator i = m_clients.begin();i != m_clients.end();++i)
-	{
-		i->second->QueueState(message);
-	}*/
+	return AnnounceStateUpdate(NULL,make_shared<StaticMsg>(message),true);
 }
 
 void GameSocket::AnnounceStateUpdate( GameClient* clFrom, msgBaseClassPtr theMsg, bool immediateOnly )

@@ -136,6 +136,7 @@ private:
 
 	bool m_spawnedInWorld;
 	uint32 m_lastStore;
+	uint32 m_storeCntr;
 
 	uint32 m_lastTestedCommand;
 

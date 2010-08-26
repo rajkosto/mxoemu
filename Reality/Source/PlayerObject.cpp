@@ -42,6 +42,7 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 	INFO_LOG(format("Player object for %1% constructed") % m_handle);
 	testCount=0;
 	m_lastStore = getTime();
+	m_storeCntr = 0;
 	m_currAnimation=0;
 	m_currMood=0;
 	m_emoteCounter=0;
@@ -200,7 +201,7 @@ uint8 PlayerObject::getRsiData( byte* outputBuf, size_t maxBufLen ) const
 
 void PlayerObject::checkAndStore()
 {
-	if (getTime() - m_lastStore > 60) //every 60 seconds
+	if (getTime() - m_lastStore > 10) //every 10 seconds
 	{
 		saveDataToDB();
 		m_lastStore = getTime();
@@ -210,7 +211,7 @@ void PlayerObject::checkAndStore()
 void PlayerObject::saveDataToDB()
 {
 	if (m_savedPos == m_pos)
-		return;
+		return setOnlineStatus(true);
 
 	bool storeSuccess = sDatabase.Execute(format("UPDATE `characters` SET `x` = '%1%', `y` = '%2%', `z` = '%3%', `rot` = '%4%', `lastOnline` = NOW() WHERE `charId` = '%5%'")
 		% m_pos.x
@@ -224,7 +225,12 @@ void PlayerObject::saveDataToDB()
 	else
 	{
 		m_savedPos = m_pos;
-		m_parent.QueueCommand(make_shared<SystemChatMsg>( (format("Character data for %1% has been written to the database.") % m_handle).str() ));
+		if (m_storeCntr >= 10)
+		{
+			m_parent.QueueCommand(make_shared<SystemChatMsg>( (format("Character data for %1% has been written to the database.") % m_handle).str() ));
+			m_storeCntr=0;
+		}
+		m_storeCntr++;
 	}
 }
 

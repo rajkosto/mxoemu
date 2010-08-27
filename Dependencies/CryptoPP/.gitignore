@@ -1,4 +1,7 @@
-
+a.out
+*.o
+*.a
+*.exe
 *.user
 *.ncb
 *.suo

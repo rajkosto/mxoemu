@@ -4,9 +4,11 @@
  **/
 
 /*
-Copyright (C) 1999-2008  Anders Hedstrom
+Copyright (C) 1999-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -37,7 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "HttpdForm.h"
 #include "IFileUpload.h"
 #include "IStream.h"
-#include "Debug.h"
+#include "File.h"
 
 #ifdef SOCKETS_NAMESPACE
 namespace SOCKETS_NAMESPACE {
@@ -55,13 +57,11 @@ HttpdForm::HttpdForm(IFile *infil, const std::string& content_type, size_t conte
 , m_file_upload(NULL)
 , m_upload_stream(NULL)
 {
-DEB(	Debug deb("HttpdForm");)
 	CGI *cgi = NULL;
 	size_t extra = 2;
 	int cl = (int)content_length;
 
 	m_current = m_cgi.end();
-DEB(	deb << "Content-Type: " << content_type << Debug::endl();)
 
 	if (content_type.size() >= 19 && content_type.substr(0, 19) == "multipart/form-data")
 	{
@@ -84,13 +84,12 @@ DEB(	deb << "Content-Type: " << content_type << Debug::endl();)
 		}
 		if (!m_strBoundary.empty())
 		{
-DEB(			Debug deb("HttpdForm; parsing, boundary = " + m_strBoundary);)
 			std::string content_type;
 			std::string current_name;
 			std::string current_filename;
 			char *slask = new char[TMPSIZE];
 			infil -> fgets(slask, TMPSIZE);
-			cl -= strlen(slask);
+			cl -= (int)strlen(slask);
 			while (cl >= 0 && !infil -> eof())
 			{
 				while (strlen(slask) && (slask[strlen(slask) - 1] == 13 || slask[strlen(slask) - 1] == 10))
@@ -111,23 +110,20 @@ DEB(			Debug deb("HttpdForm; parsing, boundary = " + m_strBoundary);)
 				{
 					// Get headers until empty line
 					infil -> fgets(slask, TMPSIZE);
-					cl -= strlen(slask);
+					cl -= (int)strlen(slask);
 					while (strlen(slask) && (slask[strlen(slask) - 1] == 13 || slask[strlen(slask) - 1] == 10))
 					{
 						slask[strlen(slask) - 1] = 0;
 					}
-DEB(					deb << "Parsing header, line = " << slask << Debug::endl();)
 					while (cl >= 0 && !infil -> eof() && *slask)
 					{
 						Parse pa(slask,":");
 						std::string h = pa.getword();
 						std::string h2 = pa.getrest();
-DEB(						deb << "KEY:" << h << "  REST:" << h2 << Debug::endl();)
 						if (!strcasecmp(h.c_str(),"Content-type"))
 						{
 							Parse pa(h2, ";");
 							content_type = pa.getword();
-DEB(							deb << "Found Content-Type: " << content_type << Debug::endl();)
 						}
 						else
 						if (!strcasecmp(h.c_str(),"Content-Disposition"))
@@ -136,7 +132,6 @@ DEB(							deb << "Found Content-Type: " << content_type << Debug::endl();)
 							h = pa.getword();
 							if (!strcmp(h.c_str(),"form-data"))
 							{
-DEB(								deb << "Found Content-Disposition: form-data, parsing" << Debug::endl();)
 								pa.EnableQuote(true);
 								h = pa.getword();
 								while (!h.empty())
@@ -154,7 +149,6 @@ DEB(								deb << "Found Content-Disposition: form-data, parsing" << Debug::end
 										{
 											current_name = h;
 										}
-DEB(										deb << "  Found name = " << current_name << Debug::endl();)
 									}
 									else
 									if (!strcmp(name.c_str(),"filename"))
@@ -177,7 +171,6 @@ DEB(										deb << "  Found name = " << current_name << Debug::endl();)
 										{
 											current_filename = current_filename.substr(x);
 										}
-DEB(										deb << "  Found filename = " << current_filename << Debug::endl();)
 									}
 									h = pa.getword();
 								}
@@ -185,7 +178,7 @@ DEB(										deb << "  Found filename = " << current_filename << Debug::endl();
 						}
 						// get next header value
 						infil -> fgets(slask, TMPSIZE);
-						cl -= strlen(slask);
+						cl -= (int)strlen(slask);
 						while (strlen(slask) && (slask[strlen(slask) - 1] == 13 || slask[strlen(slask) - 1] == 10))
 						{
 							slask[strlen(slask) - 1] = 0;
@@ -196,12 +189,12 @@ DEB(										deb << "  Found filename = " << current_filename << Debug::endl();
 					{
 						std::string val;
 						infil -> fgets(slask, TMPSIZE);
-						cl -= strlen(slask);
+						cl -= (int)strlen(slask);
 						while (cl >= 0 && !infil -> eof() && strncmp(slask,m_strBoundary.c_str(),m_strBoundary.size() ))
 						{
 							val += slask;
 							infil -> fgets(slask, TMPSIZE);
-							cl -= strlen(slask);
+							cl -= (int)strlen(slask);
 						}
 						// remove trailing cr/linefeed
 						while (!val.empty() && (val[val.size() - 1] == 13 || val[val.size() - 1] == 10))
@@ -210,7 +203,6 @@ DEB(										deb << "  Found filename = " << current_filename << Debug::endl();
 						}
 						cgi = new CGI(current_name, val);
 						m_cgi.push_back(cgi);
-DEB(						deb << current_name << ": " << val << Debug::endl();)
 						if (!cl)
 						{
 							break;
@@ -219,7 +211,7 @@ DEB(						deb << current_name << ": " << val << Debug::endl();)
 					else // current_filename.size() > 0
 					{
 						// read until m_strBoundary...
-						FILE *fil = NULL;
+						IFile *fil = NULL;
 						int out = 0;
 						char c;
 						char fn[2000]; // where post'd file will be saved
@@ -229,17 +221,28 @@ DEB(						deb << current_name << ": " << val << Debug::endl();)
 							::GetTempPathA(2000, tmp_path);
 							if (tmp_path[strlen(tmp_path) - 1] != '\\')
 							{
+#ifdef __CYGWIN__
 								strcat(tmp_path, "\\");
+#else
+								strcat_s(tmp_path, sizeof(tmp_path), "\\");
+#endif
 							}
-							sprintf(fn,"%s%s",tmp_path,current_filename.c_str());
+							snprintf(fn,sizeof(fn),"%s%s",tmp_path,current_filename.c_str());
 						}
 #else
-						sprintf(fn,"/tmp/%s",current_filename.c_str());
+						snprintf(fn,sizeof(fn),"/tmp/%s",current_filename.c_str());
 #endif
 						if (m_file_upload && !m_upload_stream)
 							m_upload_stream = &m_file_upload -> IFileUploadBegin(current_name, current_filename, content_type);
 						else
-							fil = fopen(fn, "wb");
+						{
+							fil = new File;
+							if (!fil -> fopen(fn, "wb"))
+							{
+								delete fil;
+								fil = NULL;
+							}
+						}
 						if (fil || m_upload_stream)
 						{
 							infil -> fread(&c,1,1);
@@ -251,7 +254,7 @@ DEB(						deb << current_name << ": " << val << Debug::endl();)
 									if (m_upload_stream)
 										m_upload_stream -> IStreamWrite(&tempcmp[tc], 1);
 									else
-										fwrite(&tempcmp[tc],1,1,fil);
+										fil -> fwrite(&tempcmp[tc],1,1);
 								}
 								tempcmp[tc] = c;
 								tc++;
@@ -286,16 +289,21 @@ DEB(						deb << current_name << ": " << val << Debug::endl();)
 							else
 							if (fil)
 							{
-								fclose(fil);
+								fil -> fclose();
+								delete fil;
 							}
 
 							cgi = new CGI(current_name,fn,fn);
 							m_cgi.push_back(cgi);
 						
+#if defined( _WIN32) && !defined(__CYGWIN__)
+							strcpy_s(slask, TMPSIZE, m_strBoundary.c_str());
+#else
 							strcpy(slask, m_strBoundary.c_str());
+#endif
 							size_t l = strlen(slask);
-							infil -> fgets(slask + l, TMPSIZE); // next line
-							cl -= strlen(slask + l);
+							infil -> fgets(slask + l, TMPSIZE - (int)l); // next line
+							cl -= (int)strlen(slask + l);
 						}
 						else
 						{
@@ -461,7 +469,7 @@ HttpdForm::~HttpdForm()
 {
 	CGI *cgi = NULL; //,*tmp;
 
-	for (cgi_v::iterator it = m_cgi.begin(); it != m_cgi.end(); it++)
+	for (cgi_v::iterator it = m_cgi.begin(); it != m_cgi.end(); ++it)
 	{
 		cgi = *it;
 		delete cgi;
@@ -563,7 +571,7 @@ int HttpdForm::getvalue(const std::string& n,std::string& v) const
 	CGI *cgi = NULL;
 	int r = 0;
 
-	for (cgi_v::const_iterator it = m_cgi.begin(); it != m_cgi.end(); it++)
+	for (cgi_v::const_iterator it = m_cgi.begin(); it != m_cgi.end(); ++it)
 	{
 		cgi = *it;
 		if (cgi -> name == n)
@@ -593,7 +601,7 @@ int HttpdForm::getvalue(const std::string& n,std::string& v) const
 
 std::string HttpdForm::getvalue(const std::string& n) const
 {
-	for (cgi_v::const_iterator it = m_cgi.begin(); it != m_cgi.end(); it++)
+	for (cgi_v::const_iterator it = m_cgi.begin(); it != m_cgi.end(); ++it)
 	{
 		CGI *cgi = *it;
 		if (cgi -> name == n)
@@ -610,7 +618,7 @@ size_t HttpdForm::getlength(const std::string& n) const
 	CGI *cgi = NULL;
 	size_t l;
 
-	for (cgi_v::const_iterator it = m_cgi.begin(); it != m_cgi.end(); it++)
+	for (cgi_v::const_iterator it = m_cgi.begin(); it != m_cgi.end(); ++it)
 	{
 		cgi = *it;
 		if (cgi -> name == n)

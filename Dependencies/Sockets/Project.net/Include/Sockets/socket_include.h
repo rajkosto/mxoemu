@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2004-2008  Anders Hedstrom
+Copyright (C) 2004-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -41,6 +43,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
    in read operations - helps on ECOS */
 #define SOCKETS_DYNAMIC_TEMP
 
+/** define type to uniquely identify a socket instance. */
+typedef unsigned long socketuid_t;
 
 // platform specific stuff
 #if (defined(__unix__) || defined(unix)) && !defined(USG)
@@ -49,7 +53,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <list>
 
 // int64
-#ifdef _MSC_VER
+#ifdef _WIN32
 typedef unsigned __int64 uint64_t;
 #else
 #include <stdlib.h>
@@ -179,6 +183,10 @@ namespace SOCKETS_NAMESPACE {
 #pragma comment(lib, "wsock32.lib")
 #endif
 #define strcasecmp _stricmp
+#ifndef __CYGWIN__
+#define snprintf sprintf_s
+#define vsnprintf vsprintf_s
+#endif
 
 typedef unsigned long ipaddr_t;
 typedef unsigned short port_t;
@@ -221,6 +229,7 @@ const char *StrError(int x);
 #ifdef SOCKETS_NAMESPACE
 namespace SOCKETS_NAMESPACE {
 #endif
+
 
 // class WSAInitializer is a part of the Socket class (on win32)
 // as a static instance - so whenever an application uses a Socket,

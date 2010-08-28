@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2004-2008  Anders Hedstrom
+Copyright (C) 2004-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -241,6 +243,11 @@ public:
 	bool IsReconnect();
 #endif
 
+	/** Flag that says a half closed socket won't be destroyed. */
+	void SetWillBeHalfClosed(bool = true);
+	/** Check half closed destroy status */
+	bool WillBeHalfClosed();
+
 	/** Use this if you only use OnRawData to process received data. */
 	void DisableInputBuffer(bool = true);
 
@@ -251,7 +258,7 @@ public:
 	/** Get the unfinished line when using SetLineProtocol = true.
 	    The finished line will always be reported with a call to OnLine.
 	 */
-	const std::string& GetLine() const;
+	const std::string GetLine() const;
 
 	// TCP options
 	bool SetTcpNodelay(bool = true);
@@ -302,6 +309,8 @@ static	int SSL_password_cb(char *buf,int num,int rwflag,void *userdata);
 private:
 	TcpSocket& operator=(const TcpSocket& ) { return *this; }
 
+	/** */
+	void SendFromOutputBuffer();
 	/** the actual send() */
 	int TryWrite(const char *buf, size_t len);
 	/** add data to output buffer top */
@@ -313,7 +322,8 @@ private:
 	uint64_t m_bytes_received;
 	bool m_skip_c; ///< Skip second char of CRLF or LFCR sequence in OnRead
 	char m_c; ///< First char in CRLF or LFCR sequence
-	std::string m_line; ///< Current line in line protocol mode
+	std::vector<char> m_line; ///< Current line in line protocol mode
+	size_t m_line_ptr;
 #ifdef SOCKETS_DYNAMIC_TEMP
 	char *m_buf; ///< temporary read buffer
 #endif
@@ -321,6 +331,7 @@ private:
 	OUTPUT *m_obuf_top; ///< output buffer on top
 	size_t m_transfer_limit;
 	size_t m_output_length;
+	size_t m_repeat_length;
 
 #ifdef HAVE_OPENSSL
 static	SSLInitializer m_ssl_init;
@@ -350,6 +361,7 @@ static	std::map<std::string, SSL_CTX *> m_server_contexts;
 	bool m_b_is_reconnect; ///< Trying to reconnect
 #endif
 
+	bool m_b_willbehalfclosed;
 };
 
 

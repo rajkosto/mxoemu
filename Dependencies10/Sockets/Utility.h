@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2004-2008  Anders Hedstrom
+Copyright (C) 2004-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -77,14 +79,18 @@ public:
 	public:
 		Uri(const std::string& url);
 
-		const std::string Url() { return m_url; }
-		const std::string& UrlUri() { return m_uri; }
-		const std::string& QueryString() { return m_query_string; }
-		const std::string Protocol() { return m_protocol; }
-		const std::string Host() { return m_host; }
-		int Port() { return m_port; }
-		const std::string Path() { return m_path; }
-		const std::string Extension() { return m_ext; }
+		const std::string& Url() const { return m_url; }
+		const std::string& UrlUri() const { return m_uri; }
+		const std::string& QueryString() const { return m_query_string; }
+		const std::string& Protocol() const { return m_protocol; }
+		const std::string& Host() const { return m_host; }
+		int Port() const { return m_port; }
+		const std::string& Path() const { return m_path; }
+		const std::string& File() const { return m_file; }
+		const std::string& Extension() const { return m_ext; }
+
+		const std::string& ToString() const { return m_url; }
+
 	private:
 		std::string m_url;
 		std::string m_uri;
@@ -93,6 +99,21 @@ public:
 		std::string m_host;
 		int m_port;
 		std::string m_path;
+		std::string m_file;
+		std::string m_ext;
+	};
+	class Path
+	{
+	public:
+		Path(const std::string& );
+
+		const std::string& GetPath() const { return m_path; }
+		const std::string& GetFilename() const { return m_file; }
+		const std::string& GetExtension() const { return m_ext; }
+
+	private:
+		std::string m_path;
+		std::string m_file;
 		std::string m_ext;
 	};
 public:
@@ -161,6 +182,8 @@ public:
 	static const std::string& GetLocalAddress6();
 #endif
 #endif
+	/** Get environment variable */
+	static const std::string GetEnv(const std::string& name);
 	/** Set environment variable.
 		\param var Name of variable to set
 		\param value Value */
@@ -188,8 +211,16 @@ public:
 
 	static const std::string Stack();
 
-	/** Utf8 decrypt. */
+	/** Utf8 decrypt, encrypt. */
 	static const std::string FromUtf8(const std::string& );
+	static const std::string ToUtf8(const std::string&);
+
+	/** File system stuff */
+	static const Path CurrentDirectory();
+	static bool ChangeDirectory(const Path& to_dir);
+
+	/** wait a specified number of ms */
+	static void Sleep(int ms);
 
 private:
 	static std::string m_host; ///< local hostname

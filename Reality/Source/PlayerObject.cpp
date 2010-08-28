@@ -243,9 +243,6 @@ void PlayerObject::setOnlineStatus( bool isOnline )
 
 void PlayerObject::InitializeWorld()
 {
-	m_lastTestedCommand = 1;
-//m_district = 18;
-	if (m_district > 17) m_district = 0;
 	m_parent.QueueCommand(make_shared<LoadWorldCmd>((LoadWorldCmd::mxoLocation)m_district,"Massive"));
 	m_parent.QueueCommand(make_shared<SetExperienceCmd>(m_exp));
 	m_parent.QueueCommand(make_shared<SetInformationCmd>(m_cash));

@@ -4,9 +4,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2007-2008  Anders Hedstrom
+Copyright (C) 2007-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -74,12 +76,12 @@ DEB(	fprintf(stderr, "SSLInitializer()\n");)
 	CRYPTO_set_locking_callback( SSL_locking_function );
 	CRYPTO_set_id_callback( SSL_id_function );
 
-	char *randfile = getenv("RANDFILE");
-	char *home = getenv("HOME");
-	if (!randfile && !home)
+	std::string randfile = Utility::GetEnv("RANDFILE");
+	std::string home = Utility::GetEnv("HOME");
+	if (randfile.empty() && home.empty())
 	{
-		char *homepath = getenv("HOMEPATH");
-		if (homepath)
+		std::string homepath = Utility::GetEnv("HOMEPATH");
+		if (!homepath.empty())
 		{
 			Utility::SetEnv("HOME", homepath);
 		}
@@ -119,7 +121,11 @@ void SSLInitializer::DeleteRandFile()
 {
 	if (m_rand_file.size())
 	{
+#ifdef _WIN32
+		_unlink(m_rand_file.c_str());
+#else
 		unlink(m_rand_file.c_str());
+#endif
 	}
 }
 

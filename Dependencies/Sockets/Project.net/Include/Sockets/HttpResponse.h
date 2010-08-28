@@ -4,9 +4,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2007-2008  Anders Hedstrom
+Copyright (C) 2007-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -68,10 +70,13 @@ public:
 	void Write( const char *buf, size_t sz );
 	void Writef( const char *format, ... );
 
-	const IFile& GetFile() const { return *m_file; }
+	const IFile& GetFile() const;
+	IFile& GetFile();
 
 	/** Replace memfile with file on disk, opened for read. */
 	void SetFile( const std::string& path );
+	/** Replace memfile with another IFile */
+	void SetFile( IFile *f );
 
 	void Reset();
 

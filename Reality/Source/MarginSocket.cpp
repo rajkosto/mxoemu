@@ -49,6 +49,8 @@ MarginSocket::MarginSocket(ISocketHandler& h) : TCPVarLenSocket(h)
 	worldCharId = 0;
 	numCharacterReplies = 0;
 	readyForUdp = false;
+	this->SetWillBeHalfClosed(true);
+
 	INFO_LOG("Margin socket constructed");
 }
 
@@ -439,6 +441,7 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 
 				if(count) //someone else already using account
 				{
+					ERROR_LOG(format("MS_LoadCharacterRequest: Closing connection for %1% (one already exists)") % m_charName );
 					this->SetCloseAndDelete(true);
 					return;
 				}

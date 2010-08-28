@@ -4,9 +4,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2008  Anders Hedstrom
+Copyright (C) 2008-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -43,8 +45,6 @@ StreamSocket::StreamSocket(ISocketHandler& h) : Socket(h)
 ,m_flush_before_close(true)
 ,m_connection_retry(0)
 ,m_retries(0)
-,m_call_on_connect(false)
-,m_b_retry_connect(false)
 ,m_line_protocol(false)
 ,m_shutdown(0)
 {
@@ -141,32 +141,6 @@ void StreamSocket::ResetConnectionRetries()
 }
 
 
-void StreamSocket::SetCallOnConnect(bool x)
-{
-	Handler().AddList(GetSocket(), LIST_CALLONCONNECT, x);
-	m_call_on_connect = x;
-}
-
-
-bool StreamSocket::CallOnConnect()
-{
-	return m_call_on_connect;
-}
-
-
-void StreamSocket::SetRetryClientConnect(bool x)
-{
-	Handler().AddList(GetSocket(), LIST_RETRY, x);
-	m_b_retry_connect = x;
-}
-
-
-bool StreamSocket::RetryClientConnect()
-{
-	return m_b_retry_connect;
-}
-
-
 void StreamSocket::SetLineProtocol(bool x)
 {
 	m_line_protocol = x;
@@ -189,6 +163,9 @@ int StreamSocket::GetShutdown()
 {
 	return m_shutdown;
 }
+
+
+
 
 #ifdef SOCKETS_NAMESPACE
 } // namespace SOCKETS_NAMESPACE {

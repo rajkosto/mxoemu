@@ -4,9 +4,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2007-2008  Anders Hedstrom
+Copyright (C) 2007-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -37,6 +39,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef SOCKETS_NAMESPACE
 namespace SOCKETS_NAMESPACE {
 #endif
+
+class IFile;
 
 /** Get http response to file or memory. 
 	\ingroup http */
@@ -109,7 +113,7 @@ private:
 	size_t m_content_length; ///< Content-length header received from remote
 	std::string m_content; ///< Received http headers
 	bool m_data_ptr_set; ///< Buffer set from outside, do not delete
-	FILE *m_fil; ///< Output file
+	IFile *m_fil; ///< Output file
 	size_t m_content_ptr; ///< Number of bytes received from body
 	bool m_b_complete; ///< The entire content-length number of bytes has been received
 	bool m_b_close_when_complete; ///< Close when the full response has been received

@@ -4,7 +4,15 @@ CFLAGS +=	-Wall -g $(INCLUDE) -MD -D_VERSION='"$(VERSION)"'
 
 # turn off optimization if compiling with gcc 2.9.x:
 #CFLAGS +=	-O0
-CFLAGS +=	-O2
+CFLAGS +=	-O2 -mno-cygwin
+
 
 # uncomment depending on your operating system
+CFLAGS +=	-D_WIN32
 CFLAGS +=	-D__CYGWIN__
+
+
+LIBS +=		c:/openssl/lib/mingw/ssleay32.a \
+		c:/openssl/lib/mingw/libeay32.a \
+		-lws2_32
+

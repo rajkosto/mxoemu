@@ -4,9 +4,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2008  Anders Hedstrom
+Copyright (C) 2008-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -93,24 +95,6 @@ public:
 	/** Reset actual connection retries (tcp only). */
 	void ResetConnectionRetries();
 
-	// LIST_CALLONCONNECT
-
-	/** Instruct socket to call OnConnect callback next sockethandler cycle. */
-	void SetCallOnConnect(bool x = true);
-
-	/** Check call on connect flag.
-		\return true if OnConnect() should be called a.s.a.p */
-	bool CallOnConnect();
-
-	// LIST_RETRY
-
-	/** Set flag to initiate a connection attempt after a connection timeout. */
-	void SetRetryClientConnect(bool x = true);
-
-	/** Check if a connection attempt should be made.
-		\return true when another attempt should be made */
-	bool RetryClientConnect();
-
 	/** Called after OnRead if socket is in line protocol mode.
 		\sa SetLineProtocol */
 	/** Enable the OnLine callback. Do not create your own OnRead
@@ -141,8 +125,6 @@ private:
 	bool m_flush_before_close; ///< Send all data before closing (default true)
 	int m_connection_retry; ///< Maximum connection retries (tcp)
 	int m_retries; ///< Actual number of connection retries (tcp)
-	bool m_call_on_connect; ///< OnConnect will be called next ISocketHandler cycle if true
-	bool m_b_retry_connect; ///< Try another connection attempt next ISocketHandler cycle
 	bool m_line_protocol; ///< Line protocol mode flag
 	int m_shutdown; ///< Shutdown status
 };

@@ -4,9 +4,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2007-2008  Anders Hedstrom
+Copyright (C) 2007-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -31,6 +33,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef _SOCKETS_CONFIG_H
 #define _SOCKETS_CONFIG_H
 
+/* Limits */
+#define TCP_LINE_SIZE 8192
+#define MAX_HTTP_HEADER_COUNT 200
+
 #ifndef _RUN_DP
 /* First undefine symbols if already defined. */
 #undef HAVE_OPENSSL
@@ -42,7 +48,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #undef ENABLE_RESOLVER
 #undef ENABLE_RECONNECT
 #undef ENABLE_DETACH
-#undef ENABLE_TRIGGERS
 #undef ENABLE_EXCEPTIONS
 #undef ENABLE_XML
 #endif // _RUN_DP
@@ -86,10 +91,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 /* Enable socket thread detach functionality. */
 #define ENABLE_DETACH
-
-
-/* Enable socket to socket triggers. Not yet in use. */
-//#define ENABLE_TRIGGERS
 
 
 /* Enabled exceptions. */

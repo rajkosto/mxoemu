@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include <StdoutLog.h>
 #include <ListenSocket.h>
-#include <SocketHandler.h>
+#include <SocketHandlerEp.h>
 #include <TcpSocket.h>
 #include <Utility.h>
 #ifndef _WIN32
@@ -220,7 +220,8 @@ public:
       //
       g_b_flood = g_b_repeat;
     }
-    if (!m_b_one && Handler().GetCount() >= FD_SETSIZE - 17)
+#ifndef USE_EPOLL
+    if (!m_b_one && Handler().GetCount() >= Handler().MaxCount() - 17)
     {
       fprintf(stderr, "\nFD_SETSIZE connection limit reached: %d, continuing in single connection stress mode\n", (int)Handler().GetCount());
       if (g_b_off)
@@ -230,6 +231,7 @@ public:
       //
       g_b_flood = g_b_repeat;
     }
+#endif
   }
   ~MySocket() {
   }
@@ -377,6 +379,41 @@ private:
 };
 
 
+int connectors = 0;
+
+class ConnectorSocket : public TcpSocket
+{
+public:
+  ConnectorSocket(ISocketHandler& h) : TcpSocket(h), m_state(0) {
+  }
+  ~ConnectorSocket() {}
+
+  void OnConnect() {
+    SetTimeout(5);
+    connectors += 1;
+    std::cout << "Connected: " << connectors << std::endl;
+  }
+
+  void OnTimeout() {
+    SetTimeout(5);
+    if (!m_state)
+    {
+      m_state = 1;
+    }
+    else
+    {
+      ConnectorSocket *s = new ConnectorSocket(Handler());
+      s -> Open(gHost, gPort);
+      s -> SetDeleteByHandler();
+      Handler().Add(s);
+    }
+  }
+
+private:
+  int m_state;
+};
+
+
 #ifndef _WIN32
 void sigint(int)
 {
@@ -398,12 +435,12 @@ void sigusr2(int)
 #endif
 
 
-class MyHandler : public SocketHandler
+class MyHandler : public SocketHandlerEp
 {
 public:
-  MyHandler() : SocketHandler() {
+  MyHandler() : SocketHandlerEp() {
   }
-  MyHandler(StdoutLog *p) : SocketHandler(p) {
+  MyHandler(StdoutLog *p) : SocketHandlerEp(p) {
   }
   ~MyHandler() {
   }
@@ -444,6 +481,7 @@ int main(int argc,char *argv[])
   bool one = false;
   bool enableLog = false;
   bool http = false;
+  bool connector = false;
   std::string url;
   time_t report_period = 10;
   for (int i = 1; i < argc; i++)
@@ -480,8 +518,10 @@ int main(int argc,char *argv[])
       http = true;
     if (!strcmp(argv[i], "-url") && i < argc - 1)
       url = argv[++i];
+    if (!strcmp(argv[i], "-connector"))
+      connector = true;
   }
-  if (argc < 2 || (!many && !one && !g_max_connections && !http) )
+  if (argc < 2 || (!many && !one && !g_max_connections && !http && !connector) )
   {
     printf("Usage: %s [mode] [options]\n", *argv);
     printf("  Modes (only use one of these):\n");
@@ -503,6 +543,7 @@ int main(int argc,char *argv[])
     printf("    -ssl       use ssl\n");
 #endif
     printf("    -url xx    url to use in http mode (default http://<host>:<port>/)\n");
+    printf("    -connector Use connector stress test\n");
     exit(-1);
   }
   fprintf(stderr, "Using data size: %d bytes\n", (int)g_data_size);
@@ -519,6 +560,15 @@ int main(int argc,char *argv[])
 #endif
   StdoutLog *log = enableLog ? new StdoutLog() : NULL;
   MyHandler h(log);
+  if (connector)
+  {
+    report_period = 4;
+    ConnectorSocket *s = new ConnectorSocket(h);
+    s -> Open(gHost, gPort);
+    s -> SetDeleteByHandler();
+    h.Add(s);
+  }
+  else
   if (http)
   {
     if (!url.size())

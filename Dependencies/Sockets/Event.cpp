@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2005-2008  Anders Hedstrom
+Copyright (C) 2005-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -45,7 +47,7 @@ namespace SOCKETS_NAMESPACE {
 long Event::m_unique_id = 0;
 
 
-Event::Event(IEventOwner *from,long sec,long usec) : m_from(from), m_time(sec, usec), m_id(++m_unique_id)
+Event::Event(IEventOwner *from,long sec,long usec,unsigned long data) : m_from(from), m_data(data), m_time(sec, usec), m_id(++m_unique_id)
 {
 }
 
@@ -61,7 +63,7 @@ bool Event::operator<(Event& e)
 }
 
 
-long Event::GetID()
+long Event::GetID() const
 {
 	return m_id;
 }
@@ -73,9 +75,15 @@ const EventTime& Event::GetTime() const
 }
 
 
-IEventOwner *Event::GetFrom()
+IEventOwner *Event::GetFrom() const
 {
 	return m_from;
+}
+
+
+unsigned long Event::Data() const
+{
+	return m_data;
 }
 
 

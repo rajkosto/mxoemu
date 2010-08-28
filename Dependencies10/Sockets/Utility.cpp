@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2004-2008  Anders Hedstrom
+Copyright (C) 2004-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -38,6 +40,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #else
 #include <netdb.h>
 #include <pthread.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #endif
 // --- stack
 #ifdef LINUX
@@ -200,7 +204,7 @@ std::string Utility::l2string(long l)
 {
 	std::string str;
 	char tmp[100];
-	sprintf(tmp,"%ld",l);
+	snprintf(tmp,sizeof(tmp),"%ld",l);
 	str = tmp;
 	return str;
 }
@@ -227,7 +231,7 @@ std::string Utility::bigint2string(uint64_t l)
 uint64_t Utility::atoi64(const std::string& str) 
 {
 	uint64_t l = 0;
-	for (size_t i = 0; i < str.size(); i++)
+	for (size_t i = 0; i < str.size(); ++i)
 	{
 		l = l * 10 + str[i] - 48;
 	}
@@ -238,7 +242,7 @@ uint64_t Utility::atoi64(const std::string& str)
 unsigned int Utility::hex2unsigned(const std::string& str)
 {
 	unsigned int r = 0;
-	for (size_t i = 0; i < str.size(); i++)
+	for (size_t i = 0; i < str.size(); ++i)
 	{
 		r = r * 16 + str[i] - 48 - ((str[i] >= 'A') ? 7 : 0) - ((str[i] >= 'a') ? 32 : 0);
 	}
@@ -254,7 +258,7 @@ std::string Utility::rfc1738_encode(const std::string& src)
 {
 static	char hex[] = "0123456789ABCDEF";
 	std::string dst;
-	for (size_t i = 0; i < src.size(); i++)
+	for (size_t i = 0; i < src.size(); ++i)
 	{
 		if (isalnum(src[i]))
 		{
@@ -284,7 +288,7 @@ static	char hex[] = "0123456789ABCDEF";
 std::string Utility::rfc1738_decode(const std::string& src)
 {
 	std::string dst;
-	for (size_t i = 0; i < src.size(); i++)
+	for (size_t i = 0; i < src.size(); ++i)
 	{
 		if (src[i] == '%' && isxdigit(src[i + 1]) && isxdigit(src[i + 2]))
 		{
@@ -312,7 +316,7 @@ bool Utility::isipv4(const std::string& str)
 {
 	int dots = 0;
 	// %! ignore :port?
-	for (size_t i = 0; i < str.size(); i++)
+	for (size_t i = 0; i < str.size(); ++i)
 	{
 		if (str[i] == '.')
 			dots++;
@@ -330,7 +334,7 @@ bool Utility::isipv6(const std::string& str)
 {
 	size_t qc = 0;
 	size_t qd = 0;
-	for (size_t i = 0; i < str.size(); i++)
+	for (size_t i = 0; i < str.size(); ++i)
 	{
 		qc += (str[i] == ':') ? 1 : 0;
 		qd += (str[i] == '.') ? 1 : 0;
@@ -351,7 +355,7 @@ bool Utility::isipv6(const std::string& str)
 		{
 			return false;
 		}
-		for (size_t i = 0; i < tmp.size(); i++)
+		for (size_t i = 0; i < tmp.size(); ++i)
 		{
 			if (tmp[i] < '0' || (tmp[i] > '9' && tmp[i] < 'A') ||
 				(tmp[i] > 'F' && tmp[i] < 'a') || tmp[i] > 'f')
@@ -422,14 +426,20 @@ void Utility::l2ip(const struct in6_addr& ip, std::string& str,bool mixed)
 		unsigned short x;
 		unsigned short addr16[8];
 		memcpy(addr16, &ip, sizeof(addr16));
-		for (size_t i = 0; i < 6; i++)
+		for (size_t i = 0; i < 6; ++i)
 		{
 			x = ntohs(addr16[i]);
 			if (*slask && (x || !ok_to_skip || prev))
+			{
+#if defined( _WIN32) && !defined(__CYGWIN__)
+				strcat_s(slask,sizeof(slask),":");
+#else
 				strcat(slask,":");
+#endif
+			}
 			if (x || !ok_to_skip)
 			{
-				sprintf(slask + strlen(slask),"%x", x);
+				snprintf(slask + strlen(slask),sizeof(slask) - strlen(slask),"%x", x);
 				if (x && skipped)
 					ok_to_skip = false;
 			}
@@ -440,9 +450,9 @@ void Utility::l2ip(const struct in6_addr& ip, std::string& str,bool mixed)
 			prev = x;
 		}
 		x = ntohs(addr16[6]);
-		sprintf(slask + strlen(slask),":%u.%u",x / 256,x & 255);
+		snprintf(slask + strlen(slask),sizeof(slask) - strlen(slask),":%u.%u",x / 256,x & 255);
 		x = ntohs(addr16[7]);
-		sprintf(slask + strlen(slask),".%u.%u",x / 256,x & 255);
+		snprintf(slask + strlen(slask),sizeof(slask) - strlen(slask),".%u.%u",x / 256,x & 255);
 	}
 	else
 	{
@@ -459,7 +469,7 @@ void Utility::l2ip(const struct in6_addr& ip, std::string& str,bool mixed)
 
 int Utility::in6_addr_compare(in6_addr a,in6_addr b)
 {
-	for (size_t i = 0; i < 16; i++)
+	for (size_t i = 0; i < 16; ++i)
 	{
 		if (a.s6_addr[i] < b.s6_addr[i])
 			return -1;
@@ -555,6 +565,25 @@ const std::string& Utility::GetLocalAddress6()
 #endif
 
 
+const std::string Utility::GetEnv(const std::string& name)
+{
+#if defined( _WIN32) && !defined(__CYGWIN__)
+	size_t sz = 0;
+	char tmp[2048];
+	if (getenv_s(&sz, tmp, sizeof(tmp), name.c_str()))
+	{
+		*tmp = 0;
+	}
+	return tmp;
+#else
+	char *s = getenv(name.c_str());
+	if (!s)
+		return "";
+	return s;
+#endif
+}
+
+
 void Utility::SetEnv(const std::string& var,const std::string& value)
 {
 #if (defined(SOLARIS8) || defined(SOLARIS))
@@ -564,8 +593,9 @@ void Utility::SetEnv(const std::string& var,const std::string& value)
 		{
 			delete[] vmap[var];
 		}
-		vmap[var] = new char[var.size() + 1 + value.size() + 1];
-		sprintf(vmap[var], "%s=%s", var.c_str(), value.c_str());
+		size_t sz = var.size() + 1 + value.size() + 1;
+		vmap[var] = new char[sz];
+		snprintf(vmap[var], sz, "%s=%s", var.c_str(), value.c_str());
 		putenv( vmap[var] );
 	}
 #elif defined _WIN32
@@ -752,7 +782,7 @@ bool Utility::u2ip(const std::string& host, struct sockaddr_in6& sa, int ai_flag
 	{
 		std::list<std::string> vec;
 		size_t x = 0;
-		for (size_t i = 0; i <= host.size(); i++)
+		for (size_t i = 0; i <= host.size(); ++i)
 		{
 			if (i == host.size() || host[i] == ':')
 			{
@@ -766,9 +796,9 @@ bool Utility::u2ip(const std::string& host, struct sockaddr_in6& sa, int ai_flag
 					unsigned long b1 = static_cast<unsigned long>(pa.getvalue());
 					unsigned long b2 = static_cast<unsigned long>(pa.getvalue());
 					unsigned long b3 = static_cast<unsigned long>(pa.getvalue());
-					sprintf(slask,"%lx",b0 * 256 + b1);
+					snprintf(slask,sizeof(slask),"%lx",b0 * 256 + b1);
 					vec.push_back(slask);
-					sprintf(slask,"%lx",b2 * 256 + b3);
+					snprintf(slask,sizeof(slask),"%lx",b2 * 256 + b3);
 					vec.push_back(slask);
 				}
 				else
@@ -782,7 +812,7 @@ bool Utility::u2ip(const std::string& host, struct sockaddr_in6& sa, int ai_flag
 		size_t sz = vec.size(); // number of byte pairs
 		size_t i = 0; // index in in6_addr.in6_u.u6_addr16[] ( 0 .. 7 )
 		unsigned short addr16[8];
-		for (std::list<std::string>::iterator it = vec.begin(); it != vec.end(); it++)
+		for (std::list<std::string>::iterator it = vec.begin(); it != vec.end(); ++it)
 		{
 			std::string bytepair = *it;
 			if (bytepair.size())
@@ -886,7 +916,7 @@ bool Utility::reverse(struct sockaddr *sa, socklen_t sa_len, std::string& hostna
 			struct sockaddr_in *sa_in = (struct sockaddr_in *)sa;
 			memcpy(&u.l, &sa_in -> sin_addr, sizeof(u.l));
 			char tmp[100];
-			sprintf(tmp, "%u.%u.%u.%u", u.a.b1, u.a.b2, u.a.b3, u.a.b4);
+			snprintf(tmp, sizeof(tmp), "%u.%u.%u.%u", u.a.b1, u.a.b2, u.a.b3, u.a.b4);
 			hostname = tmp;
 			return true;
 		}
@@ -914,14 +944,20 @@ bool Utility::reverse(struct sockaddr *sa, socklen_t sa_len, std::string& hostna
 				unsigned short addr16[8];
 				struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *)sa;
 				memcpy(addr16, &sa_in6 -> sin6_addr, sizeof(addr16));
-				for (size_t i = 0; i < 8; i++)
+				for (size_t i = 0; i < 8; ++i)
 				{
 					unsigned short x = ntohs(addr16[i]);
 					if (*slask && (x || !ok_to_skip || prev))
+					{
+#if defined( _WIN32) && !defined(__CYGWIN__)
+						strcat_s(slask, sizeof(slask),":");
+#else
 						strcat(slask,":");
+#endif
+					}
 					if (x || !ok_to_skip)
 					{
-						sprintf(slask + strlen(slask),"%x", x);
+						snprintf(slask + strlen(slask), sizeof(slask) - strlen(slask),"%x", x);
 						if (x && skipped)
 							ok_to_skip = false;
 					}
@@ -933,7 +969,13 @@ bool Utility::reverse(struct sockaddr *sa, socklen_t sa_len, std::string& hostna
 				}
 			}
 			if (!*slask)
+			{
+#if defined( _WIN32) && !defined(__CYGWIN__)
+				strcpy_s(slask, sizeof(slask), "::");
+#else
 				strcpy(slask, "::");
+#endif
+			}
 			hostname = slask;
 			return true;
 		}
@@ -1024,7 +1066,7 @@ unsigned long Utility::ThreadID()
 std::string Utility::ToLower(const std::string& str)
 {
 	std::string r;
-	for (size_t i = 0; i < str.size(); i++)
+	for (size_t i = 0; i < str.size(); ++i)
 	{
 		if (str[i] >= 'A' && str[i] <= 'Z')
 			r += str[i] | 32;
@@ -1038,7 +1080,7 @@ std::string Utility::ToLower(const std::string& str)
 std::string Utility::ToUpper(const std::string& str)
 {
 	std::string r;
-	for (size_t i = 0; i < str.size(); i++)
+	for (size_t i = 0; i < str.size(); ++i)
 	{
 		if (str[i] >= 'a' && str[i] <= 'z')
 			r += (char)(str[i] - 32);
@@ -1052,7 +1094,7 @@ std::string Utility::ToUpper(const std::string& str)
 std::string Utility::ToString(double d)
 {
 	char tmp[100];
-	sprintf(tmp, "%f", d);
+	snprintf(tmp, sizeof(tmp), "%f", d);
 	return tmp;
 }
 
@@ -1067,7 +1109,7 @@ static	Utility::Rng generator( (unsigned long)time(NULL) );
 Utility::Rng::Rng(unsigned long seed) : m_value( 0 )
 {
 	m_tmp[0] = seed & 0xffffffffUL;
-	for (int i = 1; i < TWIST_LEN; i++)
+	for (int i = 1; i < TWIST_LEN; ++i)
 	{
 		m_tmp[i] = (1812433253UL * (m_tmp[i - 1] ^ (m_tmp[i - 1] >> 30)) + i);
 	}
@@ -1140,11 +1182,51 @@ Utility::Uri::Uri(const std::string& url) : m_url(url), m_port(0), m_path(url)
 		m_uri = m_path;
 	}
 	pos = std::string::npos;
-	for (size_t i = 0; i < m_uri.size(); i++)
+	for (size_t i = 0; i < m_uri.size(); ++i)
+		if (m_uri[i] == '/')
+			pos = i;
+	if (pos != std::string::npos)
+		m_file = m_uri.substr(pos + 1);
+	pos = std::string::npos;
+	for (size_t i = 0; i < m_uri.size(); ++i)
 		if (m_uri[i] == '.')
 			pos = i;
 	if (pos != std::string::npos)
 		m_ext = m_uri.substr(pos + 1);
+}
+
+
+Utility::Path::Path(const std::string& _str)
+{
+	std::string str = _str;
+	for (size_t i = 0; i < str.size(); ++i)
+	{
+#ifdef _WIN32
+		if (str[i] == '/')
+			str[i] = '\\';
+#else
+		if (str[i] == '\\')
+			str[i] = '/';
+#endif
+	}
+#ifndef _WIN32
+	struct stat st;
+	stat(str.c_str(), &st);
+	if (S_ISDIR(st.st_mode))
+	{
+		m_path = str;
+		return;
+	}
+#endif
+	size_t x = 0;
+	for (size_t i = 0; i < str.size(); ++i)
+		if (str[i] == '/' || str[i] == '\\')
+			x = i + 1;
+	m_path = str.substr(0, x);
+	m_file = str.substr(x);
+	for (size_t i = 0; i < m_file.size(); ++i)
+		if (m_file[i] == '.')
+			m_ext = m_file.substr(i + 1);
 }
 
 
@@ -1156,7 +1238,7 @@ const std::string Utility::Stack()
 	int n = backtrace(buffer, BFSIZE);
 	char **res = backtrace_symbols(buffer, n);
 	std::string tmp;
-	for (int i = 0; i < n; i++)
+	for (int i = 0; i < n; ++i)
 	{
 		std::string x = res[i];
 		std::string plus;
@@ -1230,7 +1312,7 @@ const std::string Utility::FromUtf8(const std::string& str)
 	if (!str.size())
 		return "";
 	std::string r;
-	for (size_t i = 0; i < str.size(); i++)
+	for (size_t i = 0; i < str.size(); ++i)
 	{
 		if (i < str.size() - 1 && (str[i] & 0xe0) == 0xc0 && (str[i + 1] & 0xc0) == 0x80)
 		{
@@ -1245,6 +1327,82 @@ const std::string Utility::FromUtf8(const std::string& str)
 		}
 	}
 	return r;
+}
+
+// 110yyyxx 10xxxxxx	
+
+const std::string Utility::ToUtf8(const std::string& str)
+{
+	if (str.empty())
+		return "";
+	std::string r;
+	for (size_t i = 0; i < str.size(); ++i)
+	{
+		if (((unsigned)str[i] & 0x80) == 0x80)
+		{
+			r += (str[i] >> 6) | 0xc0;
+			r += (str[i] & 0x3f) | 0x80;
+		}
+		else
+		{
+			r += str[i];
+		}
+	}
+	return r;
+}
+
+
+const Utility::Path Utility::CurrentDirectory()
+{
+#ifdef _WIN32
+	TCHAR slask[MAX_PATH + 1];
+	DWORD ret =
+#ifdef UNICODE
+	::GetCurrentDirectoryW(MAX_PATH, slask);
+#else
+	::GetCurrentDirectoryA(MAX_PATH, slask);
+#endif
+	if (!ret)
+	{
+		*slask = 0;
+		DWORD err = GetLastError();
+	}
+	return Path(slask);
+#else
+	char slask[32000];
+	if (!getcwd(slask, 32000))
+	{
+		return Path(".");
+	}
+	return Path(slask);
+#endif
+}
+
+
+bool Utility::ChangeDirectory(const Utility::Path& to_dir)
+{
+#ifdef _WIN32
+	return SetCurrentDirectory(to_dir.GetPath().c_str()) ? true : false;
+#else
+	if (chdir( to_dir.GetPath().c_str() ) == -1)
+	{
+		return false;
+	}
+	return true;
+#endif
+}
+
+
+void Utility::Sleep(int ms)
+{
+#ifdef _WIN32
+	::Sleep(ms);
+#else
+	struct timeval tv;
+	tv.tv_sec = ms / 1000;
+	tv.tv_usec = (ms % 1000) * 1000;
+	select(0, NULL, NULL, NULL, &tv);
+#endif
 }
 
 

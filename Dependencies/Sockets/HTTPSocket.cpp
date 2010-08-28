@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2004-2008  Anders Hedstrom
+Copyright (C) 2004-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -33,8 +35,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "HTTPSocket.h"
 #include "Parse.h"
 #include "ISocketHandler.h"
-#include "Utility.h"
 #include <stdarg.h>
+#include <cstdio>
 
 #ifdef SOCKETS_NAMESPACE
 namespace SOCKETS_NAMESPACE {
@@ -54,6 +56,8 @@ HTTPSocket::HTTPSocket(ISocketHandler& h)
 ,m_b_chunked(false)
 ,m_chunk_size(0)
 ,m_chunk_state(0)
+,m_header_count(0)
+,m_max_header_count(MAX_HTTP_HEADER_COUNT)
 {
 	SetLineProtocol();
 	DisableInputBuffer();
@@ -262,6 +266,11 @@ void HTTPSocket::OnLine(const std::string& line)
 		SetRetain();
 	}
 #endif
+	if (m_header_count++ > m_max_header_count)
+	{
+		SetCloseAndDelete();
+		Handler().LogError(this, "OnLine", m_header_count, "http header count exceeds builtin limit of (" + Utility::l2string(m_max_header_count) + ")", LOG_LEVEL_FATAL);
+	}
 }
 
 
@@ -269,7 +278,7 @@ void HTTPSocket::SendResponse()
 {
 	std::string msg;
 	msg = m_http_version + " " + m_status + " " + m_status_text + "\r\n";
-	for (string_m::iterator it = m_response_header.begin(); it != m_response_header.end(); it++)
+	for (string_m::iterator it = m_response_header.begin(); it != m_response_header.end(); ++it)
 	{
 		std::string key = (*it).first;
 		std::string val = (*it).second;
@@ -286,15 +295,11 @@ void HTTPSocket::SendResponse()
 
 void HTTPSocket::AddResponseHeader(const std::string& header, const char *format, ...)
 {
-	char slask[5000]; // temporary for vsprintf / vsnprintf
+	char slask[8192]; // temporary for vsprintf / vsnprintf
 	va_list ap;
 
 	va_start(ap, format);
-#ifdef _WIN32
-	vsprintf(slask, format, ap);
-#else
-	vsnprintf(slask, 5000, format, ap);
-#endif
+	vsnprintf(slask, sizeof(slask), format, ap);
 	va_end(ap);
 
 	m_response_header[header] = slask;
@@ -305,7 +310,7 @@ void HTTPSocket::SendRequest()
 {
 	std::string msg;
 	msg = m_method + " " + m_url + " " + m_http_version + "\r\n";
-	for (string_m::iterator it = m_response_header.begin(); it != m_response_header.end(); it++)
+	for (string_m::iterator it = m_response_header.begin(); it != m_response_header.end(); ++it)
 	{
 		std::string key = (*it).first;
 		std::string val = (*it).second;
@@ -343,6 +348,7 @@ void HTTPSocket::Reset()
                 std::list<std::pair<std::string, std::string> >::iterator it = m_response_header_append.begin();
                 m_response_header_append.erase(it);
         }
+        m_header_count = 0;
 
 }
 
@@ -494,7 +500,7 @@ bool HTTPSocket::ResponseHeaderIsSet(const std::string& name)
 		return true;
 	}
 	std::list<std::pair<std::string, std::string> >::iterator it2;
-	for (it2 = m_response_header_append.begin(); it2 != m_response_header_append.end(); it2++)
+	for (it2 = m_response_header_append.begin(); it2 != m_response_header_append.end(); ++it2)
 	{
 		std::pair<std::string, std::string>& ref = *it2;
 		if (!strcasecmp(ref.first.c_str(), name.c_str()) )

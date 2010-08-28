@@ -1,6 +1,7 @@
 SOCKETS =	..
 PLATFORM =	linux-x86-32
-LIBS =		-L$(SOCKETS) -lSockets 
+LIBS =		
+#-L$(SOCKETS) -lSockets 
 
 INCLUDE =	-I$(SOCKETS)
 include		$(SOCKETS)/Makefile.version
@@ -10,72 +11,80 @@ CPPFLAGS =	$(CFLAGS)
 
 #LIBS +=		-lsctp
 
+LDFLAGS +=	-rdynamic
+
 PROGS =		events resolve sockets_test base64 semtest \
 		echoserver stressclient http httpd retry resume \
 		http_post x copy crlf https sloppy_http chunked \
-		threadstress listener 
+		threadstress listener httpd_test scanr
 
 all:		$(PROGS)
 
-events:		events.o 
-		$(CXX) -o $@ $^ $(LIBS)
+events:		events.o ../libSockets.a 
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-resolve:	resolve.o 
-		$(CXX) -o $@ $^ $(LIBS)
+resolve:	resolve.o ../libSockets.a 
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-sockets_test:	sockets_test.o 
-		$(CXX) -o $@ $^ $(LIBS)
+sockets_test:	sockets_test.o ../libSockets.a 
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-base64:		base64.o 
-		$(CXX) -o $@ $^ $(LIBS)
+base64:		base64.o ../libSockets.a 
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-semtest:	semtest.o 
-		$(CXX) -o $@ $^ $(LIBS)
+semtest:	semtest.o ../libSockets.a 
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-echoserver:	echoserver.o 
-		$(CXX) -o $@ $^ $(LIBS)
+echoserver:	echoserver.o ../libSockets.a 
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-stressclient:	stressclient.o 
-		$(CXX) -o $@ $^ $(LIBS)
+stressclient:	stressclient.o ../libSockets.a 
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-http:		http.o 
-		$(CXX) -o $@ $^ $(LIBS)
+http:		http.o ../libSockets.a 
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-httpd:		httpd.o 
-		$(CXX) -o $@ $^ $(LIBS)
+httpd:		httpd.o ../libSockets.a 
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-retry:		retry.o 
-		$(CXX) -o $@ $^ $(LIBS)
+retry:		retry.o ../libSockets.a 
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-resume:		resume.o 
-		$(CXX) -o $@ $^ $(LIBS)
+resume:		resume.o ../libSockets.a 
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-http_post:	http_post.o 
-		$(CXX) -o $@ $^ $(LIBS)
+http_post:	http_post.o ../libSockets.a 
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-x:		x.o 
-		$(CXX) -o $@ $^ $(LIBS)
+x:		x.o ../libSockets.a 
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-copy:		copy.o 
-		$(CXX) -o $@ $^ $(LIBS)
+copy:		copy.o ../libSockets.a 
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-crlf:		crlf.o 
-		$(CXX) -o $@ $^ $(LIBS)
+crlf:		crlf.o ../libSockets.a 
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-https:		https.o
-		$(CXX) -o $@ $^ $(LIBS)
+https:		https.o ../libSockets.a
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-sloppy_http:	sloppy_http.o
-		$(CXX) -o $@ $^ $(LIBS)
+sloppy_http:	sloppy_http.o ../libSockets.a
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-chunked:	chunked.o
-		$(CXX) -o $@ $^ $(LIBS)
+chunked:	chunked.o ../libSockets.a
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-threadstress:	threadstress.o
-		$(CXX) -o $@ $^ $(LIBS)
+threadstress:	threadstress.o ../libSockets.a
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-listener:	listener.o
-		$(CXX) -o $@ $^ $(LIBS)
+listener:	listener.o ../libSockets.a
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
+
+scanr:		scanr.o ../libSockets.a
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
+
+httpd_test:	httpd_test.o ../libSockets.a
+		$(CXX) -o $@ $^ $(LIBS) $(LDFLAGS)
 
 clean:
 		rm -f *.o *~ slask *.d $(PROGS)

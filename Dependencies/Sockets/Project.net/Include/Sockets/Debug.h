@@ -2,9 +2,7 @@
 #define _SOCKETS_Debug_H
 
 #include "sockets-config.h"
-#include <string>
 #include "Utility.h"
-#include <map>
 #include <stdio.h>
 
 
@@ -56,8 +54,12 @@ public:
 	}
 static	void Print(const char *format, ...);
 
+	Debug& operator<<(const char *);
 	Debug& operator<<(const std::string& );
+	Debug& operator<<(short);
+	Debug& operator<<(int);
 	Debug& operator<<(long);
+	Debug& operator<<(double);
 	Debug& operator<<(endl);
 
 private:

@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2004-2008  Anders Hedstrom
+Copyright (C) 2004-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about
@@ -40,7 +42,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <ctype.h>
 #include <fcntl.h>
 
-#include "ISocketHandler.h"
 #include "Utility.h"
 
 #include "SocketAddress.h"
@@ -52,6 +53,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef ENABLE_IPV6
 #include "Ipv6Address.h"
 #endif
+#include "SocketThread.h"
 
 #ifdef _DEBUG
 #define DEB(x) x; fflush(stderr);
@@ -68,6 +70,7 @@ namespace SOCKETS_NAMESPACE {
 #ifdef _WIN32
 WSAInitializer Socket::m_winsock_init;
 #endif
+socketuid_t Socket::m_next_uid = 0;
 
 
 Socket::Socket(ISocketHandler& h)
@@ -85,7 +88,12 @@ Socket::Socket(ISocketHandler& h)
 ,m_client_remote_address(NULL)
 ,m_remote_address(NULL)
 ,m_traffic_monitor(NULL)
+,m_timeout_start(0)
+,m_timeout_limit(0)
 ,m_bLost(false)
+,m_uid(++Socket::m_next_uid)
+,m_call_on_connect(false)
+,m_b_retry_connect(false)
 #ifdef HAVE_OPENSSL
 ,m_b_enable_ssl(false)
 ,m_b_ssl(false)
@@ -177,19 +185,12 @@ int Socket::Close()
 		return 0;
 	}
 	int n;
+	Handler().ISocketHandler_Del(this); // remove from fd_set's
 	if ((n = closesocket(m_socket)) == -1)
 	{
 		// failed...
 		Handler().LogError(this, "close", Errno, StrError(Errno), LOG_LEVEL_ERROR);
 	}
-	Handler().Set(m_socket, false, false, false); // remove from fd_set's
-	Handler().AddList(m_socket, LIST_CALLONCONNECT, false);
-#ifdef ENABLE_DETACH
-	Handler().AddList(m_socket, LIST_DETACH, false);
-#endif
-	Handler().AddList(m_socket, LIST_TIMEOUT, false);
-	Handler().AddList(m_socket, LIST_RETRY, false);
-	Handler().AddList(m_socket, LIST_CLOSE, false);
 	m_socket = INVALID_SOCKET;
 	return n;
 }
@@ -259,15 +260,16 @@ bool Socket::DeleteByHandler()
 	return m_bDel;
 }
 
+
 void Socket::SetCloseAndDelete(bool x)
 {
 	if (x != m_bClose)
 	{
-		Handler().AddList(m_socket, LIST_CLOSE, x);
 		m_bClose = x;
 		if (x)
 		{
 			m_tClose = time(NULL);
+			Handler().SetClose();
 		}
 	}
 }
@@ -443,12 +445,6 @@ bool Socket::SetNonblocking(bool bNb, SOCKET s)
 	}
 	return true;
 #endif
-}
-
-
-void Socket::Set(bool bRead, bool bWrite, bool bException)
-{
-	Handler().Set(m_socket, bRead, bWrite, bException);
 }
 
 
@@ -628,6 +624,34 @@ uint64_t Socket::GetBytesReceived(bool)
 }
 
 
+void Socket::SetCallOnConnect(bool x)
+{
+	m_call_on_connect = x;
+	if (x)
+		Handler().SetCallOnConnect();
+}
+
+
+bool Socket::CallOnConnect()
+{
+	return m_call_on_connect;
+}
+
+
+void Socket::SetRetryClientConnect(bool x)
+{
+	m_b_retry_connect = x;
+	if (x)
+		Handler().SetRetry();
+}
+
+
+bool Socket::RetryClientConnect()
+{
+	return m_b_retry_connect;
+}
+
+
 #ifdef HAVE_OPENSSL
 void Socket::OnSSLConnect()
 {
@@ -739,7 +763,8 @@ const std::string& Socket::GetSocketProtocol()
 
 void Socket::SetRetain()
 {
-	if (m_bClient) m_bRetain = true;
+	if (m_bClient)
+		m_bRetain = true;
 }
 
 
@@ -856,8 +881,9 @@ void Socket::OnDetached()
 
 void Socket::SetDetach(bool x)
 {
-	Handler().AddList(m_socket, LIST_DETACH, x);
 	m_detach = x;
+	if (x)
+		Handler().SetDetach();
 }
 
 
@@ -885,45 +911,6 @@ void Socket::SetSlaveHandler(ISocketHandler *p)
 }
 
 
-Socket::SocketThread::SocketThread(Socket *p)
-:Thread(false)
-,m_socket(p)
-{
-	// Creator will release
-}
-
-
-Socket::SocketThread::~SocketThread()
-{
-	if (IsRunning())
-	{
-		SetRelease(true);
-		SetRunning(false);
-#ifdef _WIN32
-		Sleep(1000);
-#else
-		sleep(1);
-#endif
-	}
-}
-
-
-void Socket::SocketThread::Run()
-{
-	SocketHandler h;
-	h.SetSlave();
-	h.Add(m_socket);
-	m_socket -> SetSlaveHandler(&h);
-	m_socket -> OnDetached();
-	while (h.GetCount() && IsRunning())
-	{
-		h.Select(0, 500000);
-	}
-	// m_socket now deleted oops
-	// yeah oops m_socket delete its socket thread, that means this
-	// so Socket will no longer delete its socket thread, instead we do this:
-	SetDeleteOnExit();
-}
 #endif // ENABLE_DETACH
 
 
@@ -1743,40 +1730,23 @@ int Socket::SoType()
 }
 
 
-#ifdef ENABLE_TRIGGERS
-void Socket::Subscribe(int id)
-{
-	Handler().Subscribe(id, this);
-}
-
-
-void Socket::Unsubscribe(int id)
-{
-	Handler().Unsubscribe(id, this);
-}
-
-
-void Socket::OnTrigger(int, const TriggerData&)
-{
-}
-
-
-void Socket::OnCancelled(int)
-{
-}
-#endif
-
-
 void Socket::SetTimeout(time_t secs)
 {
 	if (!secs)
 	{
-		Handler().AddList(m_socket, LIST_TIMEOUT, false);
+		m_timeout_start = 0;
+		m_timeout_limit = 0;
 		return;
 	}
-	Handler().AddList(m_socket, LIST_TIMEOUT, true);
 	m_timeout_start = time(NULL);
 	m_timeout_limit = secs;
+	Handler().SetTimeout();
+}
+
+
+bool Socket::CheckTimeout()
+{
+	return m_timeout_start > 0 && m_timeout_limit > 0;
 }
 
 
@@ -1792,7 +1762,7 @@ void Socket::OnConnectTimeout()
 
 bool Socket::Timeout(time_t tnow)
 {
-	if (tnow - m_timeout_start > m_timeout_limit)
+	if (m_timeout_start > 0 && tnow - m_timeout_start > m_timeout_limit)
 		return true;
 	return false;
 }

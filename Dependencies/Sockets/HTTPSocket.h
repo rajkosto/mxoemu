@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2004-2008  Anders Hedstrom
+Copyright (C) 2004-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -126,6 +128,8 @@ protected:
 	/** Reset state of socket to sucessfully implement keep-alive. */
 	virtual void Reset();
 
+	void SetMaxHeaderCount(int x) { m_max_header_count = x; }
+
 private:
 	HTTPSocket& operator=(const HTTPSocket& ) { return *this; }
 	bool m_first;
@@ -149,6 +153,8 @@ private:
 	size_t m_chunk_size;
 	int m_chunk_state;
 	std::string m_chunk_line;
+	int m_header_count;
+	int m_max_header_count;
 };
 
 

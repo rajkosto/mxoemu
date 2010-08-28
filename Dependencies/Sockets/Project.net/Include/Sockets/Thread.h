@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2004-2008  Anders Hedstrom
+Copyright (C) 2004-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -31,6 +33,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define _SOCKETS_Thread_H
 
 #include "sockets-config.h"
+#ifdef _WIN32
+#else
+#include <pthread.h>
+#endif
+#include "Semaphore.h"
+
 #ifdef SOCKETS_NAMESPACE
 namespace SOCKETS_NAMESPACE {
 #endif
@@ -44,7 +52,6 @@ typedef unsigned threadfunc_t;
 typedef void * threadparam_t;
 #define STDPREFIX __stdcall
 #else
-#include <pthread.h>
 
 typedef void * threadfunc_t;
 typedef void * threadparam_t;
@@ -83,6 +90,17 @@ public:
 	void SetDeleteOnExit(bool x = true);
 	bool IsDestructor();
 
+	void Start() {
+		SetRelease(true);
+	}
+
+	void Stop() {
+		Start();
+		SetRunning(false);
+	}
+
+	void Wait();
+
 protected:
 #ifdef _WIN32
 	HANDLE m_thread;
@@ -94,6 +112,7 @@ protected:
 private:
 	Thread(const Thread& ) {}
 	Thread& operator=(const Thread& ) { return *this; }
+	Semaphore m_sem;
 	bool m_running;
 	bool m_release;
 	bool m_b_delete_on_exit;

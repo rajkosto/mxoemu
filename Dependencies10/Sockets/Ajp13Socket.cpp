@@ -4,9 +4,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2007-2008  Anders Hedstrom
+Copyright (C) 2007-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -33,10 +35,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include "Ajp13Socket.h"
 #include "ajp13.h"
-#include "HttpRequest.h"
-#include "HttpResponse.h"
-#include "IFile.h"
-#include "Utility.h"
 
 #ifdef SOCKETS_NAMESPACE
 namespace SOCKETS_NAMESPACE {
@@ -61,7 +59,7 @@ void Ajp13Socket::OnHeader( short id, short len )
 {
 	if (id != 0x1234)
 	{
-		fprintf(stderr, "ABORT: bad packet id: %x\n", id);
+DEB(		fprintf(stderr, "ABORT: bad packet id: %x\n", id);)
 		SetCloseAndDelete();
 	}
 	else
@@ -76,7 +74,7 @@ void Ajp13Socket::ReceiveBody(const char *buf, size_t sz)
 {
 	if (sz - 2 > m_body_size_left)
 	{
-		fprintf(stderr, "More body data received than expected\n");
+DEB(		fprintf(stderr, "More body data received than expected\n");)
 		SetCloseAndDelete();
 		return;
 	}
@@ -166,7 +164,7 @@ void Ajp13Socket::ReceiveForwardRequest( const char *buf, size_t sz )
 				}
 				else
 				{
-					fprintf(stderr, "Unknown header key value: %x\n", x);
+DEB(					fprintf(stderr, "Unknown header key value: %x\n", x);)
 					SetCloseAndDelete();
 				}
 			}
@@ -203,7 +201,7 @@ void Ajp13Socket::ReceiveForwardRequest( const char *buf, size_t sz )
 				}
 				else
 				{
-					fprintf(stderr, "Unknown attribute key: 0x%02x\n", buf[ptr]);
+DEB(					fprintf(stderr, "Unknown attribute key: 0x%02x\n", buf[ptr]);)
 					SetCloseAndDelete();
 				}
 			}
@@ -298,7 +296,7 @@ void Ajp13Socket::Respond(const HttpResponse& res)
 		}
 		std::list<std::string> vec = m_res.CookieNames();
 		{
-			for (std::list<std::string>::iterator it = vec.begin(); it != vec.end(); it++)
+			for (std::list<std::string>::iterator it = vec.begin(); it != vec.end(); ++it)
 			{
 				Utility::ncmap<int>::const_iterator it2 = Init.ResponseHeader.find( "set-cookie" );
 				if (it2 != Init.ResponseHeader.end())
@@ -369,6 +367,7 @@ void Ajp13Socket::OnTransferLimit()
 
 		SendBuf( msg, ptr );
 
+		SetTransferLimit(0);
 		m_res.GetFile().fclose();
 		OnResponseComplete();
 	}
@@ -401,7 +400,7 @@ void Ajp13Socket::OnPacket( const char *buf, size_t sz )
 		ReceiveCPing(buf, sz);
 		break;
 	default:
-		fprintf(stderr, "Unknown packet type: 0x%02x\n", *buf);
+DEB(		fprintf(stderr, "Unknown packet type: 0x%02x\n", *buf);)
 		SetCloseAndDelete();
 	}
 

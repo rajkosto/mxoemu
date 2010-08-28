@@ -9,10 +9,12 @@ public:
 	, m_request(request) {}
 
 	void OnConnect() {
+		printf("... connected\n");
 		Send( m_request );
 	}
 
 	void OnRawData( const char *buf, size_t len ) {
+		printf("... data\n");
 		if (len > 0) {
 			std::string tmp;
 			tmp.resize( len );
@@ -48,6 +50,7 @@ int main(int argc, char *argv[])
 {
 	std::string zz = get_http("www.alhem.net", 80, "GET /index.html HTTP/1.0\r\n"
 		"Host: www.alhem.net\r\n"
+		"Connection: close\r\n"
 		"\r\n");
 	printf("%s\n%d\n", zz.c_str(), zz.size());
 }

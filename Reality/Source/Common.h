@@ -103,7 +103,9 @@ typedef unsigned char byte;
 #define I64FMT "%016I64X"
 #define I64FMTD "%I64u"
 #define SI64FMTD "%I64d"
-#define snprintf _snprintf
+#ifndef snprintf
+#define snprintf sprintf_s
+#endif
 #define atoll __atoi64
 #else
 #define stricmp strcasecmp

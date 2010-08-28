@@ -4,9 +4,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2008  Anders Hedstrom
+Copyright (C) 2008-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -38,13 +40,14 @@ namespace SOCKETS_NAMESPACE {
 #endif
 
 SocketStream::SocketStream(ISocketHandler& h, TcpSocket *sock) : m_handler(h), m_socket(sock)
+, m_socket_uid(sock -> UniqueIdentifier())
 {
 }
 
 
 size_t SocketStream::IStreamRead(char *buf, size_t max_sz)
 {
-  if (m_handler.Valid(m_socket))
+  if (m_handler.Valid(m_socket_uid))
   {
     return m_socket -> ReadInput(buf, max_sz);
   }
@@ -54,7 +57,7 @@ size_t SocketStream::IStreamRead(char *buf, size_t max_sz)
 
 void SocketStream::IStreamWrite(const char *buf, size_t sz)
 {
-  if (m_handler.Valid(m_socket))
+  if (m_handler.Valid(m_socket_uid))
   {
     m_socket -> SendBuf(buf, sz);
   }

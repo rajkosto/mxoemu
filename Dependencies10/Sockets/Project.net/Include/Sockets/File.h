@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2004-2008  Anders Hedstrom
+Copyright (C) 2004-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -45,9 +47,11 @@ class File : public IFile
 {
 public:
 	File();
+	/** convenience: calls fopen() */
+	File(const std::string& path, const std::string& mode);
 	~File();
 
-	bool fopen(const std::string&, const std::string&);
+	bool fopen(const std::string& path, const std::string& mode);
 	void fclose() const;
 
 	size_t fread(char *, size_t, size_t) const;
@@ -61,6 +65,8 @@ public:
 
 	void reset_read() const;
 	void reset_write();
+
+	const std::string& Path() const;
 
 private:
 	File(const File& ) {} // copy constructor

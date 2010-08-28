@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2004-2008  Anders Hedstrom
+Copyright (C) 2004-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -46,6 +48,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef ENABLE_EXCEPTIONS
 #include "Exception.h"
 #endif
+#include "Lock.h"
 
 #ifdef SOCKETS_NAMESPACE
 namespace SOCKETS_NAMESPACE {
@@ -89,7 +92,13 @@ public:
 	int Close() {
 		if (GetSocket() != INVALID_SOCKET)
 		{
-			closesocket(GetSocket());
+			if (closesocket(GetSocket()) == -1)
+			{
+			}
+			else
+			{
+				Attach(INVALID_SOCKET);
+			}
 		}
 		return 0;
 	}
@@ -320,7 +329,6 @@ public:
 		{
 			socklen_t sa_len = sizeof(struct sockaddr);
 			SOCKET a_s = accept(GetSocket(), &sa, &sa_len);
-
 			if (a_s == INVALID_SOCKET)
 			{
 				// EAGAIN or EWOULDBLOCK
@@ -340,31 +348,35 @@ public:
 				closesocket(a_s);
 				return;
 			}
-			if (Handler().GetCount() >= FD_SETSIZE)
+			if (Handler().GetCount() >= Handler().MaxCount())
 			{
-				Handler().LogError(this, "accept", (int)Handler().GetCount(), "ISocketHandler fd_set limit reached", LOG_LEVEL_FATAL);
+				Handler().LogError(this, "accept", (int)Handler().GetCount(), "ISocketHandler socket limit reached", LOG_LEVEL_FATAL);
 				closesocket(a_s);
 				return;
 			}
-			Socket *tmp = m_bHasCreate ? m_creator -> Create() : new X(Handler());
-#ifdef ENABLE_IPV6
-			tmp -> SetIpv6( IsIpv6() );
-#endif
-			tmp -> SetParent(this);
-			tmp -> Attach(a_s);
-			tmp -> SetNonblocking(true);
+			//
+			Socket *tmp = NULL;
+			if (Handler().IsThreaded())
 			{
+				ISocketHandler& h = Handler().GetRandomHandler();
+				tmp = new X(h); // %! no support for Create
+#ifdef ENABLE_IPV6
+				tmp -> SetIpv6( IsIpv6() );
+#endif
+				tmp -> SetParent(this);
+				tmp -> Attach(a_s);
+				tmp -> SetNonblocking(true);
 #ifdef ENABLE_IPV6
 #ifdef IPPROTO_IPV6
 				if (sa_len == sizeof(struct sockaddr_in6))
 				{
-					struct sockaddr_in6 *p = (struct sockaddr_in6 *)&sa;
-					if (p -> sin6_family == AF_INET6)
+					if (reinterpret_cast<struck sockaddr_in6&>(sa).sin6_family == AF_INET6)
 					{
-						Ipv6Address ad(p -> sin6_addr,ntohs(p -> sin6_port));
-						ad.SetFlowinfo(p -> sin6_flowinfo);
+						Ipv6Address ad(reinterpret_cast<struck sockaddr_in6&>(sa).sin6_addr,
+							ntohs(reinterpret_cast<struck sockaddr_in6&>(sa).sin6_port));
+						ad.SetFlowinfo(reinterpret_cast<struck sockaddr_in6&>(sa).sin6_flowinfo);
 #ifndef _WIN32
-						ad.SetScopeId(p -> sin6_scope_id);
+						ad.SetScopeId(reinterpret_cast<struck sockaddr_in6&>(sa).sin6_scope_id);
 #endif
 						tmp -> SetRemoteAddress(ad);
 					}
@@ -380,28 +392,90 @@ public:
 						tmp -> SetRemoteAddress(ad);
 					}
 				}
-			}
-			tmp -> SetConnected(true);
-			tmp -> Init();
-			tmp -> SetDeleteByHandler(true);
-			Handler().Add(tmp);
+				tmp -> SetConnected(true);
+				tmp -> Init();
+				tmp -> SetDeleteByHandler(true);
+				{
+					Lock lock(h.GetMutex());
+					h.Add(tmp);
 #ifdef HAVE_OPENSSL
-			if (tmp -> IsSSL()) // SSL Enabled socket
-			{
-				// %! OnSSLAccept calls SSLNegotiate that can finish in this one call.
-				// %! If that happens and negotiation fails, the 'tmp' instance is
-				// %! still added to the list of active sockets in the sockethandler.
-				// %! See bugfix for this in SocketHandler::Select - don't Set rwx
-				// %! flags if CloseAndDelete() flag is true.
-				// %! An even better fugbix (see TcpSocket::OnSSLAccept) now avoids
-				// %! the Add problem altogether, so ignore the above.
-				// %! (OnSSLAccept does no longer call SSLNegotiate().)
-				tmp -> OnSSLAccept();
+					if (tmp -> IsSSL()) // SSL Enabled socket
+					{
+						// %! OnSSLAccept calls SSLNegotiate that can finish in this one call.
+						// %! If that happens and negotiation fails, the 'tmp' instance is
+						// %! still added to the list of active sockets in the sockethandler.
+						// %! See bugfix for this in SocketHandler::Select - don't Set rwx
+						// %! flags if CloseAndDelete() flag is true.
+						// %! An even better fugbix (see TcpSocket::OnSSLAccept) now avoids
+						// %! the Add problem altogether, so ignore the above.
+						// %! (OnSSLAccept does no longer call SSLNegotiate().)
+						tmp -> OnSSLAccept();
+					}
+					else
+#endif
+					{
+						tmp -> OnAccept();
+					}
+				}
+				h.Release();
 			}
 			else
-#endif
 			{
-				tmp -> OnAccept();
+				tmp = m_bHasCreate ? m_creator -> Create() : new X(Handler());
+#ifdef ENABLE_IPV6
+				tmp -> SetIpv6( IsIpv6() );
+#endif
+				tmp -> SetParent(this);
+				tmp -> Attach(a_s);
+				tmp -> SetNonblocking(true);
+#ifdef ENABLE_IPV6
+#ifdef IPPROTO_IPV6
+				if (sa_len == sizeof(struct sockaddr_in6))
+				{
+					if (reinterpret_cast<struck sockaddr_in6&>(sa).sin6_family == AF_INET6)
+					{
+						Ipv6Address ad(reinterpret_cast<struck sockaddr_in6&>(sa).sin6_addr,
+							ntohs(reinterpret_cast<struck sockaddr_in6&>(sa).sin6_port));
+						ad.SetFlowinfo(reinterpret_cast<struck sockaddr_in6&>(sa).sin6_flowinfo);
+#ifndef _WIN32
+						ad.SetScopeId(reinterpret_cast<struck sockaddr_in6&>(sa).sin6_scope_id);
+#endif
+						tmp -> SetRemoteAddress(ad);
+					}
+				}
+#endif
+#endif
+				if (sa_len == sizeof(struct sockaddr_in))
+				{
+					struct sockaddr_in *p = (struct sockaddr_in *)&sa;
+					if (p -> sin_family == AF_INET)
+					{
+						Ipv4Address ad(p -> sin_addr,ntohs(p -> sin_port));
+						tmp -> SetRemoteAddress(ad);
+					}
+				}
+				tmp -> SetConnected(true);
+				tmp -> Init();
+				tmp -> SetDeleteByHandler(true);
+				Handler().Add(tmp);
+#ifdef HAVE_OPENSSL
+				if (tmp -> IsSSL()) // SSL Enabled socket
+				{
+					// %! OnSSLAccept calls SSLNegotiate that can finish in this one call.
+					// %! If that happens and negotiation fails, the 'tmp' instance is
+					// %! still added to the list of active sockets in the sockethandler.
+					// %! See bugfix for this in SocketHandler::Select - don't Set rwx
+					// %! flags if CloseAndDelete() flag is true.
+					// %! An even better fugbix (see TcpSocket::OnSSLAccept) now avoids
+					// %! the Add problem altogether, so ignore the above.
+					// %! (OnSSLAccept does no longer call SSLNegotiate().)
+					tmp -> OnSSLAccept();
+				}
+				else
+#endif
+				{
+					tmp -> OnAccept();
+				}
 			}
 		} // while (true)
 	}

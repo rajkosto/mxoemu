@@ -10,6 +10,7 @@
 #include <HttpGetSocket.h>
 #include <Socket.h>
 #include <HttpDebugSocket.h>
+#include <iostream>
 
 #ifdef SOCKETS_NAMESPACE
 using namespace SOCKETS_NAMESPACE;
@@ -46,16 +47,6 @@ public:
 			{
 				p -> Send("Some kind of Socket\n");
 			}
-			bool r;
-			bool w;
-			bool e;
-			Get(p -> GetSocket(), r, w, e);
-			char slask[1000];
-			sprintf(slask,"  Read: %s  Write: %s  Exception: %s\n",
-				r ? "SET" : "not set",
-				w ? "SET" : "not set",
-				e ? "SET" : "not set");
-			p -> Send( slask );
 		}
 	}
 	void SetQuit() { m_quit = true; }
@@ -123,79 +114,86 @@ public:
 		Parse pa(line);
 		std::string cmd = pa.getword();
 		std::string arg = pa.getrest();
-		if (cmd == "get")
+		try
 		{
-			HttpGetSocket *p = new hSocket(Handler(), arg, "tmpfile.html");
-			p -> SetHttpVersion("HTTP/1.1");
-			p -> AddResponseHeader("Connection", "keep-alive");
-			p -> SetDeleteByHandler();
-			Handler().Add( p );
-			Send("Reading url '" + arg + "'\n");
-		}
-		else
-		if (cmd == "quit")
-		{
-			Send("Goodbye!\n");
-			SetCloseAndDelete();
-		}
-		else
-		if (cmd == "list")
-		{
-			static_cast<MyHandler&>(Handler()).List( this );
-		}
-		else
-		if (cmd == "stop")
-		{
-			static_cast<MyHandler&>(Handler()).SetQuit();
-		}
-		else
-		if (cmd == "resolve")
-		{
-			//Resolve( arg );
-			ipaddr_t a;
-			if (Utility::u2ip(arg, a))
+			if (cmd == "get")
 			{
-				std::string tmp;
-				Utility::l2ip(a, tmp);
-				Send("Resolved: " + tmp + "\n");
+				HttpGetSocket *p = new hSocket(Handler(), arg, "tmpfile.html");
+				p -> SetHttpVersion("HTTP/1.1");
+				p -> AddResponseHeader("Connection", "keep-alive");
+				p -> SetDeleteByHandler();
+				Handler().Add( p );
+				Send("Reading url '" + arg + "'\n");
+			}
+			else
+			if (cmd == "quit")
+			{
+				Send("Goodbye!\n");
+				SetCloseAndDelete();
+			}
+			else
+			if (cmd == "list")
+			{
+				dynamic_cast<MyHandler&>(Handler()).List( this );
+			}
+			else
+			if (cmd == "stop")
+			{
+				dynamic_cast<MyHandler&>(Handler()).SetQuit();
+			}
+			else
+			if (cmd == "resolve")
+			{
+				//Resolve( arg );
+				ipaddr_t a;
+				if (Utility::u2ip(arg, a))
+				{
+					std::string tmp;
+					Utility::l2ip(a, tmp);
+					Send("Resolved: " + tmp + "\n");
+				}
+				else
+				{
+					Send("Resolve failed: " + arg + "\n");
+				}
+			}
+			else
+	/*
+			if (cmd == "reverse")
+			{
+				ipaddr_t a;
+				Utility::u2ip(arg, a); // ip -> ipaddr_t
+				int id = Socket::Resolve(a, 0);
+				Send("Resolve id = " + Utility::l2string(id) + "\n");
+			}
+			else
+	*/
+	#ifdef ENABLE_DETACH
+			if (cmd == "detach")
+			{
+				if (!Detach())
+				{
+					Send("Detach() call failed\n");
+				}
+				else
+				{
+					Send("Ok.\n");
+				}
+			}
+			else
+	#endif
+			if (cmd == "count")
+			{
+				Send("Socket count: " + Utility::l2string( (long)Handler().GetCount()) + "\n");
 			}
 			else
 			{
-				Send("Resolve failed: " + arg + "\n");
+				Send("Huh?\n");
 			}
 		}
-		else
-/*
-		if (cmd == "reverse")
+		catch (const std::exception& e)
 		{
-			ipaddr_t a;
-			Utility::u2ip(arg, a); // ip -> ipaddr_t
-			int id = Socket::Resolve(a, 0);
-			Send("Resolve id = " + Utility::l2string(id) + "\n");
-		}
-		else
-*/
-#ifdef ENABLE_DETACH
-		if (cmd == "detach")
-		{
-			if (!Detach())
-			{
-				Send("Detach() call failed\n");
-			}
-			else
-			{
-				Send("Ok.\n");
-			}
-		}
-		else
-#endif
-		if (cmd == "count")
-		{
-			Send("Socket count: " + Utility::l2string( (long)Handler().GetCount()) + "\n");
-		}
-		else
-		{
-			Send("Huh?\n");
+			Send(e.what() + std::string("\n"));
 		}
 		Send("Cmd>");
 	}
@@ -264,84 +262,95 @@ public:
 
 int main()
 {
-	StdoutLog log;
-	MyHandler h(&log);
+	try
+	{
+		StdoutLog log;
+		MyHandler h(&log);
 
 #ifdef ENABLE_RESOLVER
-	h.EnableResolver(9999);
+		h.EnableResolver(9999);
 #endif
 //	Utility::ResolveLocal();
-	printf(" *** My hostname: %s\n", Utility::GetLocalHostname().c_str());
-	printf(" *** My local IP: %s\n", Utility::GetLocalAddress().c_str());
+		printf(" *** My hostname: %s\n", Utility::GetLocalHostname().c_str());
+		printf(" *** My local IP: %s\n", Utility::GetLocalAddress().c_str());
 
-	// socks4 options
+		// socks4 options
 /*
-	h.SetSocks4Host("127.0.0.1");
-	h.SetSocks4Port(1080);
-	h.SetSocks4Userid("www.alhem.net");
-	h.SetSocks4TryDirect( true );
-	printf("Socks4Host: %x\n", h.GetSocks4Host());
+		h.SetSocks4Host("127.0.0.1");
+		h.SetSocks4Port(1080);
+		h.SetSocks4Userid("www.alhem.net");
+		h.SetSocks4TryDirect( true );
+		printf("Socks4Host: %x\n", h.GetSocks4Host());
 */
 
-	// first server
-	ListenSocket<MySocket> l1(h);
-	if (l1.Bind(1024))
-	{
-		printf("Bind 1024 failed\n");
-		exit(-1);
-	}
-	h.Add(&l1);
+		// first server
+		ListenSocket<MySocket> l1(h);
+		if (l1.Bind(1024))
+		{
+			printf("Bind 1024 failed\n");
+			exit(-1);
+		}
+		h.Add(&l1);
 
-	// second server
-	ListenSocket<MySocket> l2(h);
-	if (l2.Bind(1025))
-	{
-		printf("Bind 1025 failed\n");
-		exit(-1);
-	}
-	h.Add(&l2);
+		// second server
+		ListenSocket<MySocket> l2(h);
+		if (l2.Bind(1025))
+		{
+			printf("Bind 1025 failed\n");
+			exit(-1);
+		}
+		h.Add(&l2);
 
-	// line server
-	ListenSocket<OrderSocket> l3(h);
-	if (l3.Bind(1027))
-	{
-		printf("Bind 1027 failed\n");
-		exit(-1);
-	}
-	h.Add(&l3);
+		// line server
+		ListenSocket<OrderSocket> l3(h);
+		if (l3.Bind(1027))
+		{
+			printf("Bind 1027 failed\n");
+			exit(-1);
+		}
+		h.Add(&l3);
 
-	// http debug
-	ListenSocket<HttpDebugSocket> l4(h);
-	if (l4.Bind(8080))
-	{
-		printf("Bind 8080 failed\n");
-		exit(-1);
-	}
-	h.Add(&l4);
+		// http debug
+		ListenSocket<HttpDebugSocket> l4(h);
+		if (l4.Bind(8080))
+		{
+			printf("Bind 8080 failed\n");
+			exit(-1);
+		}
+		h.Add(&l4);
 
-	// wait for resolver to really start
+		// wait for resolver to really start
 #ifdef ENABLE_RESOLVER
-	printf("Waiting for resolver ...");
-	while (!h.ResolverReady())
-		;
-	printf(" resolver ready!\n");
+		printf("Waiting for resolver ...");
+		while (!h.ResolverReady())
+			;
+		printf(" resolver ready!\n");
 #endif
 
-	TestSocket ts(h);
+		TestSocket ts(h);
 printf(">>> TestSocket.Open\n");
-	ts.Open("localhost", 1027);
+		ts.Open("localhost", 1027);
 printf(">>> Adding TestSocket\n");
-	h.Add(&ts);
+		h.Add(&ts);
 
-printf(">>> mainloop\n");
-	h.Select(0,0);
-	while (!h.Quit())
-	{
-		h.Select(1,0);
-		h.CheckSanity();
+printf(">>> Enter mainloop\n");
+		h.Select(0,0);
+		while (!h.Quit())
+		{
+			h.Select(1,0);
+		}
+printf(">>> Leaving mainloop\n");
+
+		return 0;
 	}
-
-	return 0;
+	catch (const Exception& e)
+	{
+		std::cerr << e.ToString() << std::endl;
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
 }
 
 

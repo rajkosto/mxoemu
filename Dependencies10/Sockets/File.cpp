@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2004-2008  Anders Hedstrom
+Copyright (C) 2004-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -46,6 +48,15 @@ File::File()
 }
 
 
+File::File(const std::string& path, const std::string& mode)
+:m_fil(NULL)
+,m_rptr(0)
+,m_wptr(0)
+{
+	fopen(path, mode);
+}
+
+
 File::~File()
 {
 	fclose();
@@ -56,7 +67,12 @@ bool File::fopen(const std::string& path, const std::string& mode)
 {
 	m_path = path;
 	m_mode = mode;
+#if defined( _WIN32) && !defined(__CYGWIN__)
+	if (fopen_s(&m_fil, path.c_str(), mode.c_str()))
+		m_fil = NULL;
+#else
 	m_fil = ::fopen(path.c_str(), mode.c_str());
+#endif
 
 	return m_fil ? true : false;
 }
@@ -157,6 +173,12 @@ void File::reset_read() const
 void File::reset_write()
 {
 	m_wptr = 0;
+}
+
+
+const std::string& File::Path() const
+{
+	return m_path;
 }
 
 

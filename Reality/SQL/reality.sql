@@ -4,7 +4,7 @@ Source Host: localhost
 Source Database: reality
 Target Host: localhost
 Target Database: reality
-Date: 23.8.2010 17:12:26
+Date: 28.8.2010 6:26:56
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -24,16 +24,16 @@ CREATE TABLE `characters` (
   `y` double NOT NULL DEFAULT '495',
   `z` double NOT NULL DEFAULT '3237.01',
   `rot` double NOT NULL DEFAULT '0.0245437',
-  `healthC` mediumint(11) NOT NULL DEFAULT '500',
-  `healthM` mediumint(11) NOT NULL DEFAULT '500',
-  `innerStrC` mediumint(11) NOT NULL DEFAULT '200',
-  `innerStrM` mediumint(11) NOT NULL DEFAULT '200',
-  `level` mediumint(11) NOT NULL DEFAULT '50',
-  `profession` int(10) NOT NULL DEFAULT '2',
-  `alignment` smallint(6) NOT NULL DEFAULT '0',
-  `pvpflag` smallint(6) NOT NULL DEFAULT '0',
-  `exp` bigint(30) NOT NULL DEFAULT '1000000000',
-  `cash` bigint(30) NOT NULL DEFAULT '10000',
+  `healthC` mediumint(11) unsigned NOT NULL DEFAULT '500',
+  `healthM` mediumint(11) unsigned NOT NULL DEFAULT '500',
+  `innerStrC` mediumint(11) unsigned NOT NULL DEFAULT '200',
+  `innerStrM` mediumint(11) unsigned NOT NULL DEFAULT '200',
+  `level` mediumint(11) unsigned NOT NULL DEFAULT '50',
+  `profession` int(10) unsigned NOT NULL DEFAULT '2',
+  `alignment` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `pvpflag` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `exp` bigint(30) unsigned NOT NULL DEFAULT '1000000000',
+  `cash` bigint(30) unsigned NOT NULL DEFAULT '10000',
   `district` tinyint(3) unsigned NOT NULL DEFAULT '1',
   `adminFlags` int(10) unsigned NOT NULL DEFAULT '0',
   `lastOnline` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
@@ -41,40 +41,42 @@ CREATE TABLE `characters` (
   PRIMARY KEY (`charId`),
   UNIQUE KEY `handle` (`handle`),
   UNIQUE KEY `charId` (`charId`)
-) ENGINE=MyISAM AUTO_INCREMENT=355 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=357 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for doors
 -- ----------------------------
 CREATE TABLE `doors` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `doorid` int(11) NOT NULL,
-  `districtid` int(11) NOT NULL,
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `doorid` int(11) unsigned NOT NULL,
+  `districtid` tinyint(3) unsigned NOT NULL,
   `X` double NOT NULL DEFAULT '0',
   `Y` double NOT NULL DEFAULT '0',
   `Z` double NOT NULL DEFAULT '0',
   `ROT` double NOT NULL DEFAULT '0',
   `Open` bit(1) NOT NULL DEFAULT b'0',
   `OpenTime` datetime DEFAULT NULL,
-  `DoorType` int(3) NOT NULL DEFAULT '1',
+  `DoorType` tinyint(3) unsigned NOT NULL DEFAULT '1',
   `FirstUser` varchar(45) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13156 DEFAULT CHARSET=latin1;
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id` (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=13168 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for hardlines
 -- ----------------------------
 CREATE TABLE `hardlines` (
   `Id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `HardLineId` smallint(6) NOT NULL,
+  `HardLineId` smallint(6) unsigned NOT NULL,
   `HardlineName` varchar(45) NOT NULL,
   `X` double NOT NULL,
   `Y` double NOT NULL,
   `Z` double NOT NULL,
   `ROT` double NOT NULL,
-  `DistrictId` smallint(6) NOT NULL,
-  PRIMARY KEY (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=139 DEFAULT CHARSET=latin1;
+  `DistrictId` smallint(6) unsigned NOT NULL,
+  PRIMARY KEY (`Id`),
+  UNIQUE KEY `Id` (`Id`)
+) ENGINE=MyISAM AUTO_INCREMENT=139 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for inventory
@@ -86,7 +88,7 @@ CREATE TABLE `inventory` (
   `slot` tinyint(11) unsigned DEFAULT NULL,
   PRIMARY KEY (`invId`),
   UNIQUE KEY `invId` (`invId`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for locations
@@ -97,37 +99,38 @@ CREATE TABLE `locations` (
   `X` double NOT NULL,
   `Y` double NOT NULL,
   `Z` double NOT NULL,
-  `District` tinyint(3) NOT NULL,
-  PRIMARY KEY (`Id`,`Command`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=62 DEFAULT CHARSET=latin1;
+  `District` tinyint(3) unsigned NOT NULL,
+  PRIMARY KEY (`Id`),
+  UNIQUE KEY `Id` (`Id`)
+) ENGINE=MyISAM AUTO_INCREMENT=62 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for rsivalues
 -- ----------------------------
 CREATE TABLE `rsivalues` (
   `charId` bigint(30) unsigned NOT NULL,
-  `sex` smallint(6) NOT NULL,
-  `body` smallint(6) NOT NULL,
-  `hat` smallint(6) NOT NULL,
-  `face` smallint(6) NOT NULL,
-  `shirt` smallint(6) NOT NULL,
-  `coat` smallint(6) NOT NULL,
-  `pants` smallint(6) NOT NULL,
-  `shoes` smallint(6) NOT NULL,
-  `gloves` smallint(6) NOT NULL,
-  `glasses` smallint(6) NOT NULL,
-  `hair` smallint(6) NOT NULL,
-  `facialdetail` smallint(6) NOT NULL,
-  `shirtcolor` smallint(6) NOT NULL,
-  `pantscolor` smallint(6) NOT NULL,
-  `coatcolor` smallint(6) NOT NULL,
-  `shoecolor` smallint(6) NOT NULL,
-  `glassescolor` smallint(6) NOT NULL,
-  `haircolor` smallint(6) NOT NULL,
-  `skintone` smallint(6) NOT NULL,
-  `tattoo` smallint(6) NOT NULL,
-  `facialdetailcolor` smallint(6) NOT NULL,
-  `leggings` smallint(6) NOT NULL,
+  `sex` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `body` smallint(6) unsigned NOT NULL DEFAULT '2',
+  `hat` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `face` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `shirt` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `coat` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `pants` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `shoes` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `gloves` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `glasses` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `hair` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `facialdetail` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `shirtcolor` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `pantscolor` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `coatcolor` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `shoecolor` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `glassescolor` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `haircolor` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `skintone` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `tattoo` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `facialdetailcolor` smallint(6) unsigned NOT NULL DEFAULT '0',
+  `leggings` smallint(6) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`charId`),
   UNIQUE KEY `charId` (`charId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -143,13 +146,13 @@ CREATE TABLE `users` (
   `publicExponent` smallint(11) unsigned NOT NULL DEFAULT '0',
   `publicModulus` tinyblob,
   `privateExponent` tinyblob,
-  `timeCreated` int(10) unsigned NOT NULL,
-  `account_status` int(11) NOT NULL DEFAULT '0' COMMENT 'if banned',
+  `timeCreated` int(10) NOT NULL,
+  `account_status` int(11) unsigned NOT NULL DEFAULT '1' COMMENT '0 = banned, 1 = user, 2 = admin',
   `sessionid` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`userId`),
   UNIQUE KEY `id` (`userId`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=MyISAM AUTO_INCREMENT=309 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=327 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for worlds
@@ -163,14 +166,14 @@ CREATE TABLE `worlds` (
   PRIMARY KEY (`worldId`),
   UNIQUE KEY `worldId` (`worldId`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records 
 -- ----------------------------
-INSERT INTO `characters` VALUES ('35', '60', '1', '0', 'TestCharacter', 'Test', 'Character', 'Just some dude', '63974.6', '694.999', '-25245.1', '2.40528', '500', '500', '200', '200', '50', '2', '0', '0', '1000000000', '10000', '1', '0', '2010-08-23 17:08:17', '0');
-INSERT INTO `characters` VALUES ('354', '60', '1', '0', 'TestChar2', 'Test2', 'Char2', 'Derperperper', '63602.3', '694.999', '-23176', '1.69351', '500', '500', '200', '200', '50', '2', '0', '0', '1000000000', '10000', '1', '0', '2010-08-23 16:35:09', '1');
-INSERT INTO `doors` VALUES ('12849', '163577862', '1', '119700', '-505', '-50636', '0', '', null, '0', 'TestCharacter');
+INSERT INTO `characters` VALUES ('35', '60', '1', '0', 'TestCharacter', 'Test', 'Character', 'Just some dude', '106181', '95', '-86876.8', '0.343612', '500', '500', '200', '200', '50', '2', '2', '0', '1000000000', '10000', '1', '1', '2010-08-28 06:11:29', '0');
+INSERT INTO `characters` VALUES ('354', '60', '1', '0', 'TestChar2', 'Test2', 'Char2', 'Derperperper', '20897', '95', '50924.2', '-2.38074', '500', '500', '200', '200', '50', '2', '2', '0', '1000000000', '10000', '2', '0', '2010-08-26 03:26:16', '0');
+INSERT INTO `doors` VALUES ('12849', '900726787', '1', '119700', '-505', '-50636', '0', '', null, '0', 'TestCharacter');
 INSERT INTO `doors` VALUES ('12850', '211812355', '1', '115835', '-505', '-54298', '0', '', null, '1', 'TestCharacter');
 INSERT INTO `doors` VALUES ('12851', '211812359', '1', '115835', '-505', '-55088.3', '0', '', null, '1', 'TestCharacter');
 INSERT INTO `doors` VALUES ('12852', '211812358', '1', '115835', '-505', '-55292.1', '0', '', null, '1', 'TestCharacter');
@@ -477,6 +480,18 @@ INSERT INTO `doors` VALUES ('13152', '163577862', '1', '67496.7', '694.999', '-2
 INSERT INTO `doors` VALUES ('13153', '430964742', '1', '83498.1', '694.999', '-34035', '-3.14159', '', null, '1', 'TestCharacter');
 INSERT INTO `doors` VALUES ('13154', '430964741', '1', '83703.9', '694.999', '-34035', '-3.11705', '', null, '1', 'TestCharacter');
 INSERT INTO `doors` VALUES ('13155', '430964739', '1', '83900.2', '694.999', '-34035', '-3.14159', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13156', '900726787', '1', '99635', '95', '-88294.9', '1.54625', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13157', '900726790', '1', '99835', '95', '-81796.5', '1.59534', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13158', '900727743', '1', '99260', '95', '-81797.1', '1.54625', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13159', '900727744', '1', '99496.5', '95', '-82040', '0.0245437', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13160', '900726788', '1', '99740', '95', '-82802', '-1.5708', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13161', '900726791', '1', '99740', '95', '-82601.1', '-1.54625', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13162', '900728053', '1', '97859.8', '95', '-82596.8', '1.5708', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13163', '900726789', '1', '97260', '95', '-82599.5', '1.59534', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13164', '900726795', '1', '97165.2', '95', '-84605.4', '-1.59534', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13165', '900728249', '1', '98140', '95', '-83806', '-1.59534', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13166', '900726796', '1', '99740', '95', '-84606.4', '-1.61988', '', null, '1', 'TestCharacter');
+INSERT INTO `doors` VALUES ('13167', '900726797', '1', '99740', '95', '-84804.6', '-1.54625', '', null, '1', 'TestCharacter');
 INSERT INTO `hardlines` VALUES ('2', '49', 'MaraNorthWest', '7737.37', '95', '13801.5', '1.5708', '1');
 INSERT INTO `hardlines` VALUES ('3', '152', 'MaraCentral', '17043.1', '495', '2398.8', '-3.14159', '1');
 INSERT INTO `hardlines` VALUES ('6', '72', 'Tagged By Tastee Wheat', '39216.4', '95', '-21475.1', '2.03713', '1');
@@ -657,7 +672,7 @@ INSERT INTO `locations` VALUES ('58', 'MaraNWHL', '7673.72', '95', '13844.9', '1
 INSERT INTO `locations` VALUES ('59', 'MaribeauTestBench', '-33684.5', '1895', '-45400.7', '2');
 INSERT INTO `locations` VALUES ('60', 'TestTW', '186638.40625', '-905', '50007.699219', '1');
 INSERT INTO `locations` VALUES ('61', 'LargeHalls1', '186638', '-905', '50007.7', '1');
-INSERT INTO `rsivalues` VALUES ('35', '0', '2', '2', '5', '4', '6', '10', '7', '5', '18', '4', '6', '4', '2', '3', '6', '5', '4', '15', '0', '0', '0');
+INSERT INTO `rsivalues` VALUES ('35', '0', '2', '9', '7', '2', '10', '1', '6', '6', '4', '1', '6', '41', '16', '0', '0', '15', '1', '10', '0', '3', '0');
 INSERT INTO `rsivalues` VALUES ('354', '1', '1', '1', '2', '7', '7', '1', '6', '7', '6', '1', '7', '0', '0', '1', '3', '5', '4', '3', '6', '2', '2');
 INSERT INTO `users` VALUES ('60', 'loluser', 'JLEwx;+?', '5824550e13f2f150c479e14f4c4d0b7c838fdca8', '17', 0xA8A95456F64A3948E0F94F7E441A861970D3D9E7947DF5054382170D9D770A1EFD6C730FEDB41EB05AC46100BE74B3CC76D9B2AF68761E99B99CAB5096231EAD08E5354F0857F1E98864DE9C5B1FB7AB1E823EC3FACD3D0B6B427D42493E2C23, 0x123060F047BCB5DD315C242E3E8F68D08C2AECD535A9310313D44DC7BE2872085C95BC184E57307C6E2E46B246BC4595DFF74C3EA73EA39D889D80B99FF79C561923994617428E166C410D98F6C56A5818E922F485B4A9C2EF44F5BF56FF8E25, '1265666869', '2', null);
-INSERT INTO `worlds` VALUES ('1', 'Reality', '1', '1', '0');
+INSERT INTO `worlds` VALUES ('1', 'Reality', '1', '0', '0');

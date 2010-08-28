@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include <StdoutLog.h>
 #include <ListenSocket.h>
-#include <SocketHandler.h>
+#include <SocketHandlerEp.h>
 #include <TcpSocket.h>
 #ifndef _WIN32
 #include <signal.h>
@@ -190,9 +190,10 @@ int main(int argc,char *argv[])
     exit(-1);
   }
   StdoutLog *log = enableLog ? new StdoutLog() : NULL;
-  SocketHandler h(log);
+  SocketHandlerEp h(log);
   ListenSocket<MySocket> l(h);
   ListenSocket<HttpDebugSocket> l2(h);
+  h.SetNumberOfThreads(10);
   if (!g_b_http)
   {
     if (l.Bind(port, queue))

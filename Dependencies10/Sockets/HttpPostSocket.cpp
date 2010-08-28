@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2004-2008  Anders Hedstrom
+Copyright (C) 2004-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -39,8 +41,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "ISocketHandler.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "Utility.h"
 #include "Lock.h"
+#include "File.h"
 
 #include "HttpPostSocket.h"
 
@@ -132,7 +134,7 @@ void HttpPostSocket::OnConnect()
 		std::string body;
 
 		// only fields, no files, add urlencoding
-		for (std::map<std::string,std::list<std::string> >::iterator it = m_fields.begin(); it != m_fields.end(); it++)
+		for (std::map<std::string,std::list<std::string> >::iterator it = m_fields.begin(); it != m_fields.end(); ++it)
 		{
 			std::string name = (*it).first;
 			std::list<std::string>& ref = (*it).second;
@@ -142,7 +144,7 @@ void HttpPostSocket::OnConnect()
 			}
 			body += name + "=";
 			bool first = true;
-			for (std::list<std::string>::iterator it = ref.begin(); it != ref.end(); it++)
+			for (std::list<std::string>::iterator it = ref.begin(); it != ref.end(); ++it)
 			{
 				std::string value = *it;
 				if (!first)
@@ -178,14 +180,14 @@ void HttpPostSocket::DoMultipartPost()
 
 	// fields
 	{
-		for (std::map<std::string,std::list<std::string> >::iterator it = m_fields.begin(); it != m_fields.end(); it++)
+		for (std::map<std::string,std::list<std::string> >::iterator it = m_fields.begin(); it != m_fields.end(); ++it)
 		{
 			std::string name = (*it).first;
 			std::list<std::string>& ref = (*it).second;
 			tmp = "--" + m_boundary + "\r\n"
 				"content-disposition: form-data; name=\"" + name + "\"\r\n"
 				"\r\n";
-			for (std::list<std::string>::iterator it = ref.begin(); it != ref.end(); it++)
+			for (std::list<std::string>::iterator it = ref.begin(); it != ref.end(); ++it)
 			{
 				std::string value = *it;
 				tmp += value + "\r\n";
@@ -196,7 +198,7 @@ void HttpPostSocket::DoMultipartPost()
 
 	// files
 	{
-		for (std::map<std::string,std::string>::iterator it = m_files.begin(); it != m_files.end(); it++)
+		for (std::map<std::string,std::string>::iterator it = m_files.begin(); it != m_files.end(); ++it)
 		{
 			std::string name = (*it).first;
 			std::string filename = (*it).second;
@@ -230,14 +232,14 @@ void HttpPostSocket::DoMultipartPost()
 
 	// send fields
 	{
-		for (std::map<std::string,std::list<std::string> >::iterator it = m_fields.begin(); it != m_fields.end(); it++)
+		for (std::map<std::string,std::list<std::string> >::iterator it = m_fields.begin(); it != m_fields.end(); ++it)
 		{
 			std::string name = (*it).first;
 			std::list<std::string>& ref = (*it).second;
 			tmp = "--" + m_boundary + "\r\n"
 				"content-disposition: form-data; name=\"" + name + "\"\r\n"
 				"\r\n";
-			for (std::list<std::string>::iterator it = ref.begin(); it != ref.end(); it++)
+			for (std::list<std::string>::iterator it = ref.begin(); it != ref.end(); ++it)
 			{
 				std::string value = *it;
 				tmp += value + "\r\n";
@@ -248,7 +250,7 @@ void HttpPostSocket::DoMultipartPost()
 
 	// send files
 	{
-		for (std::map<std::string,std::string>::iterator it = m_files.begin(); it != m_files.end(); it++)
+		for (std::map<std::string,std::string>::iterator it = m_files.begin(); it != m_files.end(); ++it)
 		{
 			std::string name = (*it).first;
 			std::string filename = (*it).second;
@@ -259,16 +261,16 @@ void HttpPostSocket::DoMultipartPost()
 				"\r\n";
 			Send( tmp );
 			{
-				FILE *fil = fopen(filename.c_str(),"rb");
-				if (fil)
+				std::auto_ptr<IFile> fil = std::auto_ptr<IFile>(new File);
+				if (fil -> fopen(filename, "rb"))
 				{
 					char slask[2000]; // for fread
 					size_t n;
-					while ((n = fread(slask, 1, 2000, fil)) > 0)
+					while ((n = fil -> fread(slask, 1, 2000)) > 0)
 					{
 						SendBuf(slask, n);
 					}
-					fclose(fil);
+					fil -> fclose();
 				}
 			}
 			Send("\r\n");

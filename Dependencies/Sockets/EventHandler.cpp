@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2005-2008  Anders Hedstrom
+Copyright (C) 2005-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -33,7 +35,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "EventHandler.h"
 #include "IEventOwner.h"
 #include "Event.h"
-#include "Socket.h"
 #include "TcpSocket.h"
 #include "ListenSocket.h"
 
@@ -43,13 +44,15 @@ namespace SOCKETS_NAMESPACE {
 #endif
 
 
-EventHandler::EventHandler(StdLog *p) : SocketHandler(p), m_quit(false), m_socket(NULL)
+EventHandler::EventHandler(StdLog *p) : SocketHandler(p), m_quit(false)
 {
+	EnableRelease();
 }
 
 
-EventHandler::EventHandler(IMutex& m,StdLog *p) : SocketHandler(m, p), m_quit(false), m_socket(NULL)
+EventHandler::EventHandler(IMutex& m,StdLog *p) : SocketHandler(m, p), m_quit(false)
 {
+	EnableRelease();
 }
 
 
@@ -100,7 +103,7 @@ void EventHandler::CheckEvents()
 		s != NULL    This is a Socket implementing IEventOwner, and we can check that the
 			     object instance still is valid using SocketHandler::Valid.
 		*/
-		if (!s || (s && Valid(s)))
+		if (!s || (s && Valid( e -> Data() )))
 		{
 			e -> GetFrom() -> OnEvent(e -> GetID());
 		}
@@ -119,17 +122,15 @@ void EventHandler::CheckEvents()
 
 long EventHandler::AddEvent(IEventOwner *from,long sec,long usec)
 {
-	Event *e = new Event(from, sec, usec);
+	Socket *s = dynamic_cast<Socket *>(from);
+	Event *e = new Event(from, sec, usec, s ? s -> UniqueIdentifier() : 0);
 	std::list<Event *>::iterator it = m_events.begin();
 	while (it != m_events.end() && *(*it) < *e)
 	{
-		it++;
+		++it;
 	}
 	m_events.insert(it, e);
-	if (m_socket)
-	{
-		m_socket -> Send("\n");
-	}
+	Release();
 	return e -> GetID();
 }
 
@@ -140,7 +141,7 @@ void EventHandler::ClearEvents(IEventOwner *from)
 	do
 	{
 		repeat = false;
-		for (std::list<Event *>::iterator it = m_events.begin(); it != m_events.end(); it++)
+		for (std::list<Event *>::iterator it = m_events.begin(); it != m_events.end(); ++it)
 		{
 			Event *e = *it;
 			if (e -> GetFrom() == from)
@@ -181,7 +182,7 @@ void EventHandler::SetQuit(bool x)
 
 void EventHandler::RemoveEvent(IEventOwner *from, long eid)
 {
-	for (std::list<Event *>::iterator it = m_events.begin(); it != m_events.end(); it++)
+	for (std::list<Event *>::iterator it = m_events.begin(); it != m_events.end(); ++it)
 	{
 		Event *e = *it;
 		if (from == e -> GetFrom() && eid == e -> GetID())
@@ -196,23 +197,6 @@ void EventHandler::RemoveEvent(IEventOwner *from, long eid)
 
 void EventHandler::Add(Socket *p)
 {
-	if (!m_socket)
-	{
-		ListenSocket<TcpSocket> *l = new ListenSocket<TcpSocket>(*this);
-		l -> SetDeleteByHandler();
-		l -> Bind("127.0.0.1", 0);
-		m_port = l -> GetPort();
-		SocketHandler::Add(l);
-		m_socket = new TcpSocket( *this );
-		m_socket -> SetDeleteByHandler();
-		m_socket -> SetConnectTimeout(5);
-		m_socket -> SetConnectionRetry(-1);
-#ifdef ENABLE_RECONNECT
-		m_socket -> SetReconnect(true);
-#endif
-		m_socket -> Open("127.0.0.1", m_port);
-		SocketHandler::Add(m_socket);
-	}
 	SocketHandler::Add( p );
 }
 

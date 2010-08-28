@@ -32,7 +32,9 @@
 
 #if defined(_WIN32) || defined(_WIN32_WCE) || defined(__WIN32__)
 #define PATH_MAX _MAX_PATH
-#define snprintf _snprintf
+#ifndef snprintf
+#define snprintf sprintf_s
+#endif
 #define strcasecmp _stricmp
 #define realpath(path,resolved_path) _fullpath(resolved_path, path, _MAX_PATH)
 #include <io.h>

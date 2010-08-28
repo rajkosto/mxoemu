@@ -88,6 +88,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Exception.cpp" />
+    <ClCompile Include="..\..\Semaphore.cpp" />
+    <ClCompile Include="..\..\SocketHandlerThread.cpp" />
+    <ClCompile Include="..\..\SocketThread.cpp" />
     <ClCompile Include="..\..\socket_include.cpp" />
     <ClCompile Include="..\..\Base64.cpp" />
     <ClCompile Include="..\..\Debug.cpp" />
@@ -136,6 +139,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Exception.h" />
+    <ClInclude Include="..\..\Semaphore.h" />
+    <ClInclude Include="..\..\SocketHandlerThread.h" />
+    <ClInclude Include="..\..\SocketThread.h" />
     <ClInclude Include="..\..\socket_include.h" />
     <ClInclude Include="..\..\sockets-config.h" />
     <ClInclude Include="..\..\Base64.h" />

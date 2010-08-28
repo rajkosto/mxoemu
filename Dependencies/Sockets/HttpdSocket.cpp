@@ -1,9 +1,11 @@
 /** \file HttpdSocket.cpp
 */
 /*
-Copyright (C) 2001-2008  Anders Hedstrom (grymse@alhem.net)
+Copyright (C) 2001-2010  Anders Hedstrom (grymse@alhem.net)
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -28,7 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef _MSC_VER
 #pragma warning(disable:4786)
 #endif
-#include "Utility.h"
 #include "HttpdCookies.h"
 #include "HttpdForm.h"
 #include "MemFile.h"
@@ -236,7 +237,7 @@ std::string HttpdSocket::datetime2httpdate(const std::string& dt)
 			Handler().LogError(this, "datetime2httpdate", 0, "mktime() failed");
 		}
 
-		sprintf(s,"%s, %02d %s %d %02d:%02d:%02d GMT",
+		snprintf(s,sizeof(s),"%s, %02d %s %d %02d:%02d:%02d GMT",
 		 days[tp.tm_wday],
 		 tp.tm_mday,
 		 months[tp.tm_mon],
@@ -254,18 +255,27 @@ std::string HttpdSocket::datetime2httpdate(const std::string& dt)
 std::string HttpdSocket::GetDate()
 {
 	time_t t = time(NULL);
+	char slask[40]; // yyyy-mm-dd hh:mm:ss
+#ifdef __CYGWIN__
+	struct tm *tp = localtime(&t);
+	snprintf(slask,sizeof(slask),"%d-%02d-%02d %02d:%02d:%02d",
+		tp -> tm_year + 1900,
+		tp -> tm_mon + 1,
+		tp -> tm_mday,
+		tp -> tm_hour,tp -> tm_min,tp -> tm_sec);
+#else
 	struct tm tp;
-#ifdef _WIN32
-	memcpy(&tp, localtime(&t), sizeof(tp));
+#if defined( _WIN32) && !defined(__CYGWIN__)
+	localtime_s(&tp, &t);
 #else
 	localtime_r(&t, &tp);
 #endif
-	char slask[40]; // yyyy-mm-dd hh:mm:ss
-	sprintf(slask,"%d-%02d-%02d %02d:%02d:%02d",
+	snprintf(slask,sizeof(slask),"%d-%02d-%02d %02d:%02d:%02d",
 		tp.tm_year + 1900,
 		tp.tm_mon + 1,
 		tp.tm_mday,
 		tp.tm_hour,tp.tm_min,tp.tm_sec);
+#endif
 	return slask;
 }
 

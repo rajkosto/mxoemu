@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2004-2008  Anders Hedstrom
+Copyright (C) 2004-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -42,6 +44,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 namespace SOCKETS_NAMESPACE {
 #endif
 
+class IFile;
+
 /** \defgroup util Utilities */
 
 /** Base64 encode/decode. 
@@ -52,6 +56,7 @@ public:
 	Base64();
 
 	void encode(FILE *, std::string& , bool add_crlf = true);
+	void encode(IFile *, std::string& , bool add_crlf = true);
 	void encode(const std::string&, std::string& , bool add_crlf = true);
 	void encode(const char *, size_t, std::string& , bool add_crlf = true);
 	void encode(const unsigned char *, size_t, std::string& , bool add_crlf = true);

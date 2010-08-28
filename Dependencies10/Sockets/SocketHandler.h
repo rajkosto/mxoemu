@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2004-2008  Anders Hedstrom
+Copyright (C) 2004-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -47,6 +49,8 @@ class Socket;
 class ResolvServer;
 #endif
 class IMutex;
+class SocketHandlerThread;
+class UdpSocket;
 
 /** Socket container class, event generator. 
 	\ingroup basic */
@@ -66,7 +70,26 @@ public:
 		\param log Optional log class pointer */
 	SocketHandler(IMutex& mutex,StdLog *log = NULL);
 
+	SocketHandler(IMutex&, ISocketHandler& parent, StdLog * = NULL);
+
 	~SocketHandler();
+
+	virtual ISocketHandler *Create(StdLog * = NULL);
+	virtual ISocketHandler *Create(IMutex&, ISocketHandler&, StdLog * = NULL);
+
+	virtual bool ParentHandlerIsValid();
+
+	virtual ISocketHandler& ParentHandler();
+
+	virtual ISocketHandler& GetRandomHandler();
+
+	virtual ISocketHandler& GetEffectiveHandler();
+
+	virtual void SetNumberOfThreads(size_t n);
+	virtual bool IsThreaded();
+
+	virtual void EnableRelease();
+	virtual void Release();
 
 	/** Get mutex reference for threadsafe operations. */
 	IMutex& GetMutex() const;
@@ -81,11 +104,10 @@ public:
 	/** Add socket instance to socket map. Removal is always automatic. */
 	void Add(Socket *);
 
-	/** Get status of read/write/exception file descriptor set for a socket. */
-	void Get(SOCKET s,bool& r,bool& w,bool& e);
-
 	/** Set read/write/exception file descriptor sets (fd_set). */
-	void Set(SOCKET s,bool bRead,bool bWrite,bool bException = true);
+	void ISocketHandler_Add(Socket *,bool bRead,bool bWrite);
+	void ISocketHandler_Mod(Socket *,bool bRead,bool bWrite);
+	void ISocketHandler_Del(Socket *);
 
 	/** Wait for events, generate callbacks. */
 	int Select(long sec,long usec);
@@ -98,17 +120,32 @@ public:
 
 	/** Check that a socket really is handled by this socket handler. */
 	bool Valid(Socket *);
+	bool Valid(socketuid_t);
 
 	/** Return number of sockets handled by this handler.  */
 	size_t GetCount();
+	size_t MaxCount() { return FD_SETSIZE; }
 
 	/** Override and return false to deny all incoming connections. 
 		\param p ListenSocket class pointer (use GetPort to identify which one) */
 	bool OkToAccept(Socket *p);
 
-	/** Called by Socket when a socket changes state. */
-	void AddList(SOCKET s,list_t which_one,bool add);
+	/** Use with care, always lock with h.GetMutex() if multithreaded */
+	const std::map<SOCKET, Socket *>& AllSockets() { return m_sockets; }
 
+	size_t MaxTcpLineSize() { return TCP_LINE_SIZE; }
+
+	void SetCallOnConnect(bool = true);
+	void SetDetach(bool = true);
+	void SetTimeout(bool = true);
+	void SetRetry(bool = true);
+	void SetClose(bool = true);
+
+private:
+	static FILE *m_event_file;
+	static unsigned long m_event_counter;
+
+public:
 	// Connection pool
 #ifdef ENABLE_POOL
 	/** Find available open connection (used by connection pool). */
@@ -174,21 +211,6 @@ public:
 	bool Resolving(Socket *);
 #endif // ENABLE_RESOLVER
 
-#ifdef ENABLE_TRIGGERS
-	/** Fetch unique trigger id. */
-	int TriggerID(Socket *src);
-	/** Subscribe socket to trigger id. */
-	bool Subscribe(int id, Socket *dst);
-	/** Unsubscribe socket from trigger id. */
-	bool Unsubscribe(int id, Socket *dst);
-	/** Execute OnTrigger for subscribed sockets.
-		\param id Trigger ID
-		\param data Data passed from source to destination
-		\param erase Empty trigger id source and destination maps if 'true',
-			Leave them in place if 'false' - if a trigger should be called many times */
-	void Trigger(int id, Socket::TriggerData& data, bool erase = true);
-#endif // ENABLE_TRIGGERS
-
 #ifdef ENABLE_DETACH
 	/** Indicates that the handler runs under SocketThread. */
 	void SetSlave(bool x = true);
@@ -196,41 +218,53 @@ public:
 	bool IsSlave();
 #endif
 
-	/** Sanity check of those accursed lists. */
-	void CheckSanity();
-
 protected:
 	socket_m m_sockets; ///< Active sockets map
-	socket_m m_add; ///< Sockets to be added to sockets map
+	std::list<Socket *> m_add; ///< Sockets to be added to sockets map
 	std::list<Socket *> m_delete; ///< Sockets to be deleted (failed when Add)
 
 protected:
+	/** Actual call to select() */
+	int ISocketHandler_Select(struct timeval *);
 	/** Remove socket from socket map, used by Socket class. */
 	void Remove(Socket *);
+	/** Schedule socket for deletion */
+	void DeleteSocket(Socket *);
+	void AddIncoming();
+	void CheckErasedSockets();
+	void CheckCallOnConnect();
+	void CheckDetach();
+	void CheckTimeout(time_t);
+	void CheckRetry();
+	void CheckClose();
+	//
 	StdLog *m_stdlog; ///< Registered log class, or NULL
 	IMutex& m_mutex; ///< Thread safety mutex
 	bool m_b_use_mutex; ///< Mutex correctly initialized
+	ISocketHandler& m_parent;
+	bool m_b_parent_is_valid;
 
 private:
-	void CheckList(socket_v&,const std::string&); ///< Used by CheckSanity
+	void RebuildFdset();
+	void Set(Socket *,bool,bool);
+	//
+	std::list<SocketHandlerThread *> m_threads;
+	UdpSocket *m_release;
+	//
 	SOCKET m_maxsock; ///< Highest file descriptor + 1 in active sockets list
 	fd_set m_rfds; ///< file descriptor set monitored for read events
 	fd_set m_wfds; ///< file descriptor set monitored for write events
 	fd_set m_efds; ///< file descriptor set monitored for exceptions
-	int m_preverror; ///< debug select() error
-	int m_errcnt; ///< debug select() error
 	time_t m_tlast; ///< timeout control
 
 	// state lists
-	socket_v m_fds; ///< Active file descriptor list
-	socket_v m_fds_erase; ///< File descriptors that are to be erased from m_sockets
-	socket_v m_fds_callonconnect; ///< checklist CallOnConnect
-#ifdef ENABLE_DETACH
-	socket_v m_fds_detach; ///< checklist Detach
-#endif
-	socket_v m_fds_timeout; ///< checklist timeout
-	socket_v m_fds_retry; ///< checklist retry client connect
-	socket_v m_fds_close; ///< checklist close and delete
+	std::list<socketuid_t> m_fds_erase; ///< File descriptors that are to be erased from m_sockets
+
+	bool m_b_check_callonconnect;
+	bool m_b_check_detach;
+	bool m_b_check_timeout;
+	bool m_b_check_retry;
+	bool m_b_check_close;
 
 #ifdef ENABLE_SOCKS4
 	ipaddr_t m_socks4_host; ///< Socks4 server host ip
@@ -242,15 +276,10 @@ private:
 	int m_resolv_id; ///< Resolver id counter
 	ResolvServer *m_resolver; ///< Resolver thread pointer
 	port_t m_resolver_port; ///< Resolver listen port
-	std::map<Socket *, bool> m_resolve_q; ///< resolve queue
+	std::map<socketuid_t, bool> m_resolve_q; ///< resolve queue
 #endif
 #ifdef ENABLE_POOL
 	bool m_b_enable_pool; ///< Connection pool enabled if true
-#endif
-#ifdef ENABLE_TRIGGERS
-	int m_next_trigger_id; ///< Unique trigger id counter
-	std::map<int, Socket *> m_trigger_src; ///< mapping trigger id to source socket
-	std::map<int, std::map<Socket *, bool> > m_trigger_dst; ///< mapping trigger id to destination sockets
 #endif
 #ifdef ENABLE_DETACH
 	bool m_slave; ///< Indicates that this is a ISocketHandler run in SocketThread

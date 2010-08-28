@@ -1,7 +1,7 @@
 [Project]
 FileName=Sockets.dev
 Name=Sockets
-UnitCount=94
+UnitCount=118
 Type=2
 Ver=1
 ObjFiles=
@@ -277,7 +277,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit25]
+[Unit24]
 FileName=..\Ipv6Address.h
 CompileCpp=1
 Folder=Basic Sockets
@@ -287,7 +287,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit26]
+[Unit25]
 FileName=..\SocketAddress.h
 CompileCpp=1
 Folder=Basic Sockets
@@ -297,7 +297,57 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
+[Unit26]
+FileName=..\SocketHandlerThread.cpp
+CompileCpp=1
+Folder=Basic Sockets
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
 [Unit27]
+FileName=..\SocketHandlerThread.h
+CompileCpp=1
+Folder=Basic Sockets
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit28]
+FileName=..\SocketThread.cpp
+CompileCpp=1
+Folder=Basic Sockets
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit29]
+FileName=..\SocketThread.h
+CompileCpp=1
+Folder=Basic Sockets
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit30]
+FileName=..\StreamSocket.cpp
+CompileCpp=1
+Folder=Basic Sockets
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit31]
 FileName=..\MemFile.h
 CompileCpp=1
 Folder=File handling
@@ -307,7 +357,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit28]
+[Unit32]
 FileName=..\File.h
 CompileCpp=1
 Folder=File handling
@@ -317,7 +367,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit29]
+[Unit33]
 FileName=..\IFile.h
 CompileCpp=1
 Folder=File handling
@@ -327,7 +377,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit30]
+[Unit34]
 FileName=..\MemFile.cpp
 CompileCpp=1
 Folder=File handling
@@ -337,7 +387,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit31]
+[Unit35]
 FileName=..\File.cpp
 CompileCpp=1
 Folder=File handling
@@ -347,7 +397,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit32]
+[Unit36]
 FileName=..\HttpDebugSocket.cpp
 CompileCpp=1
 Folder=HTTP Sockets
@@ -357,7 +407,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit33]
+[Unit37]
 FileName=..\HttpDebugSocket.h
 CompileCpp=1
 Folder=HTTP Sockets
@@ -367,7 +417,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit34]
+[Unit38]
 FileName=..\HttpGetSocket.cpp
 CompileCpp=1
 Folder=HTTP Sockets
@@ -377,7 +427,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit35]
+[Unit39]
 FileName=..\HttpGetSocket.h
 CompileCpp=1
 Folder=HTTP Sockets
@@ -387,7 +437,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit36]
+[Unit40]
 FileName=..\HttpPostSocket.cpp
 CompileCpp=1
 Folder=HTTP Sockets
@@ -397,7 +447,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit37]
+[Unit41]
 FileName=..\HttpPostSocket.h
 CompileCpp=1
 Folder=HTTP Sockets
@@ -407,7 +457,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit38]
+[Unit42]
 FileName=..\HttpPutSocket.cpp
 CompileCpp=1
 Folder=HTTP Sockets
@@ -417,7 +467,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit39]
+[Unit43]
 FileName=..\HttpPutSocket.h
 CompileCpp=1
 Folder=HTTP Sockets
@@ -427,7 +477,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit40]
+[Unit44]
 FileName=..\HTTPSocket.cpp
 CompileCpp=1
 Folder=HTTP Sockets
@@ -437,7 +487,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit41]
+[Unit45]
 FileName=..\HTTPSocket.h
 CompileCpp=1
 Folder=HTTP Sockets
@@ -447,7 +497,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit42]
+[Unit46]
 FileName=..\HttpClientSocket.h
 CompileCpp=1
 Folder=HTTP Sockets
@@ -457,7 +507,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit43]
+[Unit47]
 FileName=..\HttpClientSocket.cpp
 CompileCpp=1
 Folder=HTTP Sockets
@@ -467,7 +517,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit45]
+[Unit48]
 FileName=..\SSLInitializer.h
 CompileCpp=1
 Folder=Internal
@@ -477,7 +527,17 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit46]
+[Unit49]
+FileName=..\SSLInitializer.cpp
+CompileCpp=1
+Folder=Internal
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit50]
 FileName=..\StdLog.h
 CompileCpp=1
 Folder=Log help classes
@@ -487,7 +547,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit47]
+[Unit51]
 FileName=..\StdoutLog.cpp
 CompileCpp=1
 Folder=Log help classes
@@ -497,7 +557,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit48]
+[Unit52]
 FileName=..\StdoutLog.h
 CompileCpp=1
 Folder=Log help classes
@@ -507,7 +567,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit49]
+[Unit53]
 FileName=..\SmtpdSocket.cpp
 CompileCpp=1
 Folder=SMTP
@@ -517,7 +577,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit50]
+[Unit54]
 FileName=..\SmtpdSocket.h
 CompileCpp=1
 Folder=SMTP
@@ -527,7 +587,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit51]
+[Unit55]
 FileName=..\sockets-config.h
 CompileCpp=1
 Folder=Sockets
@@ -537,7 +597,27 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit54]
+[Unit56]
+FileName=..\Exception.h
+CompileCpp=1
+Folder=Sockets
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit57]
+FileName=..\Exception.cpp
+CompileCpp=1
+Folder=Sockets
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit58]
 FileName=..\Thread.cpp
 CompileCpp=1
 Folder=Threading
@@ -547,7 +627,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit55]
+[Unit59]
 FileName=..\Thread.h
 CompileCpp=1
 Folder=Threading
@@ -557,7 +637,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit56]
+[Unit60]
 FileName=..\Lock.h
 CompileCpp=1
 Folder=Threading
@@ -567,7 +647,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit57]
+[Unit61]
 FileName=..\Lock.cpp
 CompileCpp=1
 Folder=Threading
@@ -577,7 +657,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit58]
+[Unit62]
 FileName=..\Mutex.cpp
 CompileCpp=1
 Folder=Threading
@@ -587,7 +667,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit59]
+[Unit63]
 FileName=..\Mutex.h
 CompileCpp=1
 Folder=Threading
@@ -597,7 +677,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit60]
+[Unit64]
 FileName=..\EventTime.h
 CompileCpp=1
 Folder=Timer Events
@@ -607,7 +687,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit61]
+[Unit65]
 FileName=..\Event.h
 CompileCpp=1
 Folder=Timer Events
@@ -617,7 +697,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit62]
+[Unit66]
 FileName=..\EventHandler.cpp
 CompileCpp=1
 Folder=Timer Events
@@ -627,7 +707,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit63]
+[Unit67]
 FileName=..\IEventOwner.cpp
 CompileCpp=1
 Folder=Timer Events
@@ -637,7 +717,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit64]
+[Unit68]
 FileName=..\IEventOwner.h
 CompileCpp=1
 Folder=Timer Events
@@ -647,7 +727,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit65]
+[Unit69]
 FileName=..\EventTime.cpp
 CompileCpp=1
 Folder=Timer Events
@@ -657,7 +737,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit66]
+[Unit70]
 FileName=..\EventHandler.h
 CompileCpp=1
 Folder=Timer Events
@@ -667,7 +747,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit67]
+[Unit71]
 FileName=..\IEventHandler.h
 CompileCpp=1
 Folder=Timer Events
@@ -677,7 +757,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit68]
+[Unit72]
 FileName=..\Event.cpp
 CompileCpp=1
 Folder=Timer Events
@@ -687,7 +767,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit69]
+[Unit73]
 FileName=..\Base64.cpp
 CompileCpp=1
 Folder=Utilities
@@ -697,7 +777,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit70]
+[Unit74]
 FileName=..\Base64.h
 CompileCpp=1
 Folder=Utilities
@@ -707,7 +787,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit71]
+[Unit75]
 FileName=..\Parse.cpp
 CompileCpp=1
 Folder=Utilities
@@ -717,7 +797,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit72]
+[Unit76]
 FileName=..\Parse.h
 CompileCpp=1
 Folder=Utilities
@@ -727,7 +807,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit73]
+[Unit77]
 FileName=..\Utility.cpp
 CompileCpp=1
 Folder=Utilities
@@ -737,7 +817,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit74]
+[Unit78]
 FileName=..\Utility.h
 CompileCpp=1
 Folder=Utilities
@@ -747,7 +827,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit75]
+[Unit79]
 FileName=..\HttpdSocket.h
 CompileCpp=1
 Folder=Webserver framework
@@ -757,7 +837,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit76]
+[Unit80]
 FileName=..\HttpdCookies.h
 CompileCpp=1
 Folder=Webserver framework
@@ -767,7 +847,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit77]
+[Unit81]
 FileName=..\HttpdForm.cpp
 CompileCpp=1
 Folder=Webserver framework
@@ -777,7 +857,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit78]
+[Unit82]
 FileName=..\HttpdForm.h
 CompileCpp=1
 Folder=Webserver framework
@@ -787,7 +867,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit79]
+[Unit83]
 FileName=..\HttpdSocket.cpp
 CompileCpp=1
 Folder=Webserver framework
@@ -797,7 +877,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit80]
+[Unit84]
 FileName=..\HttpdCookies.cpp
 CompileCpp=1
 Folder=Webserver framework
@@ -807,7 +887,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit81]
+[Unit85]
 FileName=..\Ajp13Socket.cpp
 CompileCpp=1
 Folder=Webserver framework
@@ -817,7 +897,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit82]
+[Unit86]
 FileName=..\Ajp13Socket.h
 CompileCpp=1
 Folder=Webserver framework
@@ -827,7 +907,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit83]
+[Unit87]
 FileName=..\AjpBaseSocket.cpp
 CompileCpp=1
 Folder=Webserver framework
@@ -837,7 +917,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit84]
+[Unit88]
 FileName=..\AjpBaseSocket.h
 CompileCpp=1
 Folder=Webserver framework
@@ -847,7 +927,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit85]
+[Unit89]
 FileName=..\HttpBaseSocket.cpp
 CompileCpp=1
 Folder=Webserver framework
@@ -857,7 +937,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit86]
+[Unit90]
 FileName=..\HttpBaseSocket.h
 CompileCpp=1
 Folder=Webserver framework
@@ -867,48 +947,8 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit87]
-FileName=..\HttpTransaction.cpp
-CompileCpp=1
-Folder=Webserver framework
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit88]
-FileName=..\HttpTransaction.h
-CompileCpp=1
-Folder=Webserver framework
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit89]
-FileName=..\HttpRequest.cpp
-CompileCpp=1
-Folder=Webserver framework
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit90]
-FileName=..\HttpRequest.h
-CompileCpp=1
-Folder=Webserver framework
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
 [Unit91]
-FileName=..\HttpResponse.cpp
+FileName=..\HttpTransaction.cpp
 CompileCpp=1
 Folder=Webserver framework
 Compile=1
@@ -918,66 +958,6 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit92]
-FileName=..\HttpResponse.h
-CompileCpp=1
-Folder=Webserver framework
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit93]
-FileName=..\ajp13.h
-CompileCpp=1
-Folder=Webserver framework
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit94]
-FileName=..\IHttpServer.h
-CompileCpp=1
-Folder=Webserver framework
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit95]
-FileName=..\ajp13.h
-CompileCpp=1
-Folder=Webserver framework
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit96]
-FileName=..\IHttpServer.h
-CompileCpp=1
-Folder=Webserver framework
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit97]
-FileName=..\HttpTransaction.cpp
-CompileCpp=1
-Folder=Webserver framework
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit98]
 FileName=..\HttpTransaction.h
 CompileCpp=1
 Folder=Webserver framework
@@ -987,7 +967,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit99]
+[Unit93]
 FileName=..\HttpRequest.cpp
 CompileCpp=1
 Folder=Webserver framework
@@ -997,7 +977,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit100]
+[Unit94]
 FileName=..\HttpRequest.h
 CompileCpp=1
 Folder=Webserver framework
@@ -1007,7 +987,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit101]
+[Unit95]
 FileName=..\HttpResponse.cpp
 CompileCpp=1
 Folder=Webserver framework
@@ -1017,7 +997,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit102]
+[Unit96]
 FileName=..\HttpResponse.h
 CompileCpp=1
 Folder=Webserver framework
@@ -1027,7 +1007,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit103]
+[Unit97]
 FileName=..\ajp13.h
 CompileCpp=1
 Folder=Webserver framework
@@ -1037,8 +1017,68 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit104]
+[Unit98]
 FileName=..\IHttpServer.h
+CompileCpp=1
+Folder=Webserver framework
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit99]
+FileName=..\ajp13.h
+CompileCpp=1
+Folder=Webserver framework
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit100]
+FileName=..\IHttpServer.h
+CompileCpp=1
+Folder=Webserver framework
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit101]
+FileName=..\HttpTransaction.cpp
+CompileCpp=1
+Folder=Webserver framework
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit102]
+FileName=..\HttpTransaction.h
+CompileCpp=1
+Folder=Webserver framework
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit103]
+FileName=..\HttpRequest.cpp
+CompileCpp=1
+Folder=Webserver framework
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit104]
+FileName=..\HttpRequest.h
 CompileCpp=1
 Folder=Webserver framework
 Compile=1
@@ -1087,47 +1127,47 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit24]
-FileName=..\StreamSocket.cpp
-CompileCpp=1
-Folder=Basic Sockets
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit44]
-FileName=..\SSLInitializer.cpp
-CompileCpp=1
-Folder=Internal
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit52]
-FileName=..\Exception.h
-CompileCpp=1
-Folder=Sockets
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit53]
-FileName=..\Exception.cpp
-CompileCpp=1
-Folder=Sockets
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
 [Unit109]
+FileName=..\HttpResponse.cpp
+CompileCpp=1
+Folder=Webserver framework
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit110]
+FileName=..\HttpResponse.h
+CompileCpp=1
+Folder=Webserver framework
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit111]
+FileName=..\ajp13.h
+CompileCpp=1
+Folder=Webserver framework
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit112]
+FileName=..\IHttpServer.h
+CompileCpp=1
+Folder=Webserver framework
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit113]
 FileName=..\XmlDocument.h
 CompileCpp=1
 Folder=Xml
@@ -1137,7 +1177,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit110]
+[Unit114]
 FileName=..\XmlDocument.cpp
 CompileCpp=1
 Folder=Xml
@@ -1147,7 +1187,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit111]
+[Unit115]
 FileName=..\XmlNode.h
 CompileCpp=1
 Folder=Xml
@@ -1157,7 +1197,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit112]
+[Unit116]
 FileName=..\XmlNode.cpp
 CompileCpp=1
 Folder=Xml
@@ -1167,7 +1207,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit113]
+[Unit117]
 FileName=..\XmlException.h
 CompileCpp=1
 Folder=Xml
@@ -1177,7 +1217,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit114]
+[Unit118]
 FileName=..\XmlException.cpp
 CompileCpp=1
 Folder=Xml

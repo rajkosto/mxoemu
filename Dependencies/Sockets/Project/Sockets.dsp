@@ -403,6 +403,22 @@ SOURCE=..\SocketHandler.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\SocketHandlerThread.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\SocketHandlerThread.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\SocketThread.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\SocketThread.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\StreamSocket.cpp
 # End Source File
 # Begin Source File
@@ -460,6 +476,14 @@ SOURCE=..\Mutex.cpp
 # Begin Source File
 
 SOURCE=..\Mutex.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Semaphore.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\Semaphore.h
 # End Source File
 # Begin Source File
 

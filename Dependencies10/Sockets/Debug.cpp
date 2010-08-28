@@ -33,11 +33,7 @@ void Debug::Print(const char *format, ...)
 	va_list ap;
 
 	va_start(ap, format);
-#ifdef _WIN32
-	vsprintf(slask, format, ap);
-#else
-	vsnprintf(slask, 5000, format, ap);
-#endif
+	vsnprintf(slask, sizeof(slask), format, ap);
 	va_end(ap);
 
 	fprintf(stderr, "%s", colors[Utility::ThreadID() % 14 + 1]);
@@ -49,6 +45,13 @@ void Debug::Print(const char *format, ...)
 }
 
 
+Debug& Debug::operator<<(const char * str)
+{
+	m_line += str;
+	return *this;
+}
+
+
 Debug& Debug::operator<<(const std::string& str)
 {
 	m_line += str;
@@ -56,9 +59,32 @@ Debug& Debug::operator<<(const std::string& str)
 }
 
 
+Debug& Debug::operator<<(short l)
+{
+	m_line += Utility::l2string(l);
+	return *this;
+}
+
+
+Debug& Debug::operator<<(int l)
+{
+	m_line += Utility::l2string(l);
+	return *this;
+}
+
+
 Debug& Debug::operator<<(long l)
 {
 	m_line += Utility::l2string(l);
+	return *this;
+}
+
+
+Debug& Debug::operator<<(double d)
+{
+	char slask[100];
+	snprintf(slask, sizeof(slask), "%f", d);
+	m_line += slask;
 	return *this;
 }
 

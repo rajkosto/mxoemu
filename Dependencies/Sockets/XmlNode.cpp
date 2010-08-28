@@ -4,9 +4,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2008  Anders Hedstrom
+Copyright (C) 2008-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -326,6 +328,24 @@ std::map<std::string, std::string> XmlNode::GetNsMapRe() const
 		++i;
 	}
 	return vec;
+}
+
+
+const std::string XmlNode::FindProperty(const std::string& propname, bool climb) const
+{
+	while (m_current)
+	{
+		if (PropertyExists(propname))
+		{
+			return GetProperty(propname);
+		}
+		if (!climb)
+		{
+			break;
+		}
+		m_current = m_current -> parent;
+	}
+	return "";
 }
 
 

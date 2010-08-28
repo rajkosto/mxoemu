@@ -478,6 +478,22 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\SocketHandlerThread.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\SocketHandlerThread.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\SocketThread.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\SocketThread.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\StreamSocket.cpp"
 				>
 			</File>
@@ -535,6 +551,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Mutex.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Semaphore.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Semaphore.h"
 				>
 			</File>
 			<File

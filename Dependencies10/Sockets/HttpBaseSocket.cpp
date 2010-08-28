@@ -4,9 +4,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2007-2008  Anders Hedstrom
+Copyright (C) 2007-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -32,10 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma warning(disable:4786)
 #endif
 #include "HttpBaseSocket.h"
-#include "IFile.h"
-#include "Utility.h"
-#include "HttpResponse.h"
-#include "Debug.h"
 
 #ifdef SOCKETS_NAMESPACE
 namespace SOCKETS_NAMESPACE {
@@ -106,7 +104,6 @@ void HttpBaseSocket::OnHeaderComplete()
 
 void HttpBaseSocket::OnData(const char *buf,size_t sz)
 {
-DEB(	Debug deb("HttpBaseSocket::OnData");)
 	m_req.Write( buf, sz );
 	m_body_size_left -= sz;
 	if (!m_body_size_left)
@@ -122,7 +119,6 @@ DEB(	Debug deb("HttpBaseSocket::OnData");)
 // --------------------------------------------------------------------------------------
 void HttpBaseSocket::Execute()
 {
-DEB(	Debug deb("HttpBaseSocket::Execute()");)
 	// parse form data / query_string and cookie header if available
 	m_req.ParseBody();
 
@@ -151,9 +147,7 @@ DEB(printf(" *** keepalive: true\n");)
 // --------------------------------------------------------------------------------------
 void HttpBaseSocket::Respond(const HttpResponse& res)
 {
-DEB(	Debug deb("HttpBaseSocket::Respond");)
 	m_res = res;
-//	m_res.SetHeader("connection", "close");
 
 	SetHttpVersion( m_res.HttpVersion() );
 	SetStatus( Utility::l2string(m_res.HttpStatusCode()) );
@@ -168,7 +162,7 @@ DEB(	Debug deb("HttpBaseSocket::Respond");)
 		AddResponseHeader( it -> first, it -> second );
 	}
 	std::list<std::string> vec = m_res.CookieNames();
-	for (std::list<std::string>::iterator it2 = vec.begin(); it2 != vec.end(); it2++)
+	for (std::list<std::string>::iterator it2 = vec.begin(); it2 != vec.end(); ++it2)
 	{
 		AppendResponseHeader( "set-cookie", m_res.Cookie(*it2) );
 	}
@@ -181,7 +175,6 @@ DEB(	Debug deb("HttpBaseSocket::Respond");)
 // --------------------------------------------------------------------------------------
 void HttpBaseSocket::OnTransferLimit()
 {
-DEB(	Debug deb("HttpBaseSocket::OnTransferLimit");)
 	char msg[32768];
 	size_t n = m_res.GetFile().fread(msg, 1, 32768);
 	while (n > 0)
@@ -196,6 +189,7 @@ DEB(	Debug deb("HttpBaseSocket::OnTransferLimit");)
 	}
 	if (!GetOutputLength())
 	{
+		SetTransferLimit(0);
 		m_res.GetFile().fclose();
 		OnResponseComplete();
 		if (!m_b_keepalive)

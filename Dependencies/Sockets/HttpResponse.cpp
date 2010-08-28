@@ -4,9 +4,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2007-2008  Anders Hedstrom
+Copyright (C) 2007-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -39,7 +41,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "MemFile.h"
 #include "File.h"
 #include "Parse.h"
-#include "Utility.h"
 
 #ifdef SOCKETS_NAMESPACE
 namespace SOCKETS_NAMESPACE {
@@ -163,7 +164,7 @@ std::list<std::string> HttpResponse::CookieNames() const
 {
 	std::list<std::string> vec;
 	DEB(fprintf(stderr, "HttpResponse::CookieNames; ");)
-	for (Utility::ncmap<std::string>::const_iterator it = m_cookie.begin(); it != m_cookie.end(); it++)
+	for (Utility::ncmap<std::string>::const_iterator it = m_cookie.begin(); it != m_cookie.end(); ++it)
 	{
 		DEB(fprintf(stderr, " %s", it -> first.c_str());)
 		vec.push_back(it -> first);
@@ -194,9 +195,23 @@ void HttpResponse::Writef( const char *format, ... )
 	va_list ap;
 	va_start(ap, format);
 	char tmp[10000];
-	vsprintf(tmp, format, ap);
+	vsnprintf(tmp, sizeof(tmp), format, ap);
 	va_end(ap);
 	m_file -> fwrite( tmp, 1, strlen(tmp) );
+}
+
+
+// --------------------------------------------------------------------------------------
+const IFile& HttpResponse::GetFile() const
+{
+  return *m_file;
+}
+
+
+// --------------------------------------------------------------------------------------
+IFile& HttpResponse::GetFile()
+{
+  return *m_file;
 }
 
 
@@ -205,6 +220,13 @@ void HttpResponse::SetFile( const std::string& path )
 {
 	m_file = std::auto_ptr<IFile>(new File);
 	m_file -> fopen( path, "rb" );
+}
+
+
+// --------------------------------------------------------------------------------------
+void HttpResponse::SetFile( IFile *f )
+{
+	m_file = std::auto_ptr<IFile>(f);
 }
 
 

@@ -54,7 +54,7 @@ private:
 
 	uint32 m_lastCleanupTime;
 	uint32 m_currTime;
-	uint32 m_lastPlayerCount;
+	size_t m_lastPlayerCount;
 };
 
 

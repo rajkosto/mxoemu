@@ -17,3 +17,11 @@ LIBS +=		\
 
 OBJS +=		Semaphore.o
 
+LDFLAGSSO =	-shared \
+		-Wl,-lssl \
+		-Wl,-lcrypto \
+		-Wl,-lxml2 \
+		-Wl,-lpthread \
+		-Wl,-h$(SONAME) \
+		-Wl,-call_shared
+

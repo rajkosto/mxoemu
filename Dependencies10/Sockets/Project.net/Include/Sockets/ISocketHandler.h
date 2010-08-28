@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2004-2008  Anders Hedstrom
+Copyright (C) 2004-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -32,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sockets-config.h"
 
 #include <list>
+#include <map>
 
 #include "socket_include.h"
 #include "Socket.h"
@@ -40,16 +43,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef SOCKETS_NAMESPACE
 namespace SOCKETS_NAMESPACE {
 #endif
-
-typedef enum {
-	LIST_CALLONCONNECT = 0,
-#ifdef ENABLE_DETACH
-	LIST_DETACH,
-#endif
-	LIST_TIMEOUT,
-	LIST_RETRY,
-	LIST_CLOSE
-} list_t;
 
 class SocketAddress;
 class IMutex;
@@ -85,6 +78,36 @@ public:
 public:
 	virtual ~ISocketHandler() {}
 
+	/** Return another instance */
+	virtual ISocketHandler *Create(StdLog * = NULL) = 0;
+
+	/** Return another instance */
+	virtual ISocketHandler *Create(IMutex&, ISocketHandler&, StdLog * = NULL) = 0;
+
+	/** Handler created with parent */
+	virtual bool ParentHandlerIsValid() = 0;
+
+	/** Get parent sockethandler */
+	virtual ISocketHandler& ParentHandler() = 0;
+
+	/** Get thread handler with least connections */
+	virtual ISocketHandler& GetRandomHandler() = 0;
+
+	/** Return parent handler if valid, otherwise return normal handler */
+	virtual ISocketHandler& GetEffectiveHandler() = 0;
+
+	/** Enable threading */
+	virtual void SetNumberOfThreads(size_t n) = 0;
+
+	/** Threading is enabled */
+	virtual bool IsThreaded() = 0;
+
+	/** Enable select release */
+	virtual void EnableRelease() = 0;
+
+	/** Make select release */
+	virtual void Release() = 0;
+
 	/** Get mutex reference for threadsafe operations. */
 	virtual IMutex& GetMutex() const = 0;
 
@@ -100,14 +123,19 @@ public:
 	// -------------------------------------------------------------------------
 	/** Add socket instance to socket map. Removal is always automatic. */
 	virtual void Add(Socket *) = 0;
+
 protected:
 	/** Remove socket from socket map, used by Socket class. */
 	virtual void Remove(Socket *) = 0;
+
+	/** Actual call to select() */
+	virtual int ISocketHandler_Select(struct timeval *) = 0;
+
 public:
-	/** Get status of read/write/exception file descriptor set for a socket. */
-	virtual void Get(SOCKET s,bool& r,bool& w,bool& e) = 0;
 	/** Set read/write/exception file descriptor sets (fd_set). */
-	virtual void Set(SOCKET s,bool bRead,bool bWrite,bool bException = true) = 0;
+	virtual void ISocketHandler_Add(Socket *,bool bRead,bool bWrite) = 0;
+	virtual void ISocketHandler_Mod(Socket *,bool bRead,bool bWrite) = 0;
+	virtual void ISocketHandler_Del(Socket *) = 0;
 
 	/** Wait for events, generate callbacks. */
 	virtual int Select(long sec,long usec) = 0;
@@ -118,15 +146,31 @@ public:
 
 	/** Check that a socket really is handled by this socket handler. */
 	virtual bool Valid(Socket *) = 0;
+	/** Preferred method - Check that a socket still is handled by this socket handler. */
+	virtual bool Valid(socketuid_t) = 0;
+
 	/** Return number of sockets handled by this handler.  */
 	virtual size_t GetCount() = 0;
+
+	/** Return maximum number of sockets allowed. */
+	virtual size_t MaxCount() = 0;
 
 	/** Override and return false to deny all incoming connections. 
 		\param p ListenSocket class pointer (use GetPort to identify which one) */
 	virtual bool OkToAccept(Socket *p) = 0;
 
-	/** Called by Socket when a socket changes state. */
-	virtual void AddList(SOCKET s,list_t which_one,bool add) = 0;
+	/** Use with care, always lock with h.GetMutex() if multithreaded */
+	virtual const std::map<SOCKET, Socket *>& AllSockets() = 0;
+
+	/** Override to accept longer lines than TCP_LINE_SIZE */
+	virtual size_t MaxTcpLineSize() = 0;
+
+	virtual void SetCallOnConnect(bool = true) = 0;
+	virtual void SetDetach(bool = true) = 0;
+	virtual void SetTimeout(bool = true) = 0;
+	virtual void SetRetry(bool = true) = 0;
+	virtual void SetClose(bool = true) = 0;
+
 
 	// -------------------------------------------------------------------------
 	// Connection pool
@@ -198,21 +242,6 @@ public:
 	/** Returns true if socket waiting for a resolve event. */
 	virtual bool Resolving(Socket *) = 0;
 #endif // ENABLE_RESOLVER
-
-#ifdef ENABLE_TRIGGERS
-	/** Fetch unique trigger id. */
-	virtual int TriggerID(Socket *src) = 0;
-	/** Subscribe socket to trigger id. */
-	virtual bool Subscribe(int id, Socket *dst) = 0;
-	/** Unsubscribe socket from trigger id. */
-	virtual bool Unsubscribe(int id, Socket *dst) = 0;
-	/** Execute OnTrigger for subscribed sockets.
-		\param id Trigger ID
-		\param data Data passed from source to destination
-		\param erase Empty trigger id source and destination maps if 'true',
-			Leave them in place if 'false' - if a trigger should be called many times */
-	virtual void Trigger(int id, Socket::TriggerData& data, bool erase = true) = 0;
-#endif // ENABLE_TRIGGERS
 
 #ifdef ENABLE_DETACH
 	/** Indicates that the handler runs under SocketThread. */

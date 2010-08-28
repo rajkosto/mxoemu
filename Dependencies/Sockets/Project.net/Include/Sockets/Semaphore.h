@@ -4,9 +4,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2007-2008  Anders Hedstrom
+Copyright (C) 2007-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -32,11 +34,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define _SOCKETS_Semaphore_H
 
 #include "sockets-config.h"
+#ifdef _WIN32
+#include "socket_include.h"
+#include <windows.h>
+#else
 #include <pthread.h>
 #ifdef MACOSX
 #include <sys/semaphore.h>
 #else
 #include <semaphore.h>
+#endif
 #endif
 
 
@@ -44,25 +51,40 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 namespace SOCKETS_NAMESPACE {
 #endif
 
+#ifdef _WIN32
+typedef LONG value_t;
+#else
+typedef unsigned int value_t;
+#endif
 
 /** pthread semaphore wrapper.
 	\ingroup threading */
 class Semaphore
 {
 public:
-	Semaphore();
-	Semaphore(unsigned int start_val);
+	Semaphore(value_t start_val = 0);
 	~Semaphore();
 
+	/** \return 0 if successful */
 	int Post();
+	/** Wait for Post
+	    \return 0 if successful */
 	int Wait();
+
+	/** Not implemented for win32 */
 	int TryWait();
+
+	/** Not implemented for win32 */
 	int GetValue(int&);
 
 private:
 	Semaphore(const Semaphore& ) {} // copy constructor
 	Semaphore& operator=(const Semaphore& ) { return *this; } // assignment operator
+#ifdef _WIN32
+	HANDLE m_handle;
+#else
 	sem_t m_sem;
+#endif
 };
 
 

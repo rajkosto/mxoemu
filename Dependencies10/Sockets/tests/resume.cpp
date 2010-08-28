@@ -9,7 +9,13 @@ class eHandler : public EventHandler
 {
 public:
 	eHandler() : EventHandler() {}
+	~eHandler() {
+	}
 };
+
+
+#define ID_STOP_SOCKET 1
+#define ID_STOP_LISTEN 2
 
 
 class eSocket : public TcpSocket, public IEventOwner
@@ -18,10 +24,12 @@ public:
 	eSocket(ISocketHandler& h) : TcpSocket(h), IEventOwner(static_cast<eHandler&>(h)), m_listen_socket(NULL), m_server(false) {
 		SetLineProtocol();
 	}
+	~eSocket() {
+	}
 
 	bool OnConnectRetry() {
 		printf("Retrying connect\n");
-		if (GetConnectionRetries() == 5)
+		if (GetConnectionRetries() == 3)
 		{
 			printf("Creating ListenSocket\n");
 			m_listen_socket = new ListenSocket<eSocket>(Handler());
@@ -36,26 +44,37 @@ public:
 	}
 
 	void OnAccept() {
-		m_id_stop_socket = AddEvent(5, 0);
-printf("Stop socket id: %d\n", m_id_stop_socket);
+		m_events[AddEvent(5, 0)] = ID_STOP_SOCKET;
 		m_server = true;
 	}
 
 	void OnConnect() {
-		m_id_stop_listen = AddEvent(10, 0);
-printf("Stop listen id: %d\n", m_id_stop_listen);
+		m_events[AddEvent(10, 0)] = ID_STOP_LISTEN;
+	}
+
+	void OnReconnect() {
+		m_events[AddEvent(10, 0)] = ID_STOP_LISTEN;
 	}
 
 	void OnEvent(int id) {
-printf("Event id: %d\n", id);
-		if (id == m_id_stop_socket && m_server)
+		if (m_events[id] == ID_STOP_SOCKET && m_server)
+		{
+		printf("Event: Server disconnect\n");
 			SetCloseAndDelete();
-		if (id == m_id_stop_listen && !m_server)
-			m_listen_socket -> SetCloseAndDelete();
+		}
+		if (m_events[id] == ID_STOP_LISTEN && !m_server)
+		{
+		printf("Event: Stop listensocket\n");
+			if (m_listen_socket)
+			{
+				m_listen_socket -> SetCloseAndDelete();
+				m_listen_socket = NULL;
+			}
+		}
 	}
 
 	void OnLine(const std::string& line) {
-		printf("Incoming data: %s\n", line.c_str());
+		printf("  Incoming data: %s\n", line.c_str());
 	}
 
 	void OnDelete() {
@@ -68,8 +87,7 @@ printf("Event id: %d\n", id);
 
 private:
 	ListenSocket<eSocket> *m_listen_socket;
-	int m_id_stop_socket;
-	int m_id_stop_listen;
+	std::map<int, int> m_events;
 	bool m_server;
 };
 
@@ -78,13 +96,12 @@ class Sender : public IEventOwner
 {
 public:
 	Sender(IEventHandler& h, TcpSocket& ref) : IEventOwner(h), m_socket(ref), m_count(1) {
-		AddEvent(1, 0);
 	}
 
 	void OnEvent(int id) {
-		if (static_cast<eHandler&>(EventHandler()).Valid(&m_socket))
+		if (static_cast<eHandler&>(GetEventHandler()).Valid(&m_socket))
 			m_socket.Send("Event#" + Utility::l2string(m_count++) + "\n");
-		EventHandler().AddEvent(this, 1, 0);
+		AddEvent(1, 0);
 	}
 
 private:

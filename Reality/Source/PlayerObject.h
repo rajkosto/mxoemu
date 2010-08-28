@@ -138,8 +138,6 @@ private:
 	uint32 m_lastStore;
 	uint32 m_storeCntr;
 
-	uint32 m_lastTestedCommand;
-
 	uint8 m_currAnimation;
 	uint8 m_currMood;
 

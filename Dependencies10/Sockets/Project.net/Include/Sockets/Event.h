@@ -3,9 +3,11 @@
  **	\author grymse@alhem.net
 **/
 /*
-Copyright (C) 2005-2008  Anders Hedstrom
+Copyright (C) 2005-2010  Anders Hedstrom
 
-This library is made available under the terms of the GNU GPL.
+This library is made available under the terms of the GNU GPL, with
+the additional exemption that compiling, linking, and/or using OpenSSL 
+is allowed.
 
 If you would like to use this library in a closed-source application,
 a separate license agreement is available. For information about 
@@ -49,18 +51,20 @@ class IEventOwner;
 class Event
 {
 public:
-	Event(IEventOwner *,long sec,long usec);
+	Event(IEventOwner *,long sec,long usec,unsigned long data = 0);
 	~Event();
 
 	bool operator<(Event&);
-	long GetID();
+	long GetID() const;
 	const EventTime& GetTime() const;
-	IEventOwner *GetFrom();
+	IEventOwner *GetFrom() const;
+	unsigned long Data() const;
 
 private:
 	Event(const Event& ) {} // copy constructor
 	Event& operator=(const Event& ) { return *this; } // assignment operator
 	IEventOwner *m_from;
+	unsigned long m_data;
 	EventTime m_time;
 	static long m_unique_id;
 	long m_id;

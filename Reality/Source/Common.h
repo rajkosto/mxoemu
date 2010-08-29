@@ -266,7 +266,7 @@ using boost::format;
 #endif
 
 #if PLATFORM != PLATFORM_WIN32
-#define Sleep(ms) usleep(1000*ms)
+inline void Sleep(int ms) { usleep(1000*ms); }
 #endif
 
 class Database;

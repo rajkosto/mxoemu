@@ -673,14 +673,6 @@ void PlayerObject::RPC_HandleStaticObjInteraction( ByteBuffer &srcCmd )
 		this->GoAhead(1);
 		return;
 	}
-	else if (interaction == 0x00) //sit
-	{
-//		sGame.AnnounceStateUpdate(NULL,make_shared<SitDownMsg>(staticObjId));
-		//m_parent.QueueState(make_shared<HexGenericMsg>("0311000108044044b5124700208ac47db717c60300020e045eccf1f846008098c3371d5ac60000"));
-		//saiking siting response?
-		//"03 11 00 01 08 04 40 44 b5 12 47 00 20 8a c4 7d b7 17 c6 03 00 02 0e 04 5e cc f1 f8 46 00 80 98 c3 37 1d 5a c6 00 00 ";
-		return;
-	}
 }
 
 void PlayerObject::RPC_HandleJump( ByteBuffer &srcCmd )

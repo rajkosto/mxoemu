@@ -497,7 +497,7 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq, uint8 ackBits )
 			++it;
 		}
 	}
-	for (msgQueueType::iterator it=m_queuedCommands.begin();it!=m_queuedCommands.end();)
+	for (sentMsgBlocksType::iterator it=m_sentCommands.begin();it!=m_sentCommands.end();)
 	{
 		if (it->invalidated || it->packetsItsIn.size() < 1)
 		{
@@ -518,10 +518,16 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq, uint8 ackBits )
 		{
 			it->invalidated=true;
 
-			if (!it->callBack.empty())
-				it->callBack();
+			while(!it->callBacks.empty())
+			{
+				const packetAckFunc& func = it->callBacks.front();
+				if(!func.empty())
+					func();
 
-			it=m_queuedCommands.begin();
+				it->callBacks.pop();
+			}
+
+			it=m_sentCommands.begin();
 		}
 		else
 		{
@@ -541,11 +547,11 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq, uint8 ackBits )
 			++it;
 		}
 	}
-	for (msgQueueType::iterator it=m_queuedCommands.begin();it!=m_queuedCommands.end();)
+	for (sentMsgBlocksType::iterator it=m_sentCommands.begin();it!=m_sentCommands.end();)
 	{
 		if (it->invalidated)
 		{
-			it=m_queuedCommands.erase(it);
+			it=m_sentCommands.erase(it);
 			eraseCounter++;
 		}
 		else
@@ -556,7 +562,7 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq, uint8 ackBits )
 	return eraseCounter;
 }
 
-bool GameClient::SendSequencedPacket( msgBaseClassPtr jumboPacket )
+uint16 GameClient::SendSequencedPacket( msgBaseClassPtr jumboPacket )
 {
 	//serialize data from dynamic packet to a static one
 	ByteBuffer serializedData;
@@ -566,7 +572,7 @@ bool GameClient::SendSequencedPacket( msgBaseClassPtr jumboPacket )
 	}
 	catch (MsgBaseClass::PacketNoLongerValid)
 	{
-		return false;
+		return 0;
 	}
 
 	enum
@@ -594,10 +600,11 @@ bool GameClient::SendSequencedPacket( msgBaseClassPtr jumboPacket )
 	//prepend sequences
 	uint16 clientSeq = GetAnAck(); //get sequence number of a packet we havent acked
 	uint8 ackBits = GetAckBits(clientSeq);
-	SequencedPacket prepended(m_serverSequence,clientSeq,ackBits,outputData);
+	uint16 serverSeq = m_serverSequence;
+	SequencedPacket prepended(serverSeq,clientSeq,ackBits,outputData);
 	SendEncrypted(prepended);
 	increaseServerSequence();
-	return true;
+	return serverSeq;
 }
 
 void GameClient::FlushQueue( bool alsoResend )
@@ -605,64 +612,145 @@ void GameClient::FlushQueue( bool alsoResend )
 	//reliable commands first
 	{
 		shared_ptr<OrderedPacket> jumboPacket(new OrderedPacket());
-		MsgBlock currBlock;
-		sort(m_queuedCommands.begin(),m_queuedCommands.end());
-		for (msgQueueType::iterator it=m_queuedCommands.begin();it!=m_queuedCommands.end();)
+		vector<sentMsgBlocksType::iterator> msgBlocksInJumbo;
+		if (alsoResend)
 		{
-			if (it->packetsItsIn.size() > 0 && (currBlock.subPackets.size() == 0 || currBlock.sequenceId+currBlock.subPackets.size() != it->sequenceId))
+			for(sentMsgBlocksType::iterator it=m_sentCommands.begin();it!=m_sentCommands.end();++it)
 			{
-				if (getMSTime() - it->msLastSent < 200 || alsoResend == false) //200ms resend
-				{
-					++it;
+				if (it->invalidated || getMSTime() - it->msLastSent < 200) //200ms reliable resend
 					continue;
-				}
-			}
 
+				//if this msgblock wont fit, flush the earlier ones
+				if (jumboPacket->GetTotalSize() + it->commands.GetTotalSize() > 1300)
+				{
+					uint16 jumboServerSeq = SendSequencedPacket(jumboPacket);
+					foreach(sentMsgBlocksType::iterator msgBlkIt,msgBlocksInJumbo)
+					{
+						msgBlkIt->packetsItsIn.push_back(jumboServerSeq);
+						msgBlkIt->msLastSent = getMSTime();
+					}
+					jumboPacket.reset(new OrderedPacket());
+					msgBlocksInJumbo.clear();
+				}
+
+				jumboPacket->msgBlocks.push_back(it->commands);
+				msgBlocksInJumbo.push_back(it);
+			}
+		}
+		MsgBlock currBlock;
+		queue<packetAckFunc> currBlockCallbacks;
+		while(!m_queuedCommands.empty())
+		{
+			const queuedMsg& currMsg = m_queuedCommands.front();
 			ByteBuffer packetStaticBuf;
 			try
 			{
-				packetStaticBuf = it->theData->toBuf();
+				packetStaticBuf = currMsg.data->toBuf();
 			}
 			catch (MsgBaseClass::PacketNoLongerValid)
 			{
-				it=m_queuedCommands.erase(it);
+				WARNING_LOG(format("(%1%) Reliable msg %2% no longer valid, this shouldn't happen!") % Address() % currMsg.sequenceId);
+
+				m_queuedCommands.pop_front();
+				for(queuedMsgType::iterator iter=m_queuedCommands.begin();iter!=m_queuedCommands.end();++iter)
+				{
+					iter->sequenceId--;
+				}
 				continue;
 			}
 
-			if (jumboPacket->GetTotalSize() + packetStaticBuf.size() > 1000)
+			//no more room to send this msg, finalize block and send packet
+			if ( (jumboPacket->GetTotalSize() + currBlock.GetTotalSize() + packetStaticBuf.size()) > 1300)
 			{
-				SendSequencedPacket(jumboPacket);
+				if (currBlock.subPackets.size() > 0)
+				{
+					//add currently formed msgblock to jumbo
+					jumboPacket->msgBlocks.push_back(currBlock);
+
+					//add msgblock to sent list
+					m_sentCommands.push_back(sentMsgBlock(currBlock,currBlockCallbacks));
+					sentMsgBlocksType::iterator newSent = m_sentCommands.end();
+					msgBlocksInJumbo.push_back(--newSent);
+
+					//empty msgblock
+					currBlock = MsgBlock();
+					while(!currBlockCallbacks.empty()) currBlockCallbacks.pop();
+				}
+				//send jumbo and update all related msgblocks
+				uint16 jumboServerSeq = SendSequencedPacket(jumboPacket);
+				foreach(sentMsgBlocksType::iterator msgBlkIt,msgBlocksInJumbo)
+				{
+					msgBlkIt->packetsItsIn.push_back(jumboServerSeq);
+					msgBlkIt->msLastSent = getMSTime();
+				}
+
+				//empty jumbo
 				jumboPacket.reset(new OrderedPacket());
-				continue;
+				msgBlocksInJumbo.clear();
 			}
 
+			//starting new block
 			if (currBlock.subPackets.size() == 0)
 			{
-				currBlock.sequenceId = it->sequenceId;
+				currBlock.sequenceId = currMsg.sequenceId;
 			}
-			else if (currBlock.sequenceId + currBlock.subPackets.size() != it->sequenceId)
+			else if (currBlock.sequenceId + currBlock.subPackets.size() != currMsg.sequenceId) //msg ids not continuous ?!
 			{
-				jumboPacket->msgBlocks.push_back(currBlock);
+				WARNING_LOG(format("(%1%) While adding msg %2% skipped some ids (should be %3%), might cause desync !") % Address() % currMsg.sequenceId % (currBlock.sequenceId+(uint32)currBlock.subPackets.size()) );
+
+				if (currBlock.subPackets.size() > 0)
+				{
+					//add currently formed msgblock to jumbo
+					jumboPacket->msgBlocks.push_back(currBlock);
+
+					//add msgblock to sent list
+					m_sentCommands.push_back(sentMsgBlock(currBlock,currBlockCallbacks));
+					sentMsgBlocksType::iterator newSent = m_sentCommands.end();
+					msgBlocksInJumbo.push_back(--newSent);
+				}
+				//empty msgblock
 				currBlock = MsgBlock();
-				currBlock.sequenceId = it->sequenceId;
+				while(!currBlockCallbacks.empty()) currBlockCallbacks.pop();
+
+				//go back to top of loop to check size again
+				continue;
 			}
 
-			it->packetsItsIn.push_back(m_serverSequence);
-			it->msLastSent = getMSTime();
 			currBlock.subPackets.push_back(packetStaticBuf);
+			currBlockCallbacks.push(currMsg.callBack);
 
-			++it;
+			m_queuedCommands.pop_front();
 		}
 		if (currBlock.subPackets.size() > 0)
 		{
+			//add currently formed msgblock to jumbo
 			jumboPacket->msgBlocks.push_back(currBlock);
+
+			//add msgblock to sent list
+			m_sentCommands.push_back(sentMsgBlock(currBlock,currBlockCallbacks));
+			sentMsgBlocksType::iterator newSent = m_sentCommands.end();
+			msgBlocksInJumbo.push_back(--newSent);
+
+			//empty msgblock
 			currBlock = MsgBlock();
+			while(!currBlockCallbacks.empty()) currBlockCallbacks.pop();
 		}
 		if (jumboPacket->msgBlocks.size() > 0)
 		{
-			SendSequencedPacket(jumboPacket);
+			//send jumbo and update all related msgblocks
+			uint16 jumboServerSeq = SendSequencedPacket(jumboPacket);
+			foreach(sentMsgBlocksType::iterator msgBlkIt,msgBlocksInJumbo)
+			{
+				msgBlkIt->packetsItsIn.push_back(jumboServerSeq);
+				msgBlkIt->msLastSent = getMSTime();
+			}
+
+			//empty jumbo
 			jumboPacket.reset(new OrderedPacket());
+			msgBlocksInJumbo.clear();
 		}
+
+		assert(m_queuedCommands.empty());
 	}
 
 	//03 next

@@ -152,7 +152,7 @@ void ObjectMgr::RandomObject( uint32 randomObjectId, GameClient* requester, doub
 	//uint32 randObjId = rand() % 0xFFFFFFFF;
 
 	string msg1 = (format("{c:0FFFF0}Object :%1%{/c}") % (int)randomObjectId).str();
-	sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(msg1));
+	requester->QueueCommand(make_shared<SystemChatMsg>(msg1));
 
 	
 	uint16 randViewId = rand() % 0xFFFF;
@@ -163,8 +163,8 @@ void ObjectMgr::RandomObject( uint32 randomObjectId, GameClient* requester, doub
 	out << int(randViewId);
 	s = out.str();
 
-	sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(s));
-	sGame.AnnounceStateUpdate(NULL,make_shared<DoorAnimationMsg>(randomObjectId, randViewId, X, Y, Z, ROT, 1));	
+	requester->QueueCommand(make_shared<SystemChatMsg>(s));
+	requester->QueueState(make_shared<DoorAnimationMsg>(randomObjectId, randViewId, X, Y, Z, ROT, 1));	
 }
 
 
@@ -186,7 +186,7 @@ void ObjectMgr::OpenDoor( uint32 doorId, GameClient* requester)
 				//Close Doors not working
 				//sGame.AnnounceStateUpdate(NULL,make_shared<CloseDoorMsg>(it->first));	
 
-				sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(msg1.str()));
+				requester->QueueCommand(make_shared<SystemChatMsg>(msg1.str()));
 			}
 			m_openDoors.erase(it);
 			return;
@@ -195,7 +195,7 @@ void ObjectMgr::OpenDoor( uint32 doorId, GameClient* requester)
 	}
 
 	format msg2 = format("{c:0FFFF0}Door:0x%08x{/c}") % (int)doorId;
-	sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(msg2.str()));
+	requester->QueueCommand(make_shared<SystemChatMsg>(msg2.str()));
 
 	if (doorOpenCount > 30) //if 10+ doors, then we want to close one
 	{
@@ -205,9 +205,7 @@ void ObjectMgr::OpenDoor( uint32 doorId, GameClient* requester)
 			//sGame.AnnounceStateUpdate(NULL,make_shared<CloseDoorMsg>(it->first));						
 			m_openDoors.erase(it);						
 			break; //exit loop we just wanted the first one
-		}
-		
-		
+		}		
 	}
 
 	uint16 viewId = allocateViewId(requester);

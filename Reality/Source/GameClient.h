@@ -79,49 +79,58 @@ public:
 		if (amIObjectUpdate != NULL)
 			amIObjectUpdate->setReceiver(this);
 
-		m_queuedCommands.push_back(queuedMsg(m_serverCommandsSent,realPtr,callFunc));
+		m_queuedCommands.push_back(queuedMsg(m_serverCommandsSent,theCmd,callFunc));
 		m_serverCommandsSent++;
 	}
 	void FlushQueue(bool alsoResend=false);
 	void CheckAndResend();
 private:
-	bool SendSequencedPacket(msgBaseClassPtr jumboPacket);
+	uint16 SendSequencedPacket(msgBaseClassPtr jumboPacket);
 	SequencedPacket Decrypt(const char *pData, size_t nLength);
 	bool PacketReceived(uint16 clientSeq);
 	uint32 AcknowledgePacket(uint16 serverSeq, uint8 ackBits);
 
+	struct sentMsgBlock
+	{
+		sentMsgBlock(MsgBlock theCmds, const queue<packetAckFunc>& theCallbacks)
+		{
+			commands=theCmds;
+			callBacks=theCallbacks;
+			msLastSent=0;
+			invalidated=false;
+		}
+		~sentMsgBlock()
+		{
+		}
+
+		MsgBlock commands;
+		vector<uint16> packetsItsIn;
+		uint32 msLastSent;
+		queue<packetAckFunc> callBacks;
+		bool invalidated;
+	};
+	typedef list<sentMsgBlock> sentMsgBlocksType;
+	sentMsgBlocksType m_sentCommands;
+
 	struct queuedMsg
 	{
-		queuedMsg(uint16 newSeqId, msgBaseClassPtr dataToSend, packetAckFunc callFunc)
+		queuedMsg(uint16 theSeq, msgBaseClassPtr theData, packetAckFunc theCallback=0)
 		{
-			sequenceId=newSeqId;
-			theData=dataToSend;
-			msLastSent=0;
-			callBack=callFunc;
-			invalidated=false;
+			sequenceId=theSeq;
+			data=theData;
+			callBack=theCallback;
 		}
 		~queuedMsg()
 		{
 		}
-		bool operator<(const queuedMsg& rhs) const
-		{
-			if (this->msLastSent == 0 && rhs.msLastSent > 0)
-				return true;
-			if (this->msLastSent > 0 && rhs.msLastSent == 0)
-				return false;
-
-			return this->sequenceId < rhs.sequenceId;
-		}
 
 		uint16 sequenceId;
-		msgBaseClassPtr theData;
-		vector<uint16> packetsItsIn;
-		uint32 msLastSent;
+		msgBaseClassPtr data;
 		packetAckFunc callBack;
-		bool invalidated;
 	};
-	typedef deque<queuedMsg> msgQueueType;
-	msgQueueType m_queuedCommands;
+
+	typedef deque<queuedMsg> queuedMsgType;
+	queuedMsgType m_queuedCommands;
 	uint16 m_serverCommandsSent;
 
 	struct queuedState

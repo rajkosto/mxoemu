@@ -74,15 +74,6 @@ public:
 	void setReceiver(class GameClient *toWho);
 };
 
-class SitDownMsg : public ObjectUpdateMsg
-{
-public:
-	SitDownMsg(uint32 objectId);
-	~SitDownMsg();
-	const ByteBuffer& toBuf();
-	void setReceiver(class GameClient *toWho);
-};
-
 class PlayerSpawnMsg : public ObjectUpdateMsg
 {
 public:

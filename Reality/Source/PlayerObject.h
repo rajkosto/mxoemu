@@ -80,6 +80,7 @@ private:
 
 	//RPC handlers
 	void RPC_NullHandle(ByteBuffer &srcCmd);
+	void RPC_HandleReadyForSpawn(ByteBuffer &srcCmd);
 	void RPC_HandleChat( ByteBuffer &srcCmd );
 	void RPC_HandleWhisper( ByteBuffer &srcCmd );
 	void RPC_HandleStopAnimation( ByteBuffer &srcCmd );

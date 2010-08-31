@@ -39,6 +39,14 @@ void PlayerObject::RPC_NullHandle( ByteBuffer &srcCmd )
 	return;
 }
 
+void PlayerObject::RPC_HandleReadyForSpawn( ByteBuffer &srcCmd )
+{
+	if (!m_spawnedInWorld)
+	{
+		this->SpawnSelf();
+	}
+}
+
 void PlayerObject::ParseAdminCommand( string theCmd )
 {
 	stringstream cmdStream;

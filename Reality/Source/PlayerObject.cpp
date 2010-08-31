@@ -242,7 +242,7 @@ void PlayerObject::setOnlineStatus( bool isOnline )
 
 void PlayerObject::InitializeWorld()
 {
-	m_parent.QueueCommand(make_shared<LoadWorldCmd>((LoadWorldCmd::mxoLocation)m_district,"Massive"),boost::bind(&PlayerObject::SpawnSelf,this));
+	m_parent.QueueCommand(make_shared<LoadWorldCmd>((LoadWorldCmd::mxoLocation)m_district,"Massive"));
 	m_parent.QueueCommand(make_shared<SetExperienceCmd>(m_exp));
 	m_parent.QueueCommand(make_shared<SetInformationCmd>(m_cash));
 /*	m_parent.QueueCommand(make_shared<HexGenericMsg>("80b24e0008000802"));
@@ -479,6 +479,7 @@ void PlayerObject::HandleCommand( ByteBuffer &srcCmd )
 	//set up handler ptrs
 	if (!m_RPCbyte.size())
 	{
+		m_RPCbyte[0x05] = &PlayerObject::RPC_HandleReadyForSpawn;
 		m_RPCbyte[0x33] = &PlayerObject::RPC_HandleStopAnimation;
 		m_RPCbyte[0x34] = &PlayerObject::RPC_HandleStartAnimtion;
 		m_RPCbyte[0x35] = &PlayerObject::RPC_HandleChangeMood;

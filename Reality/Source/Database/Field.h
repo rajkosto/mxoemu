@@ -26,10 +26,7 @@
 #ifndef MXOSIM_FIELD_H
 #define MXOSIM_FIELD_H
 
-#if PLATFORM != PLATFORM_WIN32
-#include <stdio.h>
-#include <stdlib.h>
-#endif
+#include <cstdlib>
 
 class Field
 {
@@ -45,25 +42,12 @@ public:
 	inline int8 GetInt8() { return mValue ? static_cast<int8>(atol(mValue)) : 0; }
 	inline uint16 GetUInt16() { return mValue ? static_cast<uint16>(atol(mValue)) : 0; }
 	inline uint32 GetUInt32() { return mValue ? static_cast<uint32>(atol(mValue)) : 0; }
-	inline uint32 GetInt32() { return mValue ? static_cast<int32>(atol(mValue)) : 0; }
-	uint64 GetUInt64() 
-	{
-		if(mValue)
-		{
-			uint64 value;
-#if !defined(WIN32) && defined(X64)
-			sscanf(mValue,I64FMTD,(long long unsigned int*)&value);
-#else
-			sscanf(mValue,I64FMTD,&value);
-#endif
-			return value;
-		}
-		else
-			return 0;
-	}
+	inline int32 GetInt32() { return mValue ? static_cast<int32>(atol(mValue)) : 0; }
+	inline int64 GetInt64() { return mValue ? lexical_cast<int64>(mValue) : 0; }
+	inline uint64 GetUInt64() { return mValue ? lexical_cast<uint64>(mValue) : 0; }
 
 private:
-		char *mValue;
+	char *mValue;
 };
 
 #endif

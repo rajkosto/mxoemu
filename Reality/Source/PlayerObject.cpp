@@ -34,7 +34,7 @@
 #include "Timer.h"
 #include <boost/algorithm/string.hpp>
 
-PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent),m_characterUID(charUID),m_spawnedInWorld(false)
+PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent),m_characterUID(charUID),m_spawnedInWorld(false),m_worldPopulated(false)
 {
 	loadFromDB(true);
 
@@ -46,7 +46,6 @@ PlayerObject::PlayerObject( GameClient &parent,uint64 charUID ) :m_parent(parent
 	m_currAnimation=0;
 	m_currMood=0;
 	m_emoteCounter=0;
-	m_jackoutRequested=false;
 
 	setOnlineStatus(true);
 }
@@ -243,7 +242,7 @@ void PlayerObject::setOnlineStatus( bool isOnline )
 
 void PlayerObject::InitializeWorld()
 {
-	m_parent.QueueCommand(make_shared<LoadWorldCmd>((LoadWorldCmd::mxoLocation)m_district,"Massive"));
+	m_parent.QueueCommand(make_shared<LoadWorldCmd>((LoadWorldCmd::mxoLocation)m_district,"Massive"),boost::bind(&PlayerObject::SpawnSelf,this));
 	m_parent.QueueCommand(make_shared<SetExperienceCmd>(m_exp));
 	m_parent.QueueCommand(make_shared<SetInformationCmd>(m_cash));
 /*	m_parent.QueueCommand(make_shared<HexGenericMsg>("80b24e0008000802"));
@@ -263,10 +262,9 @@ void PlayerObject::InitializeWorld()
 	m_parent.QueueCommand(make_shared<HexGenericMsg>("47000004010000000000000000000000000000001a0006000000010000000001010000000000800000000000000000"));
 	m_parent.QueueCommand(make_shared<HexGenericMsg>("2e0700000000000000000000005900002e00000000000000000000000000000000000000"));
 	m_parent.QueueCommand(make_shared<HexGenericMsg>("80865220060000000000000000000000000000000000000000210000000000230000000000"));*/
-	//m_parent.QueueCommand(make_shared<EventURLCmd>("http://mxoemu.info/forum/index.php"));
+	m_parent.QueueCommand(make_shared<EventURLCmd>("http://mxoemu.info/forum/index.php"));
 	
 	m_parent.QueueCommand(make_shared<SystemChatMsg>("{c:FF0000}W{/c}{c:DD0000}e{/c}{c:EE0000}l{/c}{c:CC0000}c{/c}{c:BB0000}o{/c}{c:AA0000}m{/c}{c:990000}e{/c} {c:880000}B{/c}{c:770000}a{/c}{c:660000}c{/c}{c:550000}k{/c}{c:440000}.{/c}{c:330000}.{/c}{c:220000}.{/c}"));
-
 }
 
 void PlayerObject::UpdateAppearance()
@@ -279,13 +277,18 @@ void PlayerObject::SpawnSelf()
 {
 	if (m_spawnedInWorld == false)
 	{
-		sGame.AnnounceStateUpdate(NULL,make_shared<PlayerSpawnMsg>(m_goId));
+		shared_ptr<PlayerSpawnMsg> dMsg = make_shared<PlayerSpawnMsg>(m_goId);
+		m_parent.QueueState(dMsg,false,boost::bind(&PlayerObject::PopulateWorld,this));
+		sGame.AnnounceStateUpdate(&m_parent,dMsg);
 		m_spawnedInWorld=true;
 	}
 }
 
 void PlayerObject::PopulateWorld()
 {
+	if (m_worldPopulated)
+		return;
+
 	//we need to get all other world entities and populate our client with it
 	vector<uint32> allWorldObjects = sObjMgr.getAllGOIds();
 	for (vector<uint32>::iterator it=allWorldObjects.begin();it!=allWorldObjects.end();++it)
@@ -306,7 +309,10 @@ void PlayerObject::PopulateWorld()
 			vector<msgBaseClassPtr> objectsPackets = theOtherObject->getCurrentStatePackets();
 			for (vector<msgBaseClassPtr>::iterator it2=objectsPackets.begin();it2!=objectsPackets.end();++it2)
 			{
-				m_parent.QueueState(*it2);
+				if (m_spawnedInWorld)
+					m_parent.QueueState(*it2);
+				else
+					m_sendAfterSpawn.push(*it2);
 			}
 		}
 	}
@@ -315,8 +321,12 @@ void PlayerObject::PopulateWorld()
 	vector<msgBaseClassPtr> openedDoorPackets = sObjMgr.GetAllOpenDoors(&m_parent);
 	for (vector<msgBaseClassPtr>::iterator it=openedDoorPackets.begin();it!=openedDoorPackets.end();++it)
 	{
-		m_parent.QueueState(*it);
+		if (m_spawnedInWorld)
+			m_parent.QueueState(*it);
+		else
+			m_sendAfterSpawn.push(*it);
 	}
+	m_worldPopulated=true;
 }
 
 void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
@@ -354,11 +364,14 @@ void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
 		return;
 	srcData >> updateType;
 	bool validUpdate=false;
+	bool movementUpdate=false;
 	switch (updateType)
 	{
 	//change angle
 	case 0x04:
 		{
+			movementUpdate=true;
+
 			uint8 theRotByte;
 			if (srcData.remaining() < sizeof(theRotByte))
 				return;
@@ -371,6 +384,8 @@ void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
 	//change angle with extra param
 	case 0x06:
 		{
+			movementUpdate=true;
+
 			uint8 theAnimation;
 			if (srcData.remaining() < sizeof(theAnimation))
 				return;
@@ -388,6 +403,8 @@ void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
 	//update xyz
 	case 0x08:
 		{
+			movementUpdate=true;
+
 			validUpdate = m_pos.fromFloatBuf(srcData);
 			break;
 		}
@@ -395,6 +412,8 @@ void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
 	case 0x0A:
 	case 0x0C:
 		{
+			movementUpdate=true;
+
 			uint8 extraByte;
 			if (srcData.remaining() < sizeof(extraByte))
 				return;
@@ -406,6 +425,8 @@ void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
 	//update xyz, extra 2 bytes before xyz
 	case 0x0E:
 		{
+			movementUpdate=true;
+
 			uint8 extraByte1,extraByte2;
 			if (srcData.remaining() < sizeof(uint8)*2)
 				return;
@@ -424,6 +445,16 @@ void PlayerObject::HandleStateUpdate( ByteBuffer &srcData )
 	}
 	if (validUpdate)
 	{
+		if(movementUpdate)
+		{
+			size_t cancelled = this->cancelEvents(EVENT_JACKOUT);
+			if (cancelled > 0)
+			{
+				m_parent.QueueCommand(make_shared<SystemChatMsg>("Jackout cancelled."));
+				m_parent.QueueState(make_shared<JackoutEffectMsg>(m_goId,false));
+			}
+		}
+
 		//propagate state to all other players
 		srcData.rpos(restOfDataPos);
 		ByteBuffer theStateData;
@@ -558,13 +589,52 @@ void PlayerObject::GoAhead(double distanceToGo)
 
 void PlayerObject::Update()
 {
-	checkAndStore();
-	if (m_jackoutRequested && getTime() - m_jackoutRequestedTime >= 10) // 10 seconds for jackout
+	if (m_spawnedInWorld)
 	{
-		m_parent.QueueCommand(make_shared<HexGenericMsg>("80fd000000000000"));
-		m_parent.FlushQueue();
-		m_jackoutRequested=false;
-		//hack, should see why client doesnt send jackout complete msg, instead of invalidating here
-		m_parent.Invalidate();
+		//flush any updates that queued up while we were spawning
+		while(m_sendAfterSpawn.size())
+		{
+			m_parent.QueueState(m_sendAfterSpawn.front());
+			m_sendAfterSpawn.pop();
+		}
+
+		checkAndStore();
+
+		//fire events that occurred
+		for(list<eventStruct>::iterator it=m_events.begin();it!=m_events.end();)
+		{
+			if (getFloatTime() >= it->fireTime)
+			{
+				it->func();
+				it=m_events.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
 	}
+}
+
+void PlayerObject::addEvent( eventType type, eventFunc func, float activationTime )
+{
+	m_events.push_back(eventStruct(type,func,getFloatTime()+activationTime));
+}
+
+size_t PlayerObject::cancelEvents( eventType type )
+{
+	size_t cancelledEvents=0;
+	for(list<eventStruct>::iterator it=m_events.begin();it!=m_events.end();)
+	{
+		if (it->type == type)
+		{
+			it = m_events.erase(it);
+			cancelledEvents++;
+		}
+		else
+		{
+			++it;
+		}
+	}
+	return cancelledEvents;
 }

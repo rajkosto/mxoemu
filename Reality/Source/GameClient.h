@@ -60,33 +60,26 @@ public:
 	void HandleEncrypted(ByteBuffer &srcData);
 	void HandleOther(ByteBuffer &otherData);
 	void HandleOrdered(ByteBuffer &orderedData);
-	void QueueState(msgBaseClassPtr theData,bool immediateOnly=false)
+
+	typedef boost::function<void ()> packetAckFunc;
+
+	void QueueState(msgBaseClassPtr theData,bool immediateOnly=false,packetAckFunc callFunc=0)
 	{
 		msgBaseClassPtr &realPtr = theData;
 		shared_ptr<ObjectUpdateMsg> amIObjectUpdate = dynamic_pointer_cast<ObjectUpdateMsg>(realPtr);
 		if (amIObjectUpdate != NULL)
 			amIObjectUpdate->setReceiver(this);
 
-		m_queuedStates.push_back(queuedState(realPtr,immediateOnly));
+		m_queuedStates.push_back(queuedState(realPtr,immediateOnly,callFunc));
 	}
-	void QueueCommand(msgBaseClassPtr theCmd)
+	void QueueCommand(msgBaseClassPtr theCmd,packetAckFunc callFunc=0)
 	{
 		msgBaseClassPtr &realPtr = theCmd;
 		shared_ptr<ObjectUpdateMsg> amIObjectUpdate = dynamic_pointer_cast<ObjectUpdateMsg>(realPtr);
 		if (amIObjectUpdate != NULL)
 			amIObjectUpdate->setReceiver(this);
 
-		m_queuedCommands.push_back(queuedMsg(m_serverCommandsSent,realPtr));
-		m_serverCommandsSent++;
-	}
-	void QueueRaw(msgBaseClassPtr theCmd)
-	{
-		msgBaseClassPtr &realPtr = theCmd;
-		shared_ptr<ObjectUpdateMsg> amIObjectUpdate = dynamic_pointer_cast<ObjectUpdateMsg>(realPtr);
-		if (amIObjectUpdate != NULL)
-			amIObjectUpdate->setReceiver(this);
-
-		m_queuedCommands.push_back(queuedMsg(m_serverCommandsSent,realPtr));
+		m_queuedCommands.push_back(queuedMsg(m_serverCommandsSent,realPtr,callFunc));
 		m_serverCommandsSent++;
 	}
 	void FlushQueue(bool alsoResend=false);
@@ -94,16 +87,18 @@ public:
 private:
 	bool SendSequencedPacket(msgBaseClassPtr jumboPacket);
 	SequencedPacket Decrypt(const char *pData, size_t nLength);
-	void FlagsChanged(uint8 oldFlags,uint8 newFlags);
 	bool PacketReceived(uint16 clientSeq);
-	uint32 AcknowledgePacket(uint16 serverSeq);
+	uint32 AcknowledgePacket(uint16 serverSeq, uint8 ackBits);
+
 	struct queuedMsg
 	{
-		queuedMsg(uint16 newSeqId, msgBaseClassPtr dataToSend)
+		queuedMsg(uint16 newSeqId, msgBaseClassPtr dataToSend, packetAckFunc callFunc)
 		{
 			sequenceId=newSeqId;
 			theData=dataToSend;
 			msLastSent=0;
+			callBack=callFunc;
+			invalidated=false;
 		}
 		~queuedMsg()
 		{
@@ -122,6 +117,8 @@ private:
 		msgBaseClassPtr theData;
 		vector<uint16> packetsItsIn;
 		uint32 msLastSent;
+		packetAckFunc callBack;
+		bool invalidated;
 	};
 	typedef deque<queuedMsg> msgQueueType;
 	msgQueueType m_queuedCommands;
@@ -129,15 +126,19 @@ private:
 
 	struct queuedState
 	{
-		queuedState(msgBaseClassPtr theState, bool immediateOnly=false)
+		queuedState(msgBaseClassPtr theState, bool immediateOnly, packetAckFunc callFunc )
 		{
-			stateData = theState;
+			stateData=theState;
 			noResend=immediateOnly;
+			callBack=callFunc;
+			invalidated=false;
 		}
 		bool noResend;
 		msgBaseClassPtr stateData;
 		vector<uint16> packetsItsIn;
 		uint32 msLastSent;
+		packetAckFunc callBack;
+		bool invalidated;
 	};
 	typedef deque<queuedState> stateQueueType;
 	stateQueueType m_queuedStates;
@@ -149,13 +150,10 @@ private:
 	uint32 m_charWorldId;
 	uint32 m_sessionId;
 
-	uint32 m_lastSimTimeMS;
-
+	float m_lastSimTime;
 
 	// client states
 	bool m_validClient;
-	bool m_worldLoaded;
-	bool m_characterSpawned;
 
 	// Master Sock handle, client's address structure, last received packet
 	class GameSocket *m_sock;
@@ -166,18 +164,42 @@ private:
 	uint32 m_lastServerMS;
 
 	//sequences of packets received
-	typedef deque<uint16> packetsToAckType;
-	packetsToAckType m_packetsToAck;
+	typedef unordered_map<uint16,bool> recvdPacketSeqsType;
+	recvdPacketSeqsType m_recvdPacketSeqs;
 
-	uint16 GetAnAck(uint16 serverSeq)
+	uint16 GetAnAck()
 	{
-		if (m_packetsToAck.size() > 0)
+		for(recvdPacketSeqsType::iterator it=m_recvdPacketSeqs.begin();it!=m_recvdPacketSeqs.end();++it)
 		{
-			uint16 theAck = m_packetsToAck.front();
-			m_packetsToAck.pop_front();
-			return theAck;
+			if (it->second == false)
+			{
+				it->second=true;
+				return it->first;
+			}
 		}
+		
+		if (m_lastClientSequence>0)
+			m_recvdPacketSeqs[m_lastClientSequence] = true;
+
 		return m_lastClientSequence;
+	}
+	uint8 GetAckBits(uint16 clientSeq)
+	{
+		uint8 ackBits=0;
+		for(int i=0;i<7;i++)
+		{
+			if(m_recvdPacketSeqs.count(clientSeq-i) > 0)
+				ackBits |= (1 << i);
+		}
+		/*
+		printf("ACK BITS: %02x for sequence %d [",uint32(ackBits),clientSeq);
+		for(int i=0;i<7;i++)
+		{
+			if (m_recvdPacketSeqs.count(clientSeq-i) > 0)
+				printf("%d=%d ",clientSeq-i,m_recvdPacketSeqs[clientSeq-i]);
+		}
+		printf("]\n");*/
+		return ackBits;
 	}
 	typedef map<uint16,ByteBuffer> clientCommandsType;
 	clientCommandsType m_clientCommandsReceived;

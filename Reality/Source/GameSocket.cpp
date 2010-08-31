@@ -163,24 +163,24 @@ void GameSocket::Broadcast( const ByteBuffer &message )
 	return AnnounceStateUpdate(NULL,make_shared<StaticMsg>(message),true);
 }
 
-void GameSocket::AnnounceStateUpdate( GameClient* clFrom, msgBaseClassPtr theMsg, bool immediateOnly )
+void GameSocket::AnnounceStateUpdate( GameClient* clFrom, msgBaseClassPtr theMsg, bool immediateOnly, GameClient::packetAckFunc callFunc )
 {
 	for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();++it)
 	{
 		if (it->second!=clFrom)
 		{
-			it->second->QueueState(theMsg,immediateOnly);
+			it->second->QueueState(theMsg,immediateOnly,callFunc);
 		}
 	}
 }
 
-void GameSocket::AnnounceCommand( GameClient* clFrom,msgBaseClassPtr theCmd )
+void GameSocket::AnnounceCommand( GameClient* clFrom,msgBaseClassPtr theCmd, GameClient::packetAckFunc callFunc )
 {
 	for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();++it)
 	{
 		if (it->second!=clFrom)
 		{
-			it->second->QueueCommand(theCmd);
+			it->second->QueueCommand(theCmd,callFunc);
 		}
 	}
 }

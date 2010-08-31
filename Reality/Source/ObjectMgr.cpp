@@ -178,7 +178,7 @@ void ObjectMgr::OpenDoor( uint32 doorId, GameClient* requester)
 		if (it->second == doorId)
 		{
 			//Didnt work first time, lets change door type
-			string sqlUpdateDoorType = (format("Update Doors Set DoorType = 0, `DoorId` = '%1%' Limit 1") % (int)doorId).str();
+			format sqlUpdateDoorType = format("UPDATE `doors` SET `DoorType`='0' WHERE `DoorId`='%1%' LIMIT 1") % doorId;
 			if (sDatabase.Execute(sqlUpdateDoorType))
 			{
 				format msg1 = format("{c:0FFFF0}Door:0x%08x Set to Indoors since u tried to open it but I think it is open, try again.{/c}") % (int)doorId;
@@ -219,7 +219,7 @@ void ObjectMgr::OpenDoor( uint32 doorId, GameClient* requester)
 	sGame.AnnounceCommand(NULL,make_shared<SystemChatMsg>(s.str()));
 
 	//sGame.AnnounceStateUpdate(NULL,make_shared<DeleteDoorMsg>(doorId));	
-	string sqlDoor = (format("Select X,Y,Z,ROT,DoorType from Doors Where `DoorId` = '%1%' Limit 1") % (int)doorId).str();
+	format sqlDoor = format("SELECT `X`, `Y`, `Z`, `ROT`, `DoorType` FROM `doors` WHERE `DoorId`='%1%' LIMIT 1") % doorId;
 
 	scoped_ptr<QueryResult> resultDoor(sDatabase.Query(sqlDoor));
 	if (resultDoor != NULL)
@@ -250,7 +250,7 @@ vector<msgBaseClassPtr> ObjectMgr::GetAllOpenDoors( GameClient* requester )
 	{
 		viewsOfClient[it->first] = it->second;
 
-		string sqlDoor = (format("Select X,Y,Z,ROT,DoorType from Doors Where `DoorId` = '%1%' Limit 1") % (int)it->second).str();
+		format sqlDoor = format("SELECT `X`, `Y`, `Z`, `ROT`, `DoorType` FROM `doors` WHERE `DoorId`='%1%' LIMIT 1") % it->second;
 		scoped_ptr<QueryResult> resultDoor(sDatabase.Query(sqlDoor));
 		if (resultDoor != NULL)
 		{

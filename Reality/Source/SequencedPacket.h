@@ -35,26 +35,26 @@ public:
 	SequencedPacket()
 	{
 		setSequences(0,0);
-		setFlags(0);
+		setAckBits(0);
 		this->clear();
 	}
-	SequencedPacket(uint16 _localSeq,uint16 _remoteSeq,uint8 _flags)
+	SequencedPacket(uint16 _localSeq,uint16 _remoteSeq,uint8 _ackBits)
 	{
 		setSequences(_localSeq,_remoteSeq);
-		setFlags(_flags);
+		setAckBits(_ackBits);
 		this->clear();
 	}
-	SequencedPacket(uint16 _localSeq,uint16 _remoteSeq,uint8 _flags,const string &headerless)
+	SequencedPacket(uint16 _localSeq,uint16 _remoteSeq,uint8 _ackBits,const string &headerless)
 	{
 		setSequences(_localSeq,_remoteSeq);
-		setFlags(_flags);
+		setAckBits(_ackBits);
 		this->clear();
 		this->append((const byte*)headerless.data(),headerless.size());
 	}
-	SequencedPacket(uint16 _localSeq,uint16 _remoteSeq,uint8 _flags,const ByteBuffer &headerless)
+	SequencedPacket(uint16 _localSeq,uint16 _remoteSeq,uint8 _ackBits,const ByteBuffer &headerless)
 	{
 		setSequences(_localSeq,_remoteSeq);
-		setFlags(_flags);
+		setAckBits(_ackBits);
 		this->clear();
 		this->append((const byte*)headerless.contents(),headerless.size());
 	}
@@ -69,9 +69,9 @@ public:
 		this->localSeq = _localSeq;
 		this->remoteSeq = _remoteSeq;
 	}
-	void setFlags(byte _flags)
+	void setAckBits(byte _ackBits)
 	{
-		flags = _flags;
+		ackBits = _ackBits;
 	}
 	void setData(const string &headerless)
 	{
@@ -92,9 +92,9 @@ public:
 	{
 		return localSeq;
 	}
-	byte getFlags()
+	byte getAckBits()
 	{
-		return flags;
+		return ackBits;
 	}
 	ByteBuffer getData()
 	{
@@ -108,7 +108,7 @@ private:
 	void Construct(ByteBuffer withHeader);
 	uint16 localSeq;
 	uint16 remoteSeq;
-	uint8 flags;
+	uint8 ackBits;
 };
 
 #endif

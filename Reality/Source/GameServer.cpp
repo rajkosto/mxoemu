@@ -38,18 +38,19 @@ initialiseSingleton( GameServer );
 
 bool GameServer::Start()
 {
+	string Interface = sConfig.GetStringDefault("GameServer.IP", "0.0.0.0");
 	int Port = sConfig.GetIntDefault("GameServer.Port", 10000);
 	INFO_LOG(format("Starting Game server on port %1%") % Port);
 
 	m_mainSocket.reset(new GameSocket(m_udpHandler));
 	port_t thePortToBind = Port;
-	if (m_mainSocket->Bind(thePortToBind) != 0)
+	if (m_mainSocket->Bind(Interface,thePortToBind) != 0)
 	{
 		ERROR_LOG(format("Error binding Game Server to port %1%") % thePortToBind);
 		return false;
 	}
 	m_udpHandler.Add(m_mainSocket.get());
-	m_serverStartMS = getMSTime64();
+	m_serverStartMS = getMSTime();
 
 	// Mark server as "up"
 	{

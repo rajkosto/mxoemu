@@ -59,7 +59,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Dbghelp.lib;ws2_32.lib;libmysql.lib;cryptlib.lib;Sockets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Dbghelp.lib;Winmm.lib;ws2_32.lib;libmysql.lib;cryptlib.lib;Sockets.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>..\Binaries\RealityD.exe</OutputFile>
       <AdditionalLibraryDirectories>..\..\Dependencies10\CryptoPP\Win32\Output\Debug;..\..\Dependencies10\MySQL\lib\32;..\..\Dependencies10\Sockets\Project.net\lib\D;..\..\Dependencies10\ZThread\lib\D;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -83,7 +83,7 @@
       </DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Dbghelp.lib;ws2_32.lib;libmysql.lib;cryptlib.lib;Sockets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Dbghelp.lib;Winmm.lib;ws2_32.lib;libmysql.lib;cryptlib.lib;Sockets.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>..\Binaries\Reality.exe</OutputFile>
       <AdditionalLibraryDirectories>..\..\Dependencies10\CryptoPP\Win32\Output\Release;..\..\Dependencies10\MySQL\lib\32;..\..\Dependencies10\Sockets\Project.net\lib\R;..\..\Dependencies10\ZThread\lib\R;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -170,6 +170,7 @@
     <ClCompile Include="MersenneTwister.cpp" />
     <ClCompile Include="PlayerObjectHandlers.cpp" />
     <ClCompile Include="StackWalker.cpp" />
+    <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="Database\Database.cpp" />
     <ClCompile Include="GameClient.cpp" />

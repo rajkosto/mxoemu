@@ -404,6 +404,7 @@ void AuthServer::Start()
 	LoadSignKeys();
 	LoadCryptoKeys();
 
+	string Interface = sConfig.GetStringDefault("AuthServer.IP","0.0.0.0");
 	int Port = sConfig.GetIntDefault("AuthServer.Port",11000);
 	INFO_LOG(format("Starting Auth server on port %1%") % Port);	
 
@@ -415,7 +416,7 @@ void AuthServer::Start()
 	bool bindFailed=false;
 	try
 	{
-		if (listenSocketInst->Bind(Port)!=0)
+		if (listenSocketInst->Bind(Interface,Port)!=0)
 			bindFailed=true;
 	}
 	catch (Exception)

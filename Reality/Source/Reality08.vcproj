@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Dbghelp.lib ws2_32.lib libmysql.lib cryptlib.lib Sockets.lib"
+				AdditionalDependencies="Dbghelp.lib Winmm.lib ws2_32.lib libmysql.lib cryptlib.lib Sockets.lib"
 				OutputFile="..\Binaries\RealityD.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\Dependencies\CryptoPP\Win32\Output\Debug;..\..\Dependencies\MySQL\lib\32;..\..\Dependencies\Sockets\Project.net\lib\D;..\..\Dependencies\ZThread\lib\D"
@@ -139,7 +139,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Dbghelp.lib ws2_32.lib libmysql.lib cryptlib.lib Sockets.lib"
+				AdditionalDependencies="Dbghelp.lib Winmm.lib ws2_32.lib libmysql.lib cryptlib.lib Sockets.lib"
 				OutputFile="..\Binaries\Reality.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\Dependencies\CryptoPP\Win32\Output\Release;..\..\Dependencies\MySQL\lib\32;..\..\Dependencies\Sockets\Project.net\lib\R;..\..\Dependencies\ZThread\lib\R"
@@ -423,6 +423,10 @@
 			</File>
 			<File
 				RelativePath=".\SymmetricCrypto.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Timer.cpp"
 				>
 			</File>
 			<File

@@ -29,6 +29,7 @@
 #include "Common.h"
 #include "ByteBuffer.h"
 #include "MessageTypes.h"
+#include "GameClient.h"
 #include <Sockets/UdpSocket.h>
 #include <Sockets/ISocketHandler.h>
 #include <Sockets/SocketAddress.h>
@@ -42,14 +43,14 @@ public:
 	void PruneDeadClients();
 	void CheckAndResend();
 	size_t Clients_Connected(void) { return m_clients.size(); }
-	class GameClient *GetClientWithSessionId(uint32 sessionId);
+	GameClient *GetClientWithSessionId(uint32 sessionId);
 	void Broadcast(const ByteBuffer &message);
-	void AnnounceStateUpdate(class GameClient* clFrom,msgBaseClassPtr theMsg, bool immediateOnly=false);
-	void AnnounceCommand(class GameClient* clFrom,msgBaseClassPtr theCmd);
+	void AnnounceStateUpdate(GameClient* clFrom,msgBaseClassPtr theMsg, bool immediateOnly=false, GameClient::packetAckFunc callFunc=0);
+	void AnnounceCommand(GameClient* clFrom,msgBaseClassPtr theCmd, GameClient::packetAckFunc callFunc=0);
 	void RemoveCharacter(string IPAddr);
 private:
 	// Client List
-	typedef map<string, class GameClient*> GClientList;
+	typedef map<string, GameClient*> GClientList;
 	GClientList m_clients;
 
 	uint32 m_lastCleanupTime;

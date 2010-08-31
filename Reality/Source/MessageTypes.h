@@ -130,9 +130,11 @@ public:
 class JackoutEffectMsg : public ObjectUpdateMsg
 {
 public:
-	JackoutEffectMsg(uint32 objectId);
+	JackoutEffectMsg(uint32 objectId, bool jackout=true);
 	~JackoutEffectMsg();
 	const ByteBuffer& toBuf();
+private:
+	bool m_jackout;
 };
 
 class StateUpdateMsg : public ObjectUpdateMsg

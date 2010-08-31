@@ -752,7 +752,7 @@ const ByteBuffer& PositionStateMsg::toBuf()
 	return m_buf;
 }
 
-JackoutEffectMsg::JackoutEffectMsg( uint32 objectId ):ObjectUpdateMsg(objectId)
+JackoutEffectMsg::JackoutEffectMsg( uint32 objectId, bool jackout ):ObjectUpdateMsg(objectId),m_jackout(jackout)
 {
 }
 
@@ -793,6 +793,13 @@ const ByteBuffer& JackoutEffectMsg::toBuf()
 
 	memcpy(&rawData[0x01],&viewId,sizeof(viewId));
 	m_player->getPosition().toFloatBuf(&rawData[0x0B],sizeof(float[3]));
+
+//	memset(&rawData[0x17],0,sizeof(uint32));
+
+	if (m_jackout)
+		rawData[0x22] = 1;
+	else
+		rawData[0x22] = 0;
 
 	m_buf = ByteBuffer(rawData,sizeof(rawData));
 	return m_buf;
@@ -1103,7 +1110,7 @@ LoadWorldCmd::LoadWorldCmd( mxoLocation theLoc,string theSky )
 	m_buf << uint16(swap16(0x060E))
 		<< uint8(0)
 		<< uint32(theLoc)
-		<< uint32(sGame.GetSimTime())
+		<< float(getFloatTime())
 		<< uint8(1);
 	string metrFile = locs[theLoc];
 	size_t putSkyStrLenOffsetHere = m_buf.wpos();

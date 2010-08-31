@@ -46,6 +46,7 @@ MarginServer::~MarginServer()
 
 void MarginServer::Start()
 {
+	string Interface = sConfig.GetStringDefault("MarginServer.IP","0.0.0.0");
     int Port = sConfig.GetIntDefault("MarginServer.Port",10000);
 	INFO_LOG(format("Starting Margin server on port %1%") % Port);	
 

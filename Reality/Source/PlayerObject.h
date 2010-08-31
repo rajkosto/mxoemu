@@ -110,6 +110,28 @@ private:
 	void saveDataToDB();
 	void setOnlineStatus( bool isOnline );
 
+	typedef enum
+	{
+		EVENT_JACKOUT
+	} eventType;
+
+	typedef boost::function < void (void) > eventFunc;
+
+	void addEvent(eventType type, eventFunc func, float activationTime);
+	size_t cancelEvents(eventType type);
+
+	struct eventStruct
+	{
+		eventStruct(eventType _type, eventFunc _func, float _fireTime) : type(_type), func(_func), fireTime(_fireTime) {}
+		eventType type;
+		eventFunc func;
+		float fireTime;
+	};
+
+	list<eventStruct> m_events;
+
+	void jackoutEvent();
+
 	void ParseAdminCommand(string theCmd);
 	void ParsePlayerCommand(string theCmd);
 	void GoAhead(double distanceToGo);
@@ -135,6 +157,9 @@ private:
 	uint32 testCount;
 
 	bool m_spawnedInWorld;
+	queue<msgBaseClassPtr> m_sendAfterSpawn;
+	bool m_worldPopulated;
+
 	uint32 m_lastStore;
 	uint32 m_storeCntr;
 
@@ -142,9 +167,6 @@ private:
 	uint8 m_currMood;
 
 	uint8 m_emoteCounter;
-
-	bool m_jackoutRequested;
-	uint32 m_jackoutRequestedTime;
 
 	bool m_isAdmin;
 };

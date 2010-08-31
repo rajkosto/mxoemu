@@ -100,9 +100,6 @@
 typedef unsigned char byte;
 
 #if COMPILER == COMPILER_MICROSOFT
-#define I64FMT "%016I64X"
-#define I64FMTD "%I64u"
-#define SI64FMTD "%I64d"
 #ifndef snprintf
 #define snprintf sprintf_s
 #endif
@@ -110,9 +107,6 @@ typedef unsigned char byte;
 #else
 #define stricmp strcasecmp
 #define strnicmp strncasecmp
-#define I64FMT "%016llX"
-#define I64FMTD "%llu"
-#define SI64FMTD "%lld"
 #endif
 
 // Short for unsigned long
@@ -193,6 +187,7 @@ static inline void xchg32 (void *a, void *b)
 #include <set>
 #include <vector>
 #include <deque>
+#include <queue>
 #include <assert.h>
 #include <iostream>
 #include <iomanip>
@@ -224,6 +219,7 @@ using std::invalid_argument;
 using std::out_of_range;
 using std::vector;
 using std::deque;
+using std::queue;
 using std::list;
 using std::map;
 using std::string;
@@ -233,12 +229,16 @@ using std::string;
 using std::tr1::shared_ptr;
 using std::tr1::make_shared;
 using std::tr1::dynamic_pointer_cast;
+#include <unordered_map>
+using std::tr1::unordered_map;
 #else
 #include <boost/shared_ptr.hpp>
 using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 #include <boost/make_shared.hpp>
 using boost::make_shared;
+#include <boost/unordered_map.hpp>
+using boost::unordered_map;
 #endif
 
 #include <boost/scoped_ptr.hpp>
@@ -250,6 +250,9 @@ using boost::format;
 
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
+
+#include <boost/bind.hpp>
+#include <boost/function.hpp>
 
 #if PLATFORM == PLATFORM_WIN32
 #include <winsock2.h>
@@ -266,7 +269,7 @@ using boost::format;
 #endif
 
 #if PLATFORM != PLATFORM_WIN32
-#define Sleep(ms) usleep(1000*ms)
+inline void Sleep(int ms) { usleep(1000*ms); }
 #endif
 
 class Database;

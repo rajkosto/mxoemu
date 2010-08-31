@@ -23,52 +23,65 @@
 //
 // ***************************************************************************
 
-#ifndef MXOSIM_GAMESERVER_H
-#define MXOSIM_GAMESERVER_H
-
 #include "Common.h"
-#include "ByteBuffer.h"
-#include "Singleton.h"
-#include "ObjectMgr.h"
-#include <Sockets/SocketHandler.h>
-#include "MessageTypes.h"
-#include "Timer.h"
 
-#include <boost/timer.hpp>
-
-class GameServer : public Singleton <GameServer>
+#ifdef WIN32
+class StaticTime
 {
 public:
-	GameServer() 
-	{ 
-		m_serverUp=false; 
+	StaticTime()
+	{
+		timeBeginPeriod(1);
+		m_timeBase = timeGetTime();
 	}
-	~GameServer() 
-	{ 
-		if (m_serverUp)
-			Stop();
+	~StaticTime()
+	{
+		timeEndPeriod(1);
 	}
-	bool Start();
-	void Stop();
-	void Loop();
-	ObjectMgr &getObjMgr() { return m_objMgr; }
-	class GameClient *GetClientWithSessionId(uint32 sessionId);
-	void Broadcast(const ByteBuffer &message);
-	void AnnounceStateUpdate(class GameClient* clFrom,msgBaseClassPtr theMsg, bool immediateOnly=false);
-	void AnnounceCommand(class GameClient* clFrom,msgBaseClassPtr theCmd);
-	string GetName() const;
-	string GetChatPrefix() const;
-private:	
-	ObjectMgr m_objMgr;
-	SocketHandler m_udpHandler;
-	shared_ptr<class GameSocket> m_mainSocket;
-	uint32 m_serverStartMS;
-	bool m_serverUp;
-};
+	uint32 getTimeBase() { return m_timeBase; }
+private:
+	uint32 m_timeBase;
+} staticTimeInst;
 
+float getFloatTime()
+{
+	return (float)(timeGetTime() - staticTimeInst.getTimeBase()) * (1.0f / 1000.0f);
+}
+uint32 getMSTime() 
+{
+	return (timeGetTime() - staticTimeInst.getTimeBase());
+}
+#else
+#include <sys/time.h>
+#include <unistd.h>
 
-#define sGame GameServer::getSingleton()
-#define sObjMgr GameServer::getSingleton().getObjMgr()
+class StaticTime
+{
+public:
+	StaticTime()
+	{
+		timeval currTime;
+		gettimeofday(&currTime, NULL);
+		m_seconds = currTime.tv_sec;
+	}
+	~StaticTime()
+	{
+	}
+	uint32 getSeconds() { return m_seconds; }
+private:
+	uint32 m_seconds;
+} staticTimeInst;
 
+float getFloatTime()
+{
+	timeval theTime;
+	gettimeofday(&theTime, NULL);
+	return (float)(theTime.tv_sec - staticTimeInst.getSeconds() + theTime.tv_usec * 0.000001f);
+}
+uint32 getMSTime()
+{
+	timeval theTime;
+	gettimeofday(&theTime, NULL);
+	return ((theTime.tv_sec - staticTimeInst.getSeconds()) * 1000) + (theTime.tv_usec / 1000);
+}
 #endif
-

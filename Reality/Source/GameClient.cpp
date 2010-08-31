@@ -43,13 +43,10 @@ GameClient::GameClient(sockaddr_in inc_addr, GameSocket *sock):m_address(inc_add
 {
 	m_serverSequence = 1;
 	m_serverCommandsSent = 0;
-	m_clientFlags = 0;
 	m_lastClientSequence = 0;
 	m_validClient = true;
-	m_worldLoaded = false;
-	m_characterSpawned = false;
 	m_encryptionInitialized = false;
-	m_lastSimTimeMS = 0;
+	m_lastSimTime = -1;
 	m_playerGoId=0;
 	m_calculatedInitialLatency = false;
 }
@@ -73,11 +70,11 @@ void GameClient::HandlePacket( const char *pData, size_t nLength )
 		return;
 
 	m_lastActivity = getTime();
-	m_lastPacketReceivedMS = getMSTime32();
+	m_lastPacketReceivedMS = getMSTime();
 
 	if (m_encryptionInitialized == false && pData[0] == 0 && nLength == 43)
 	{
-		m_lastServerMS = getMSTime32();
+		m_lastServerMS = getMSTime();
 
 		ByteBuffer packetData;
 		packetData.append(pData,nLength);
@@ -178,9 +175,10 @@ void GameClient::HandlePacket( const char *pData, size_t nLength )
 		}
 		sObjMgr.getGOPtr(m_playerGoId)->InitializeWorld();
 		FlushQueue();
+		return;
 	}
 
-	if (m_worldLoaded == true && pData[0] != 0x01) // Ping...just reply with the same thing
+	if (m_encryptionInitialized == true && pData[0] != 0x01) // Ping...just reply with the same thing
 	{		
 		const byte pingHeader[8] =	{0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x04, 0x08};
 		if ( (nLength != sizeof(pingHeader)+sizeof(uint32)) || 
@@ -202,12 +200,21 @@ void GameClient::HandlePacket( const char *pData, size_t nLength )
 
 			if (m_calculatedInitialLatency == false)
 			{
-				uint64 clientLatency = getMSTime32()-m_lastServerMS;
+				uint32 clientLatency = getMSTime()-m_lastServerMS;
 				DEBUG_LOG(format("CLIENT LATENCY: %1%")%clientLatency);
 				m_calculatedInitialLatency=true;
 			}
 
-			uint32 pktsAcked = AcknowledgePacket(packetData.getRemoteSeq());
+			uint32 pktsAcked = AcknowledgePacket(packetData.getRemoteSeq(), packetData.getAckBits());
+			if (packetData.getAckBits() & 0x80)
+			{
+				DEBUG_LOG(format("(%s) Set first bit of ackBits (%02x)! SSeq: %d CSeq: %d Packet %s")
+					%Address()
+					%uint32(packetData.getAckBits())
+					%packetData.getRemoteSeq()
+					%packetData.getLocalSeq()
+					%Bin2Hex(packetData));
+			}
 
 			uint8 firstByte = packetData.contents()[0];
 			//normal packet byte
@@ -232,10 +239,6 @@ void GameClient::HandlePacket( const char *pData, size_t nLength )
 
 			//add to need to ack list
 			PacketReceived(packetData.getLocalSeq());						
-			if (m_clientFlags != packetData.getFlags())
-			{
-				FlagsChanged(m_clientFlags,packetData.getFlags());
-			}
 
 			//TODO: hack,we should update things irrespective of packets received
 			if (m_playerGoId != 0)
@@ -408,50 +411,6 @@ void GameClient::SendEncrypted(SequencedPacket withSequences)
 	m_sock->SendToBuf(m_address, sendMe.contents(), sendMe.size(), 0);
 }
 
-void GameClient::FlagsChanged( uint8 oldFlags,uint8 newFlags )
-{
-//	DEBUG_LOG(format("flags changed from %02x to %02x")%uint32(oldFlags)%uint32(newFlags));
-
-	m_clientFlags = newFlags;
-	if (m_clientFlags == 0x01)
-	{
-		//skip straight to 0x07
-		m_clientFlags=0x07;	
-		if (m_worldLoaded==false)
-		{
-			sObjMgr.getGOPtr(m_playerGoId)->SpawnSelf();
-			m_worldLoaded = true;
-		}
-	}
-	else if (m_clientFlags == 0x07)
-	{
-		if (m_worldLoaded==false)
-		{
-			sObjMgr.getGOPtr(m_playerGoId)->SpawnSelf();
-			m_worldLoaded = true;
-		}
-	}
-	else if (m_clientFlags == 0x7F)
-	{
-		if (m_worldLoaded==false)
-		{
-			sObjMgr.getGOPtr(m_playerGoId)->SpawnSelf();
-			m_worldLoaded = true;
-		}
-		if (m_characterSpawned == false)
-		{
-			sObjMgr.getGOPtr(m_playerGoId)->PopulateWorld();
-			m_characterSpawned = true;
-		}
-	}
-	else
-	{   //break on nonhandled
-		ERROR_LOG(format("Unhandled Client Flag: 0x%02x") % uint32(m_clientFlags));
-	}
-
-}
-
-
 bool GameClient::PacketReceived( uint16 clientSeq )
 {
 	bool wraparound=false;
@@ -466,34 +425,114 @@ bool GameClient::PacketReceived( uint16 clientSeq )
 
 	if (wraparound == true)
 	{
-		size_t removedPacketsToAck = m_packetsToAck.size();
-		m_packetsToAck.clear();
+		size_t removedPacketsToAck=0;
+		typedef std::pair<uint16,bool> ackedType;
+		foreach(ackedType acked,m_recvdPacketSeqs)
+			if(!acked.second)removedPacketsToAck++;
 
-		INFO_LOG(format("(%1%) Purged %2% acks due to client wraparound") % Address() % removedPacketsToAck);
+		m_recvdPacketSeqs.clear();
+
+		if (removedPacketsToAck)
+			INFO_LOG(format("(%1%) Purged %2% unsent acks due to client wraparound") % Address() % removedPacketsToAck);
 	}
 
-	if (find(m_packetsToAck.begin(),m_packetsToAck.end(),clientSeq) != m_packetsToAck.end())
+	if (m_recvdPacketSeqs.count(clientSeq) != 0)
 		return false;
 
-	m_packetsToAck.push_back(clientSeq);
+	//insert as not acked
+	m_recvdPacketSeqs[clientSeq] = false;
 	return true;
 }
 
 
 
-uint32 GameClient::AcknowledgePacket( uint16 serverSeq )
+uint32 GameClient::AcknowledgePacket( uint16 serverSeq, uint8 ackBits )
 {
-	//		vector<uint16> zeAckedPacketz;
+	vector<uint16> ackSequences;
+	ackSequences.reserve(8);
+	//process bits to see which sequences to ack
+	{
+		for(int i=0;i<7;i++)
+		{
+			uint8 mask = 1 << i;
+			if (ackBits & mask)
+				ackSequences.push_back(serverSeq-i);
+		}
+	}
+/*	printf("serverSeq %d ackBits %02x [",uint32(serverSeq),uint32(ackBits));
+	foreach(uint16 seq, ackSequences)
+	{
+		printf("%d ",seq);
+	}
+	printf("]\n");*/
+
+	for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();)
+	{
+		if (it->invalidated || it->packetsItsIn.size() < 1)
+		{
+			++it;
+			continue;
+		}
+
+		bool remove=false;
+		foreach(uint16 ack, ackSequences)
+		{
+			if (find(it->packetsItsIn.begin(),it->packetsItsIn.end(),ack)!=it->packetsItsIn.end())
+			{
+				remove=true;
+				break;
+			}
+		}
+		if ( remove )
+		{
+			it->invalidated=true;
+
+			if (!it->callBack.empty())
+				it->callBack();
+
+			it=m_queuedStates.begin();
+		}
+		else
+		{
+			++it;
+		}
+	}
+	for (msgQueueType::iterator it=m_queuedCommands.begin();it!=m_queuedCommands.end();)
+	{
+		if (it->invalidated || it->packetsItsIn.size() < 1)
+		{
+			++it;
+			continue;
+		}
+
+		bool remove=false;
+		foreach(uint16 ack, ackSequences)
+		{
+			if (find(it->packetsItsIn.begin(),it->packetsItsIn.end(),ack)!=it->packetsItsIn.end())
+			{
+				remove=true;
+				break;
+			}
+		}
+		if ( remove )
+		{
+			it->invalidated=true;
+
+			if (!it->callBack.empty())
+				it->callBack();
+
+			it=m_queuedCommands.begin();
+		}
+		else
+		{
+			++it;
+		}
+	}
 	uint32 eraseCounter=0;
 	for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();)
 	{
-		if ( (it->packetsItsIn.size() > 0) &&
-			find(it->packetsItsIn.begin(),it->packetsItsIn.end(),serverSeq)!=it->packetsItsIn.end() )
+		if (it->invalidated)
 		{
-			/*for (int i=0;i<it->packetsItsIn.size();i++)
-			{
-				zeAckedPacketz.push_back(it->packetsItsIn[i]);
-			}*/
 			it=m_queuedStates.erase(it);
 			eraseCounter++;
 		}
@@ -504,13 +543,8 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq )
 	}
 	for (msgQueueType::iterator it=m_queuedCommands.begin();it!=m_queuedCommands.end();)
 	{
-		if ( (it->packetsItsIn.size() > 0) &&
-			find(it->packetsItsIn.begin(),it->packetsItsIn.end(),serverSeq)!=it->packetsItsIn.end() )
+		if (it->invalidated)
 		{
-			/*for (int i=0;i<it->packetsItsIn.size();i++)
-			{
-				zeAckedPacketz.push_back(it->packetsItsIn[i]);
-			}*/
 			it=m_queuedCommands.erase(it);
 			eraseCounter++;
 		}
@@ -519,34 +553,6 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq )
 			++it;
 		}
 	}
-	/*stringstream derp;
-	derp << "Acking " << serverSeq << " Acked " << eraseCounter << " packets latency " << m_latency << "ms ( ";
-	for (int i=0;i<zeAckedPacketz.size();i++)
-	{
-		derp << zeAckedPacketz[i] << " ";
-	}
-	vector<uint16> zePacketsLeft;
-	for (msgQueueType::iterator it=m_queuedCommands.begin();it!=m_queuedCommands.end();++it)
-	{
-		for (int i=0;i<it->packetsItsIn.size();i++)
-		{
-			zePacketsLeft.push_back(it->packetsItsIn[i]);
-		}
-	}
-	for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();++it)
-	{
-		for (int i=0;i<it->packetsItsIn.size();i++)
-		{
-			zePacketsLeft.push_back(it->packetsItsIn[i]);
-		}
-	}
-	derp << ") " << zePacketsLeft.size() << " left ( ";
-	for (int i=0;i<zePacketsLeft.size();i++)
-	{
-		derp << zePacketsLeft[i] << " ";
-	}
-	derp << ")";
-	DEBUG_LOG(derp.str());*/
 	return eraseCounter;
 }
 
@@ -563,33 +569,32 @@ bool GameClient::SendSequencedPacket( msgBaseClassPtr jumboPacket )
 		return false;
 	}
 
-	ByteBuffer outputData;
-	//we send simtime synchronization only in the first packet (anything else seems to break the game)
-	uint32 currTimeMS = getMSTime32();
-	if ( /*currTimeMS-m_lastSimTimeMS>1000 && serializedData.size() > 0*/ m_lastSimTimeMS==0)
+	enum
 	{
-		m_lastSimTimeMS = getMSTime32();
-		outputData << uint8(0x82);
-		//theirs ticks at 64hz, ours ticks at 1000
-/*		double preciseInterval = double(m_lastSimTimeMS)/double(1000/64);
-		uint32 simTimeToSend = uint32(preciseInterval);
-		outputData << uint32(simTimeToSend);*/
-		outputData << uint32(sGame.GetSimTime());
-	}
-	else
+		SERVERFLAGS_NORMAL = (1 << 1),
+		SERVERFLAGS_RESETRCC = (1 << 6),
+		SERVERFLAGS_SIMTIME = (1 << 7),
+	};
+
+	uint8 serverFlags = SERVERFLAGS_NORMAL;
+
+	if ( m_lastSimTime <= 0 || getFloatTime() - m_lastSimTime >= 5.0f) //send simtime every 5 seconds
 	{
-		//nosimtime byte
-		outputData << uint8(0x02);
+		m_lastSimTime = getFloatTime();
+		serverFlags |= SERVERFLAGS_SIMTIME;
 	}
 
-	//append that to our simtime or nosimtime byte
+	ByteBuffer outputData;
+	outputData << uint8(serverFlags);
+	if (serverFlags &= SERVERFLAGS_SIMTIME)
+		outputData << float(m_lastSimTime);
 	if (serializedData.size() > 0)
-	{
 		outputData.append(serializedData.contents(),serializedData.size());
-	}
 
 	//prepend sequences
-	SequencedPacket prepended(m_serverSequence,GetAnAck(m_serverSequence),m_clientFlags,outputData);
+	uint16 clientSeq = GetAnAck(); //get sequence number of a packet we havent acked
+	uint8 ackBits = GetAckBits(clientSeq);
+	SequencedPacket prepended(m_serverSequence,clientSeq,ackBits,outputData);
 	SendEncrypted(prepended);
 	increaseServerSequence();
 	return true;
@@ -606,7 +611,7 @@ void GameClient::FlushQueue( bool alsoResend )
 		{
 			if (it->packetsItsIn.size() > 0 && (currBlock.subPackets.size() == 0 || currBlock.sequenceId+currBlock.subPackets.size() != it->sequenceId))
 			{
-				if (getMSTime32() - it->msLastSent < 200 || alsoResend == false) //200ms resend
+				if (getMSTime() - it->msLastSent < 200 || alsoResend == false) //200ms resend
 				{
 					++it;
 					continue;
@@ -643,7 +648,7 @@ void GameClient::FlushQueue( bool alsoResend )
 			}
 
 			it->packetsItsIn.push_back(m_serverSequence);
-			it->msLastSent = getMSTime32();
+			it->msLastSent = getMSTime();
 			currBlock.subPackets.push_back(packetStaticBuf);
 
 			++it;
@@ -663,7 +668,7 @@ void GameClient::FlushQueue( bool alsoResend )
 	//03 next
 	for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();)
 	{
-		if ((getMSTime32() - it->msLastSent < 500 || alsoResend == false) && it->packetsItsIn.size() > 0) //500ms resend
+		if ((getMSTime() - it->msLastSent < 500 || alsoResend == false) && it->packetsItsIn.size() > 0) //500ms resend
 		{
 			++it;
 			continue;
@@ -689,7 +694,7 @@ void GameClient::FlushQueue( bool alsoResend )
 			}
 		}
 		it->packetsItsIn.push_back(m_serverSequence);
-		it->msLastSent=getMSTime32();
+		it->msLastSent=getMSTime();
 		SendSequencedPacket(it->stateData);
 		if (it->noResend==true)
 			it = m_queuedStates.erase(it);
@@ -698,10 +703,16 @@ void GameClient::FlushQueue( bool alsoResend )
 	}
 
 	//we ran out of packets but there are still more acks to be sent ?
-	while(m_packetsToAck.size() > 0)
+	size_t numUnacked=0;
+	typedef std::pair<uint16,bool> ackedType;
+	foreach(ackedType acked,m_recvdPacketSeqs)
 	{
-		SendSequencedPacket(make_shared<EmptyMsg>());
+		if (!acked.second)
+			numUnacked++;
 	}
+
+	for(size_t i=0;i<numUnacked;i++)
+		SendSequencedPacket(make_shared<EmptyMsg>());
 }
 
 

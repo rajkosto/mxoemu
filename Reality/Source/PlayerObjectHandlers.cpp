@@ -635,12 +635,12 @@ void PlayerObject::RPC_HandleStaticObjInteraction( ByteBuffer &srcCmd )
 	{
 		LocationVector loc = this->getPosition();
 
-		scoped_ptr<QueryResult> resultDoorExists(sDatabase.Query(format("Select * from Doors Where `DistrictId` = '%1%' And `DoorId` = '%2%' Limit 1") % (int)getDistrict() % staticObjId));
+		scoped_ptr<QueryResult> resultDoorExists(sDatabase.Query(format("SELECT * FROM `doors` WHERE `DistrictId`='%1%' And `DoorId`='%2%' Limit 1") % (int)getDistrict() % staticObjId));
 		if (resultDoorExists == NULL)
 		{
 			m_parent.QueueCommand(make_shared<SystemChatMsg>("{c:FFFF00}You are using a door not in the database yet, lets add it{/c}"));	
 			format sqlDoorInsert = 
-				format("INSERT INTO `Doors` SET  `DistrictId` = '%1%', `DoorId` = '%2%', X = '%3%', Y = '%4%', Z = '%5%', ROT = '%6%', FirstUser = '%7%'")
+				format("INSERT INTO `doors` SET  `DistrictId` = '%1%', `DoorId` = '%2%', X = '%3%', Y = '%4%', Z = '%5%', ROT = '%6%', FirstUser = '%7%'")
 				% (int)m_district
 				% staticObjId
 				% loc.x	% loc.y	% loc.z	% loc.rot
@@ -1002,8 +1002,16 @@ void PlayerObject::RPC_HandleJackoutRequest( ByteBuffer &srcCmd )
 	m_parent.QueueState(make_shared<JackoutEffectMsg>(m_goId));
 	//chat msg
 	m_parent.QueueCommand(make_shared<HexGenericMsg>("2E0700000000000000000000002300002E00000000000000000000000000000000000000"));
-	m_jackoutRequested = true;
-	m_jackoutRequestedTime = getTime();
+	this->addEvent(EVENT_JACKOUT,boost::bind(&PlayerObject::jackoutEvent,this),10.0f); //schedule jackout in 10 seconds
+}
+
+
+void PlayerObject::jackoutEvent()
+{
+	m_parent.QueueCommand(make_shared<HexGenericMsg>("80fd000000000000"));
+	m_parent.FlushQueue();
+	//hack, should see why client doesnt send jackout complete msg, instead of invalidating here
+	m_parent.Invalidate();
 }
 
 void PlayerObject::RPC_HandleJackoutFinished( ByteBuffer &srcCmd )

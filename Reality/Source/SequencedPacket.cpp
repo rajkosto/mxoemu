@@ -58,13 +58,13 @@ SequencedPacket::SequencedPacket( const string &withHeader )
 	Construct(simulation);
 }
 
-ByteBuffer SequencedPacket::getDataWithHeader()
+ByteBuffer SequencedPacket::getDataWithHeader() const
 {
 	uint32 packedSeqs = swap32((ackBits << 24) | ((remoteSeq & 0xFFF) << 12) | (localSeq & 0xFFF)); // FL CC CS SS
 
 	ByteBuffer returnMe;
 	returnMe << packedSeqs;
-	returnMe.append(this->contents(),this->size());
+	returnMe.append(this->contents(),this->count());
 
 	return returnMe;
 }

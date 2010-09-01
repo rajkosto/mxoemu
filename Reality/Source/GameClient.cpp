@@ -431,6 +431,8 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq, uint8 ackBits )
 {
 	vector<uint16> ackSequences;
 	ackSequences.reserve(8);
+	vector<uint16> nakSequences;
+	nakSequences.reserve(8);
 	//process bits to see which sequences to ack
 	{
 		for(int i=0;i<MAX_ACKED_PACKETS;i++)
@@ -438,6 +440,8 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq, uint8 ackBits )
 			uint8 mask = 1 << i;
 			if (ackBits & mask)
 				ackSequences.push_back(serverSeq-i);
+			else
+				nakSequences.push_back(serverSeq-i);
 		}
 	}
 /*	printf("serverSeq %d ackBits %02x [",uint32(serverSeq),uint32(ackBits));
@@ -446,6 +450,20 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq, uint8 ackBits )
 		printf("%d ",seq);
 	}
 	printf("]\n");*/
+
+	//sleezily resend with same sequences to mute effects of drops
+	foreach( uint16 ack, nakSequences )
+	{
+		for(savedPacketsType::const_iterator it=m_savedPackets.begin();it!=m_savedPackets.end();++it)
+		{
+			if (it->getLocalSeq() == ack)
+			{
+				m_rawPacketsResent++;
+				SendEncrypted(*it);
+				break;
+			}
+		}
+	}
 
 	for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();)
 	{
@@ -638,6 +656,8 @@ void GameClient::ResetRCC()
 	m_morePacketRequests = 0;
 	m_rawPacketsResent = 0;
 
+	while (!m_savedPackets.empty()) m_savedPackets.pop_back();
+	
 	m_recvdPacketSeqs.clear();
 	m_clientCommandsReceived.clear();
 
@@ -686,6 +706,11 @@ uint16 GameClient::SendSequencedPacket( msgBaseClassPtr jumboPacket )
 	SequencedPacket prepended(serverSeq,clientSeq,ackBits,outputData);
 	SendEncrypted(prepended);
 	increaseServerSequence();
+
+	m_savedPackets.push_back(prepended);
+	while (m_savedPackets.size() > MAX_SAVED_PACKETS)
+		m_savedPackets.pop_front();
+
 	return serverSeq;
 }
 

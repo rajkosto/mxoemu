@@ -105,6 +105,10 @@ private:
 	static const uint MAXIMUM_RESEND_TIME = 1000;
 	static const uint INITIAL_PING = 200;
 	static const uint MAX_ACKED_PACKETS = 7;
+	static const uint MAX_SAVED_PACKETS = 32;
+
+	typedef deque<SequencedPacket> savedPacketsType;
+	savedPacketsType m_savedPackets;
 
 	deque<uint32> m_pingHistory;
 	float m_currentPing;
@@ -136,7 +140,7 @@ private:
 
 		m_currentPing /= m_pingHistory.size();
 	}
-private:
+
 	struct sentMsgBlock
 	{
 		sentMsgBlock(MsgBlock theCmds, const queue<packetAckFunc>& theCallbacks)

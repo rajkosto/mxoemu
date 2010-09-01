@@ -84,26 +84,26 @@ public:
 		this->append((const byte*)headerless.contents(),headerless.size());
 	}
 
-	unsigned short getRemoteSeq()
+	unsigned short getRemoteSeq() const
 	{
 		return remoteSeq;
 	}
-	unsigned short getLocalSeq()
+	unsigned short getLocalSeq() const
 	{
 		return localSeq;
 	}
-	byte getAckBits()
+	byte getAckBits() const
 	{
 		return ackBits;
 	}
-	ByteBuffer getData()
+	ByteBuffer getData() const
 	{
 		ByteBuffer zeReturn;
-		zeReturn.append((const byte*)this->contents(),this->size());
+		zeReturn.append((const byte*)this->contents(),this->count());
 		zeReturn.rpos(0);
 		return zeReturn;
 	}
-	ByteBuffer getDataWithHeader();
+	ByteBuffer getDataWithHeader() const;
 private:
 	void Construct(ByteBuffer withHeader);
 	uint16 localSeq;

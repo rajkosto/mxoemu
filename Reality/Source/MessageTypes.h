@@ -559,10 +559,10 @@ struct MsgBlock
 			destination.append(it->contents(),it->size());
 		}
 	}
-	uint32 GetTotalSize()
+	uint32 GetTotalSize() const
 	{
 		uint32 startSize = sizeof(uint16)+sizeof(uint8);
-		for (list<ByteBuffer>::iterator it=subPackets.begin();it!=subPackets.end();++it)
+		for (list<ByteBuffer>::const_iterator it=subPackets.begin();it!=subPackets.end();++it)
 		{
 			startSize += it->size();
 		}		
@@ -646,10 +646,10 @@ public:
 		ToBuffer(m_buf);
 		return m_buf;
 	}
-	uint32 GetTotalSize()
+	uint32 GetTotalSize() const
 	{
 		uint32 startSize = sizeof(uint8)*2;
-		for (list<MsgBlock>::iterator it=msgBlocks.begin();it!=msgBlocks.end();++it)
+		for (list<MsgBlock>::const_iterator it=msgBlocks.begin();it!=msgBlocks.end();++it)
 		{
 			startSize += it->GetTotalSize();
 		}		

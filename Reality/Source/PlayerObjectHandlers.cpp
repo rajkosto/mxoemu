@@ -222,6 +222,19 @@ void PlayerObject::ParseAdminCommand( string theCmd )
 
 
 	}
+	else if (iequals(command, "simTimeSet") || iequals(command, "simTimeInc"))
+	{
+		float newSimTime;
+		cmdStream >> newSimTime;
+
+		if (iequals(command,"simTimeSet"))
+			sGame.SetSimTime(newSimTime);
+		else
+			sGame.IncreaseSimTime(newSimTime);
+
+		sGame.AnnounceCommand(NULL,make_shared<BroadcastMsg>((format("Simtime set to %1%")%sGame.GetSimTime()).str()));
+		return;
+	}
 	else if (iequals(command, "setHL"))
 	{
 		string hardlineId;
@@ -311,6 +324,10 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 			m_parent.QueueState(thePacket,true);
 		else
 			m_parent.QueueCommand(thePacket);
+	}
+	else if (iequals(command,"netstats"))
+	{
+		m_parent.QueueCommand(make_shared<SystemChatMsg>(m_parent.GetNetStats()));
 	}
 	else if (iequals(command, "gotoPos"))
 	{

@@ -1062,7 +1062,7 @@ LoadWorldCmd::LoadWorldCmd( mxoLocation theLoc,string theSky )
 	m_buf << uint16(swap16(0x060E))
 		<< uint8(0)
 		<< uint32(theLoc)
-		<< float(getFloatTime())
+		<< float(sGame.GetSimTime())
 		<< uint8(1);
 	string metrFile = locs[theLoc];
 	size_t putSkyStrLenOffsetHere = m_buf.wpos();

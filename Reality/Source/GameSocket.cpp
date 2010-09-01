@@ -150,6 +150,19 @@ GameClient * GameSocket::GetClientWithSessionId( uint32 sessionId )
 	return NULL;
 }
 
+vector<GameClient*> GameSocket::GetClientsWithCharacterId( uint64 charId )
+{
+	vector<GameClient*> returns;
+	for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();++it)
+	{
+		if (it->second->GetCharacterId() == charId)
+		{
+			returns.push_back(it->second);
+		}
+	}
+	return returns;
+}
+
 void GameSocket::CheckAndResend()
 {
 	for (GClientList::iterator it=m_clients.begin();it!=m_clients.end();++it)

@@ -53,9 +53,23 @@ public:
 	void Loop();
 	ObjectMgr &getObjMgr() { return m_objMgr; }
 	class GameClient *GetClientWithSessionId(uint32 sessionId);
+	vector<class GameClient*> GetClientsWithCharacterId(uint64 charId);
 	void Broadcast(const ByteBuffer &message);
 	void AnnounceStateUpdate(class GameClient* clFrom,msgBaseClassPtr theMsg, bool immediateOnly=false);
 	void AnnounceCommand(class GameClient* clFrom,msgBaseClassPtr theCmd);
+	float GetSimTime()
+	{
+		return getFloatTime()-m_simtimeStart+m_simtimeOffset;
+	}
+	void IncreaseSimTime(float howMuch)
+	{
+		m_simtimeOffset+=howMuch;
+	}
+	void SetSimTime(float toWhat)
+	{
+		m_simtimeStart=getFloatTime();
+		m_simtimeOffset=fabs(toWhat);
+	}
 	string GetName() const;
 	string GetChatPrefix() const;
 private:	
@@ -64,6 +78,9 @@ private:
 	shared_ptr<class GameSocket> m_mainSocket;
 	uint32 m_serverStartMS;
 	bool m_serverUp;
+
+	float m_simtimeStart;
+	float m_simtimeOffset;
 };
 
 

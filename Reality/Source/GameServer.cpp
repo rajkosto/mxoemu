@@ -38,6 +38,9 @@ initialiseSingleton( GameServer );
 
 bool GameServer::Start()
 {
+	m_simtimeStart = getFloatTime();
+	m_simtimeOffset = 0;
+
 	string Interface = sConfig.GetStringDefault("GameServer.IP", "0.0.0.0");
 	int Port = sConfig.GetIntDefault("GameServer.Port", 10000);
 	INFO_LOG(format("Starting Game server on port %1%") % Port);
@@ -84,9 +87,14 @@ void GameServer::Loop(void)
 	m_udpHandler.Select(0,4000); //4ms
 }
 
-GameClient * GameServer::GetClientWithSessionId( uint32 sessionId )
+GameClient* GameServer::GetClientWithSessionId( uint32 sessionId )
 {
 	return m_mainSocket->GetClientWithSessionId(sessionId);
+}
+
+vector<GameClient*> GameServer::GetClientsWithCharacterId( uint64 charId )
+{
+	return m_mainSocket->GetClientsWithCharacterId(charId);
 }
 
 void GameServer::Broadcast( const ByteBuffer &message )

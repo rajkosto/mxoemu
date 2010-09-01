@@ -54,6 +54,10 @@ public:
 		else
 			return 0;
 	}
+	uint64 GetCharacterId() 
+	{
+		return m_characterUID;
+	}
 	uint32 GetWorldCharId() { return m_charWorldId; }
 
 	void HandlePacket(const char *pData, size_t nLength);
@@ -84,28 +88,85 @@ public:
 	}
 	void FlushQueue(bool alsoResend=false);
 	void CheckAndResend();
+	string GetNetStats();
 private:
+	//RCC Start
+	void ResetRCC();
 	uint16 SendSequencedPacket(msgBaseClassPtr jumboPacket);
 	SequencedPacket Decrypt(const char *pData, size_t nLength);
 	bool PacketReceived(uint16 clientSeq);
 	uint32 AcknowledgePacket(uint16 serverSeq, uint8 ackBits);
 
+	// RCC Constants
+	enum {
+		NUM_SAVED_PINGS = 16,
+		PING_MULTIPLIER_RELIABLE = 1,
+		PING_MULTIPLIER_UNRELIABLE = 2,
+		MINIMUM_RESEND_TIME = 30,
+		MAXIMUM_RESEND_TIME = 1000,
+		INITIAL_PING = 200,
+		MAX_ACKED_PACKETS = 7,
+	};
+
+	deque<uint32> m_pingHistory;
+	float m_currentPing;
+
+	//netstat statistics
+	uint32 m_guarSent;
+	uint32 m_guarResent;
+	uint32 m_guarsInvalid;
+	uint32 m_guarsSkipped;
+	uint32 m_unguarSent;
+	uint32 m_unguarResent;
+	uint32 m_unguarsInvalid;
+	uint32 m_duplicateCmdsReceived;
+	uint32 m_unguarRejected;
+	uint32 m_morePacketRequests;
+	uint32 m_rawPacketsResent;
+
+	void AddtoPingHistory(uint32 msTime)
+	{
+		m_pingHistory.push_back(msTime);
+		while (m_pingHistory.size()>NUM_SAVED_PINGS)
+			m_pingHistory.pop_front();
+
+		m_currentPing = 0;
+		foreach(uint32 thePing, m_pingHistory)
+		{
+			m_currentPing += thePing;
+		}
+
+		m_currentPing /= m_pingHistory.size();
+	}
+private:
 	struct sentMsgBlock
 	{
 		sentMsgBlock(MsgBlock theCmds, const queue<packetAckFunc>& theCallbacks)
 		{
 			commands=theCmds;
 			callBacks=theCallbacks;
-			msLastSent=0;
 			invalidated=false;
 		}
 		~sentMsgBlock()
 		{
 		}
 
+		uint32 getLastTimeSent()
+		{
+			if (packetsItsIn.size() < 1)
+				return 0;
+
+			uint32 highestMsSent=0;
+			for(map<uint16,uint32>::iterator it=packetsItsIn.begin();it!=packetsItsIn.end();++it)
+			{
+				if (it->second > highestMsSent)
+					highestMsSent=it->second;
+			}
+			return highestMsSent;
+		}
+
 		MsgBlock commands;
-		vector<uint16> packetsItsIn;
-		uint32 msLastSent;
+		map<uint16,uint32> packetsItsIn;
 		queue<packetAckFunc> callBacks;
 		bool invalidated;
 	};
@@ -142,10 +203,24 @@ private:
 			callBack=callFunc;
 			invalidated=false;
 		}
+
+		uint32 getLastTimeSent()
+		{
+			if (packetsItsIn.size() < 1)
+				return 0;
+
+			uint32 highestMsSent=0;
+			for(map<uint16,uint32>::iterator it=packetsItsIn.begin();it!=packetsItsIn.end();++it)
+			{
+				if (it->second > highestMsSent)
+					highestMsSent=it->second;
+			}
+			return highestMsSent;
+		}
+
 		bool noResend;
 		msgBaseClassPtr stateData;
-		vector<uint16> packetsItsIn;
-		uint32 msLastSent;
+		map<uint16,uint32> packetsItsIn;
 		packetAckFunc callBack;
 		bool invalidated;
 	};
@@ -153,24 +228,6 @@ private:
 	stateQueueType m_queuedStates;
 
 	void SendEncrypted(SequencedPacket withSequences);
-
-	bool m_encryptionInitialized;
-	uint64 m_characterUID;
-	uint32 m_charWorldId;
-	uint32 m_sessionId;
-
-	float m_lastSimTime;
-
-	// client states
-	bool m_validClient;
-
-	// Master Sock handle, client's address structure, last received packet
-	class GameSocket *m_sock;
-	Ipv4Address m_address;
-	uint32 m_lastActivity;
-	uint32 m_lastPacketReceivedMS;
-	bool m_calculatedInitialLatency;
-	uint32 m_lastServerMS;
 
 	//sequences of packets received
 	typedef unordered_map<uint16,bool> recvdPacketSeqsType;
@@ -195,14 +252,14 @@ private:
 	uint8 GetAckBits(uint16 clientSeq)
 	{
 		uint8 ackBits=0;
-		for(int i=0;i<7;i++)
+		for(int i=0;i<MAX_ACKED_PACKETS;i++)
 		{
 			if(m_recvdPacketSeqs.count(clientSeq-i) > 0)
 				ackBits |= (1 << i);
 		}
 		/*
 		printf("ACK BITS: %02x for sequence %d [",uint32(ackBits),clientSeq);
-		for(int i=0;i<7;i++)
+		for(int i=0;i<MAX_ACKED_PACKETS;i++)
 		{
 			if (m_recvdPacketSeqs.count(clientSeq-i) > 0)
 				printf("%d=%d ",clientSeq-i,m_recvdPacketSeqs[clientSeq-i]);
@@ -210,11 +267,10 @@ private:
 		printf("]\n");*/
 		return ackBits;
 	}
-	typedef map<uint16,ByteBuffer> clientCommandsType;
+	typedef vector<uint16> clientCommandsType;
 	clientCommandsType m_clientCommandsReceived;
 
 	// Sequences
-	uint8 m_clientFlags;
 	uint16 m_serverSequence;
 	inline void increaseServerSequence()
 	{
@@ -230,10 +286,27 @@ private:
 		return	( (biggerSequence > smallerSequence) && (biggerSequence-smallerSequence <= int32(max_sequence/2)) )
 				|| ( (smallerSequence > biggerSequence) && (smallerSequence-biggerSequence > int32(max_sequence/2)) );
 	}
+
+	float m_lastSimTimeUpdate;
+	//RCC end
+
+	bool m_encryptionInitialized;
+	uint64 m_characterUID;
+	uint32 m_charWorldId;
+	uint32 m_sessionId;
+
+	// client states
+	bool m_validClient;
+
+	// Master Sock handle, client's address structure, last received packet
+	class GameSocket *m_sock;
+	Ipv4Address m_address;
+	uint32 m_lastActivity;
+	uint32 m_lastPacketReceivedMS;
+	uint32 m_lastServerMS;
+
 	uint32 m_playerGoId;
-
 	class MarginSocket *m_marginConn;
-
 	TwofishCryptEngine m_tfEngine;
 };
 

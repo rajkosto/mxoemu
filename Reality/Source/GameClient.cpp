@@ -41,14 +41,13 @@
 
 GameClient::GameClient(sockaddr_in inc_addr, GameSocket *sock):m_address(inc_addr),m_sock(sock)
 {
-	m_serverSequence = 1;
-	m_serverCommandsSent = 0;
-	m_lastClientSequence = 0;
 	m_validClient = true;
 	m_encryptionInitialized = false;
-	m_lastSimTime = -1;
+
+	ResetRCC();
+
+	m_characterUID = 0;
 	m_playerGoId=0;
-	m_calculatedInitialLatency = false;
 }
 
 GameClient::~GameClient()
@@ -198,16 +197,11 @@ void GameClient::HandlePacket( const char *pData, size_t nLength )
 			SequencedPacket packetData=Decrypt(&pData[1],nLength-1);
 			ByteBuffer dataToParse;
 
-			if (m_calculatedInitialLatency == false)
-			{
-				uint32 clientLatency = getMSTime()-m_lastServerMS;
-				DEBUG_LOG(format("CLIENT LATENCY: %1%")%clientLatency);
-				m_calculatedInitialLatency=true;
-			}
-
 			uint32 pktsAcked = AcknowledgePacket(packetData.getRemoteSeq(), packetData.getAckBits());
 			if (packetData.getAckBits() & 0x80)
 			{
+				m_morePacketRequests++;
+
 				DEBUG_LOG(format("(%s) Set first bit of ackBits (%02x)! SSeq: %d CSeq: %d Packet %s")
 					%Address()
 					%uint32(packetData.getAckBits())
@@ -358,28 +352,15 @@ void GameClient::HandleOrdered( ByteBuffer &orderedData )
 		uint16 currCmdSequence = it1->sequenceId;
 		for (list<ByteBuffer>::iterator it2=it1->subPackets.begin();it2!=it1->subPackets.end();++it2)
 		{
-			if (m_clientCommandsReceived.find(currCmdSequence) != m_clientCommandsReceived.end())
+			if (std::count(m_clientCommandsReceived.begin(),m_clientCommandsReceived.end(),currCmdSequence) > 0)
 			{
-				ByteBuffer &existingPacket = m_clientCommandsReceived[currCmdSequence];
-				if (it2->size() != existingPacket.size() || memcmp(it2->contents(),existingPacket.contents(),existingPacket.size()) != 0)
-				{
-					DEBUG_LOG(format("(%1%) Command %2% already exists, but with different contents, reprocessing.") % Address() % currCmdSequence);
-					m_clientCommandsReceived[currCmdSequence] = *it2;
-
-					if (m_playerGoId != 0)
-					{
-						sObjMgr.getGOPtr(m_playerGoId)->HandleCommand(*it2);
-					}
-				}
-				else
-				{
-					DEBUG_LOG(format("(%1%) Command %2% already exists, with identical contents, ignoring.") % Address() % currCmdSequence);
-				}
+				DEBUG_LOG(format("(%1%) Command %2% already exists, ignoring.") % Address() % currCmdSequence);
+				m_duplicateCmdsReceived++;
 			}
 			else
 			{
 //				DEBUG_LOG(format("(%1%) Parsing command %2%.") % Address() % currCmdSequence);
-				m_clientCommandsReceived[currCmdSequence] = *it2;
+				m_clientCommandsReceived.push_back(currCmdSequence);
 
 				if (m_playerGoId != 0)
 				{
@@ -452,7 +433,7 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq, uint8 ackBits )
 	ackSequences.reserve(8);
 	//process bits to see which sequences to ack
 	{
-		for(int i=0;i<7;i++)
+		for(int i=0;i<MAX_ACKED_PACKETS;i++)
 		{
 			uint8 mask = 1 << i;
 			if (ackBits & mask)
@@ -477,8 +458,10 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq, uint8 ackBits )
 		bool remove=false;
 		foreach(uint16 ack, ackSequences)
 		{
-			if (find(it->packetsItsIn.begin(),it->packetsItsIn.end(),ack)!=it->packetsItsIn.end())
+			if (it->packetsItsIn.count(ack) > 0)
 			{
+				//update latency
+				AddtoPingHistory(getMSTime() - it->packetsItsIn[ack]);
 				remove=true;
 				break;
 			}
@@ -508,8 +491,10 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq, uint8 ackBits )
 		bool remove=false;
 		foreach(uint16 ack, ackSequences)
 		{
-			if (find(it->packetsItsIn.begin(),it->packetsItsIn.end(),ack)!=it->packetsItsIn.end())
+			if (it->packetsItsIn.count(ack) > 0)
 			{
+				//update latency
+				AddtoPingHistory(getMSTime() - it->packetsItsIn[ack]);
 				remove=true;
 				break;
 			}
@@ -562,6 +547,103 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq, uint8 ackBits )
 	return eraseCounter;
 }
 
+
+
+string GameClient::GetNetStats()
+{
+	format summary = format("Latency: %1%ms GuarQ: %2% UnGuarQ: %3%\n");
+	summary % int(m_currentPing) % uint32(m_sentCommands.size()) % uint32(m_queuedStates.size());
+	stringstream details;
+	if (m_sentCommands.size())
+	{
+		details << "Guaranteed:\n";
+		int cnt=1;
+		foreach(const sentMsgBlock& sentCmd, m_sentCommands)
+		{
+			const MsgBlock& currBlock = sentCmd.commands;
+			details << cnt << ". " << currBlock.sequenceId << "-" << currBlock.sequenceId+currBlock.subPackets.size()
+				<< "(" << currBlock.GetTotalSize() << "B): ";
+			for(map<uint16,uint32>::const_iterator it=sentCmd.packetsItsIn.begin();it!=sentCmd.packetsItsIn.end();++it)
+			{
+				details << it->first << "(" << getMSTime()-it->second << "ms) ";
+			}
+			details << "\n";
+			cnt++;
+		}
+	}
+	if (m_queuedStates.size())
+	{
+		details << "Unguaranteed:\n";
+		int cnt=1;
+		foreach(const queuedState& sentState, m_queuedStates)
+		{
+			ByteBuffer msgBuf;
+			try
+			{
+				msgBuf = sentState.stateData->toBuf();
+			}
+			catch(MsgBaseClass::PacketNoLongerValid)
+			{
+				continue;
+			}
+
+			uint16 viewId=0;
+			if (msgBuf.read<uint8>() == 3)
+			{
+				msgBuf >> viewId;
+			}
+
+			details << cnt << ". View: " << viewId << "(" << msgBuf.count() << "B): ";
+			for(map<uint16,uint32>::const_iterator it=sentState.packetsItsIn.begin();it!=sentState.packetsItsIn.end();++it)
+			{
+				details << it->first << "(" << getMSTime()-it->second << "ms) ";
+			}
+			details << "\n";
+			cnt++;
+		}
+	}
+
+	stringstream stats;
+	stats << "guarBlkSent: " << m_guarSent << " guarBlkResent: " << m_guarResent << " guarsInvalid: " << m_guarsInvalid << " guarsSkipped: " << m_guarsSkipped << "\n";
+	stats << "unGuarSent: " << m_unguarSent << " unGuarResent: " << m_unguarResent << " unGuarsInvalid: " << m_unguarsInvalid << " unGuarsRejected: " << m_unguarRejected << "\n";
+	stats << "duplicateCmdsRecvd: " << m_duplicateCmdsReceived << " additionalPcktRqsts: " << m_morePacketRequests << " rawPcktsResent: " << m_rawPacketsResent;
+
+	return	summary.str()+details.str()+stats.str();
+}
+
+void GameClient::ResetRCC()
+{
+	m_serverSequence = 1;
+	m_serverCommandsSent = 0;
+	m_lastClientSequence = 0;
+
+	m_currentPing = INITIAL_PING;
+	m_pingHistory.clear();
+
+	m_sentCommands.clear();
+	while (!m_queuedCommands.empty()) m_queuedCommands.pop_back();
+
+	m_guarSent = 0;
+	m_guarResent = 0;
+	m_guarsInvalid = 0;
+	m_guarsSkipped = 0;
+
+	while (!m_queuedStates.empty()) m_queuedStates.pop_back();
+
+	m_unguarSent = 0;
+	m_unguarResent = 0;
+	m_unguarsInvalid = 0;
+	m_duplicateCmdsReceived = 0;
+	m_unguarRejected = 0;
+	m_morePacketRequests = 0;
+	m_rawPacketsResent = 0;
+
+	m_recvdPacketSeqs.clear();
+	m_clientCommandsReceived.clear();
+
+	m_lastSimTimeUpdate = -1;
+}
+
 uint16 GameClient::SendSequencedPacket( msgBaseClassPtr jumboPacket )
 {
 	//serialize data from dynamic packet to a static one
@@ -584,16 +666,16 @@ uint16 GameClient::SendSequencedPacket( msgBaseClassPtr jumboPacket )
 
 	uint8 serverFlags = SERVERFLAGS_NORMAL;
 
-	if ( m_lastSimTime <= 0 || getFloatTime() - m_lastSimTime >= 5.0f) //send simtime every 5 seconds
+	if ( m_lastSimTimeUpdate <= 0 || getFloatTime()-m_lastSimTimeUpdate >= 5.0f) //send simtime every 5 seconds
 	{
-		m_lastSimTime = getFloatTime();
+		m_lastSimTimeUpdate = getFloatTime();
 		serverFlags |= SERVERFLAGS_SIMTIME;
 	}
 
 	ByteBuffer outputData;
 	outputData << uint8(serverFlags);
 	if (serverFlags &= SERVERFLAGS_SIMTIME)
-		outputData << float(m_lastSimTime);
+		outputData << float(sGame.GetSimTime());
 	if (serializedData.size() > 0)
 		outputData.append(serializedData.contents(),serializedData.size());
 
@@ -611,13 +693,18 @@ void GameClient::FlushQueue( bool alsoResend )
 {
 	//reliable commands first
 	{
+		uint32 reliableResendMS = min(max((uint32)m_currentPing, MINIMUM_RESEND_TIME)*PING_MULTIPLIER_RELIABLE, MAXIMUM_RESEND_TIME);
+
 		shared_ptr<OrderedPacket> jumboPacket(new OrderedPacket());
 		vector<sentMsgBlocksType::iterator> msgBlocksInJumbo;
-		if (alsoResend)
+		if (alsoResend || !m_queuedCommands.empty()) //always resend previous guaranteed msgs before sending new ones
 		{
 			for(sentMsgBlocksType::iterator it=m_sentCommands.begin();it!=m_sentCommands.end();++it)
 			{
-				if (it->invalidated || getMSTime() - it->msLastSent < 200) //200ms reliable resend
+				if (it->invalidated)
+					continue;
+
+				if( (getMSTime() - it->getLastTimeSent() < reliableResendMS) && m_queuedCommands.empty()) //don't resend like crazy
 					continue;
 
 				//if this msgblock wont fit, flush the earlier ones
@@ -626,8 +713,7 @@ void GameClient::FlushQueue( bool alsoResend )
 					uint16 jumboServerSeq = SendSequencedPacket(jumboPacket);
 					foreach(sentMsgBlocksType::iterator msgBlkIt,msgBlocksInJumbo)
 					{
-						msgBlkIt->packetsItsIn.push_back(jumboServerSeq);
-						msgBlkIt->msLastSent = getMSTime();
+						msgBlkIt->packetsItsIn[jumboServerSeq]=getMSTime();
 					}
 					jumboPacket.reset(new OrderedPacket());
 					msgBlocksInJumbo.clear();
@@ -635,6 +721,8 @@ void GameClient::FlushQueue( bool alsoResend )
 
 				jumboPacket->msgBlocks.push_back(it->commands);
 				msgBlocksInJumbo.push_back(it);
+
+				m_guarResent++;
 			}
 		}
 		MsgBlock currBlock;
@@ -649,6 +737,7 @@ void GameClient::FlushQueue( bool alsoResend )
 			}
 			catch (MsgBaseClass::PacketNoLongerValid)
 			{
+				m_guarsInvalid++;
 				WARNING_LOG(format("(%1%) Reliable msg %2% no longer valid, this shouldn't happen!") % Address() % currMsg.sequenceId);
 
 				m_queuedCommands.pop_front();
@@ -675,13 +764,14 @@ void GameClient::FlushQueue( bool alsoResend )
 					//empty msgblock
 					currBlock = MsgBlock();
 					while(!currBlockCallbacks.empty()) currBlockCallbacks.pop();
+
+					m_guarSent++;
 				}
 				//send jumbo and update all related msgblocks
 				uint16 jumboServerSeq = SendSequencedPacket(jumboPacket);
 				foreach(sentMsgBlocksType::iterator msgBlkIt,msgBlocksInJumbo)
 				{
-					msgBlkIt->packetsItsIn.push_back(jumboServerSeq);
-					msgBlkIt->msLastSent = getMSTime();
+					msgBlkIt->packetsItsIn[jumboServerSeq] = getMSTime();
 				}
 
 				//empty jumbo
@@ -696,6 +786,7 @@ void GameClient::FlushQueue( bool alsoResend )
 			}
 			else if (currBlock.sequenceId + currBlock.subPackets.size() != currMsg.sequenceId) //msg ids not continuous ?!
 			{
+				m_guarsSkipped++;
 				WARNING_LOG(format("(%1%) While adding msg %2% skipped some ids (should be %3%), might cause desync !") % Address() % currMsg.sequenceId % (currBlock.sequenceId+(uint32)currBlock.subPackets.size()) );
 
 				if (currBlock.subPackets.size() > 0)
@@ -711,6 +802,8 @@ void GameClient::FlushQueue( bool alsoResend )
 				//empty msgblock
 				currBlock = MsgBlock();
 				while(!currBlockCallbacks.empty()) currBlockCallbacks.pop();
+
+				m_guarSent++;
 
 				//go back to top of loop to check size again
 				continue;
@@ -734,6 +827,8 @@ void GameClient::FlushQueue( bool alsoResend )
 			//empty msgblock
 			currBlock = MsgBlock();
 			while(!currBlockCallbacks.empty()) currBlockCallbacks.pop();
+
+			m_guarSent++;
 		}
 		if (jumboPacket->msgBlocks.size() > 0)
 		{
@@ -741,8 +836,7 @@ void GameClient::FlushQueue( bool alsoResend )
 			uint16 jumboServerSeq = SendSequencedPacket(jumboPacket);
 			foreach(sentMsgBlocksType::iterator msgBlkIt,msgBlocksInJumbo)
 			{
-				msgBlkIt->packetsItsIn.push_back(jumboServerSeq);
-				msgBlkIt->msLastSent = getMSTime();
+				msgBlkIt->packetsItsIn[jumboServerSeq] = getMSTime();
 			}
 
 			//empty jumbo
@@ -754,9 +848,10 @@ void GameClient::FlushQueue( bool alsoResend )
 	}
 
 	//03 next
+	uint32 unreliableResendMS = min(max((uint32)m_currentPing, MINIMUM_RESEND_TIME)*PING_MULTIPLIER_UNRELIABLE, MAXIMUM_RESEND_TIME);
 	for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();)
 	{
-		if ((getMSTime() - it->msLastSent < 500 || alsoResend == false) && it->packetsItsIn.size() > 0) //500ms resend
+		if ((getMSTime() - it->getLastTimeSent() < 500 || alsoResend == false) && it->packetsItsIn.size() > 0) //500ms resend
 		{
 			++it;
 			continue;
@@ -770,20 +865,32 @@ void GameClient::FlushQueue( bool alsoResend )
 			}
 			catch (MsgBaseClass::PacketNoLongerValid)
 			{
+				m_unguarsInvalid++;
+
 				it=m_queuedStates.erase(it);
 				continue;
 			}
 
-			if (it->packetsItsIn.size() > 10)
+			if (it->packetsItsIn.size() > 20)
 			{
-				DEBUG_LOG(format("(%1%) Doesn't want packet %2% of size %3%") % Address() % it->packetsItsIn.front() % serializedData.size());
+				m_unguarRejected++;
+				DEBUG_LOG(format("(%1%) Doesn't want packet %2% of size %3%") % Address() % it->packetsItsIn.begin()->first % serializedData.size());
 				it=m_queuedStates.erase(it);
 				continue;
 			}
 		}
-		it->packetsItsIn.push_back(m_serverSequence);
-		it->msLastSent=getMSTime();
-		SendSequencedPacket(it->stateData);
+
+		if (it->packetsItsIn.size() > 0)
+		{
+			m_unguarResent++;
+		}
+		else
+		{
+			m_unguarSent++;
+		}
+
+		uint16 serverSeq = SendSequencedPacket(it->stateData);
+		it->packetsItsIn[serverSeq] = getMSTime();
 		if (it->noResend==true)
 			it = m_queuedStates.erase(it);
 		else

@@ -49,7 +49,7 @@ MarginSocket::MarginSocket(ISocketHandler& h) : TCPVarLenSocket(h)
 	worldCharId = 0;
 	numCharacterReplies = 0;
 	readyForUdp = false;
-	this->SetWillBeHalfClosed(true);
+//	this->SetWillBeHalfClosed(true);
 
 	INFO_LOG("Margin socket constructed");
 }
@@ -61,8 +61,9 @@ MarginSocket::~MarginSocket()
 
 void MarginSocket::OnDisconnect( short info, int code )
 {
-	if (GameClient *udpClient = sGame.GetClientWithSessionId(sessionId))
+/*	if (GameClient *udpClient = sGame.GetClientWithSessionId(sessionId))
 		udpClient->Invalidate();
+*/
 
 	INFO_LOG(format("Margin socket with %1% disconnected") % GetRemoteSocketAddress()->Convert(true));
 }
@@ -431,15 +432,8 @@ void MarginSocket::ProcessData( const byte *buf,size_t len )
 			//Don't allow multiple users with the same character id
 			if (sConfig.GetBoolDefault("MarginServer.AllowMultipleSessionsPerCharacter", false)==false)
 			{
-				vector<MarginSocket*> allUsers = sMargin.GetSocketsForCharacterUID(charId);
-				int count=0;
-				foreach(MarginSocket* user,allUsers)
-				{
-					if (user!=this)
-						count++;
-				}
-
-				if(count) //someone else already using account
+				vector<class GameClient*> allUsers = sGame.GetClientsWithCharacterId(charId);
+				if(allUsers.size() > 0) //someone else already using account
 				{
 					ERROR_LOG(format("MS_LoadCharacterRequest: Closing connection for %1% (one already exists)") % m_charName );
 					this->SetCloseAndDelete(true);

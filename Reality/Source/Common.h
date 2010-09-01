@@ -272,6 +272,17 @@ using boost::format;
 inline void Sleep(int ms) { usleep(1000*ms); }
 #endif
 
+#ifdef min
+#undef min
+#endif
+template<class A, class B>
+inline A min(A a, B b) { return ((a < (A)b) ? a : (A)b); }
+#ifdef max
+#undef max
+#endif
+template<class A, class B>
+inline A max(A a, B b) { return ((a > (A)b) ? a : (A)b); }
+
 class Database;
 
 #ifndef THIS_IS_SPARTA

@@ -98,15 +98,13 @@ private:
 	uint32 AcknowledgePacket(uint16 serverSeq, uint8 ackBits);
 
 	// RCC Constants
-	enum {
-		NUM_SAVED_PINGS = 16,
-		PING_MULTIPLIER_RELIABLE = 1,
-		PING_MULTIPLIER_UNRELIABLE = 2,
-		MINIMUM_RESEND_TIME = 30,
-		MAXIMUM_RESEND_TIME = 1000,
-		INITIAL_PING = 200,
-		MAX_ACKED_PACKETS = 7,
-	};
+	static const uint NUM_SAVED_PINGS = 16;
+	static const uint PING_MULTIPLIER_RELIABLE = 1;
+	static const uint PING_MULTIPLIER_UNRELIABLE = 2;
+	static const uint MINIMUM_RESEND_TIME = 30;
+	static const uint MAXIMUM_RESEND_TIME = 1000;
+	static const uint INITIAL_PING = 200;
+	static const uint MAX_ACKED_PACKETS = 7;
 
 	deque<uint32> m_pingHistory;
 	float m_currentPing;

@@ -254,7 +254,7 @@ private:
 	uint8 GetAckBits(uint16 clientSeq)
 	{
 		uint8 ackBits=0;
-		for(int i=0;i<MAX_ACKED_PACKETS;i++)
+		for(uint i=0;i<MAX_ACKED_PACKETS;i++)
 		{
 			if(m_recvdPacketSeqs.count(clientSeq-i) > 0)
 				ackBits |= (1 << i);

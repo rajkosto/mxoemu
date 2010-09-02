@@ -452,7 +452,7 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq, uint8 ackBits )
 	printf("]\n");*/
 
 	//sleezily resend with same sequences to mute effects of drops
-	foreach( uint16 ack, nakSequences )
+/*	foreach( uint16 ack, nakSequences )
 	{
 		for(savedPacketsType::const_iterator it=m_savedPackets.begin();it!=m_savedPackets.end();++it)
 		{
@@ -463,7 +463,7 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq, uint8 ackBits )
 				break;
 			}
 		}
-	}
+	}*/
 
 	for (stateQueueType::iterator it=m_queuedStates.begin();it!=m_queuedStates.end();)
 	{
@@ -569,8 +569,8 @@ uint32 GameClient::AcknowledgePacket( uint16 serverSeq, uint8 ackBits )
 
 string GameClient::GetNetStats()
 {
-	format summary = format("Latency: %1%ms GuarQ: %2% UnGuarQ: %3%\n");
-	summary % int(m_currentPing) % uint32(m_sentCommands.size()) % uint32(m_queuedStates.size());
+	format summary = format("Latency: %1%ms GuarQ: %2% UnGuarQ: %3% sSeq: %4% cSeq: %5%\n");
+	summary % int(m_currentPing) % uint32(m_sentCommands.size()) % uint32(m_queuedStates.size()) % m_serverSequence % m_lastClientSequence;
 	stringstream details;
 	if (m_sentCommands.size())
 	{
@@ -707,9 +707,9 @@ uint16 GameClient::SendSequencedPacket( msgBaseClassPtr jumboPacket )
 	SendEncrypted(prepended);
 	increaseServerSequence();
 
-	m_savedPackets.push_back(prepended);
+	/*m_savedPackets.push_back(prepended);
 	while (m_savedPackets.size() > MAX_SAVED_PACKETS)
-		m_savedPackets.pop_front();
+		m_savedPackets.pop_front();*/
 
 	return serverSeq;
 }

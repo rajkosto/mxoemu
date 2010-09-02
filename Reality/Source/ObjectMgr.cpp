@@ -171,10 +171,8 @@ void ObjectMgr::RandomObject( uint32 randomObjectId, GameClient* requester, doub
 void ObjectMgr::OpenDoor( uint32 doorId, GameClient* requester)
 {
 	//Does this work?
-	int doorOpenCount = 0;
 	for (map<uint16,uint32>::iterator it=m_openDoors.begin();it!=m_openDoors.end();++it)
 	{
-		doorOpenCount++;
 		if (it->second == doorId)
 		{
 			//Didnt work first time, lets change door type
@@ -197,15 +195,11 @@ void ObjectMgr::OpenDoor( uint32 doorId, GameClient* requester)
 	format msg2 = format("{c:0FFFF0}Door:0x%08x{/c}") % (int)doorId;
 	requester->QueueCommand(make_shared<SystemChatMsg>(msg2.str()));
 
-	if (doorOpenCount > 30) //if 10+ doors, then we want to close one
+	if (m_openDoors.size() > 37000) //if lots of doors, then we want to close one
 	{
-		for (map<uint16,uint32>::iterator it=m_openDoors.begin();it!=m_openDoors.end();++it)
-		{
-			//Close Doors not working
-			//sGame.AnnounceStateUpdate(NULL,make_shared<CloseDoorMsg>(it->first));						
-			m_openDoors.erase(it);						
-			break; //exit loop we just wanted the first one
-		}		
+		m_openDoors.erase(m_openDoors.begin());
+		//Close Doors not working
+		//sGame.AnnounceStateUpdate(NULL,make_shared<CloseDoorMsg>(it->first));						
 	}
 
 	uint16 viewId = allocateViewId(requester);

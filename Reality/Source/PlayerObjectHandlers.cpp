@@ -260,8 +260,8 @@ void PlayerObject::ParseAdminCommand( string theCmd )
 		Z = this->getPosition().z;
 		O = this->getPosition().rot;
 
-		string sql1 = (format("DELETE FROM `hardlines` Where `DistrictId` = '%1%' And `HardlineId` = '%2%'") % s % hardlineId ).str();
-		string sql2 = (format("INSERT INTO `hardlines` SET `DistrictId` = '%1%', `HardlineId` = '%2%', X = '%3%', Y = '%4%', Z = '%5%', HardlineName = '%6%', ROT = '%7%'") % s % hardlineId % X % Y % Z % hardlineName % O).str();
+		string sql1 = (format("DELETE FROM `hardlines` WHERE `DistrictId` = '%1%' AND `HardlineId` = '%2%'") % s % hardlineId ).str();
+		string sql2 = (format("INSERT INTO `hardlines` SET `DistrictId` = '%1%', `HardlineId`='%2%',`X`='%3%',`Y`='%4%',`Z`= '%5%',`HardlineName`='%6%',`ROT`='%7%'") % s % hardlineId % X % Y % Z % hardlineName % O).str();
 		if (sDatabase.Execute(sql1))
 		{
 			if (sDatabase.Execute(sql2))
@@ -327,7 +327,14 @@ void PlayerObject::ParsePlayerCommand( string theCmd )
 	}
 	else if (iequals(command,"netstats"))
 	{
-		m_parent.QueueCommand(make_shared<SystemChatMsg>(m_parent.GetNetStats()));
+		string theNetStats = m_parent.GetNetStats();
+		m_parent.QueueCommand(make_shared<SystemChatMsg>(theNetStats));
+		boost::replace_all(theNetStats,"\n"," ");
+		INFO_LOG(format("(%1%) %2%:%3% netstats: %4%")
+			% m_parent.Address()
+			% m_handle
+			% m_goId
+			% theNetStats );
 	}
 	else if (iequals(command, "gotoPos"))
 	{
@@ -926,7 +933,7 @@ void PlayerObject::RPC_HandleHardlineTeleport( ByteBuffer &srcCmd )
 	LocationVector loc = this->getPosition();
 
 	format sqlHLExists = 
-		format("Select * from Hardlines Where `DistrictId` = '%1%' And `HardlineId` = '%2%' Limit 1")
+		format("SELECT * FROM `hardlines` WHERE `DistrictId`='%1%' AND `HardlineId`='%2%' LIMIT 1")
 		% (int)districtYouAreIn 
 		% (int)hardlineYouAreUsing;
 

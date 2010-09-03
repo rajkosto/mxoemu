@@ -717,13 +717,13 @@ void PlayerObject::RPC_HandleJump( ByteBuffer &srcCmd )
 
 	uint32 theTimeStamp = srcCmd.read<uint32>();
 
-	DEBUG_LOG(format("(%1%) %2%:%3% jumping to %4%,%5%,%6% extra data %7% timestamp %8%")
+/*	DEBUG_LOG(format("(%1%) %2%:%3% jumping to %4%,%5%,%6% extra data %7% timestamp %8%")
 		% m_parent.Address()
 		% m_handle
 		% m_goId
 		% endPos.x % endPos.y % endPos.z
 		% Bin2Hex(&extraData[0],extraData.size())
-		% theTimeStamp );
+		% theTimeStamp );*/
 
 	this->setPosition(endPos);
 	sGame.AnnounceStateUpdate(NULL,make_shared<PositionStateMsg>(m_goId));
@@ -737,12 +737,13 @@ void PlayerObject::RPC_HandleRegionLoadedNotification( ByteBuffer &srcCmd )
 	if (!loc.fromFloatBuf(srcCmd))
 		throw ByteBuffer::out_of_range();
 
-	DEBUG_LOG(format("(%1%) %2%:%3% loaded region X:%4% Y:%5% Z:%6% extra: %7%")
+/*	DEBUG_LOG(format("(%1%) %2%:%3% loaded region X:%4% Y:%5% Z:%6% extra: %7%")
 		% m_parent.Address()
 		% m_handle
 		% m_goId
 		% loc.x % loc.y % loc.z
 		% Bin2Hex(fourBytes));
+*/
 }
 
 void PlayerObject::RPC_HandleReadyForWorldChange( ByteBuffer &srcCmd )
@@ -1035,7 +1036,7 @@ void PlayerObject::jackoutEvent()
 	m_parent.QueueCommand(make_shared<HexGenericMsg>("80fd000000000000"));
 	m_parent.FlushQueue();
 	//hack, should see why client doesnt send jackout complete msg, instead of invalidating here
-	m_parent.Invalidate();
+	//m_parent.Invalidate();
 }
 
 void PlayerObject::RPC_HandleJackoutFinished( ByteBuffer &srcCmd )

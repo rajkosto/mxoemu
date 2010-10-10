@@ -45,7 +45,7 @@ public:
 	size_t Clients_Connected(void) { return m_clients.size(); }
 	GameClient *GetClientWithSessionId(uint32 sessionId);
 	vector<GameClient*> GetClientsWithCharacterId( uint64 charId );
-	void Broadcast(const ByteBuffer &message);
+	void Broadcast(const ByteBuffer &message, bool command);
 	void AnnounceStateUpdate(GameClient* clFrom,msgBaseClassPtr theMsg, bool immediateOnly=false, GameClient::packetAckFunc callFunc=0);
 	void AnnounceCommand(GameClient* clFrom,msgBaseClassPtr theCmd, GameClient::packetAckFunc callFunc=0);
 	void RemoveCharacter(string IPAddr);

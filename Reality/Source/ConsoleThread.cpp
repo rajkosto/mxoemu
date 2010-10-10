@@ -140,7 +140,7 @@ bool ConsoleThread::run()
 				cout << "EMPTY MESSAGE" << std::endl;
 			}
 		}
-		else if (iequals(command, "send"))
+		else if (iequals(command, "send") || iequals(command, "sendCmd") )
 		{
 			stringstream hexStream;
 			for (;;)
@@ -176,7 +176,12 @@ bool ConsoleThread::run()
 				cout << "Invalid hex string" << std::endl;		
 				continue;
 			}
-			sGame.Broadcast(ByteBuffer(binaryOutput));
+
+			bool rpcCmd=false;
+			if (iequals(command, "sendCmd"))
+				rpcCmd=true;
+
+			sGame.Broadcast(ByteBuffer(binaryOutput),rpcCmd);
 			cout << "OK" << std::endl;
 		}
 	}

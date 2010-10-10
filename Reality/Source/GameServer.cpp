@@ -97,11 +97,11 @@ vector<GameClient*> GameServer::GetClientsWithCharacterId( uint64 charId )
 	return m_mainSocket->GetClientsWithCharacterId(charId);
 }
 
-void GameServer::Broadcast( const ByteBuffer &message )
+void GameServer::Broadcast( const ByteBuffer &message, bool command )
 {
 	if (m_mainSocket != NULL)
 	{
-		m_mainSocket->Broadcast(message);
+		m_mainSocket->Broadcast(message, command);
 	}
 }
 

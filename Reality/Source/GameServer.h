@@ -54,7 +54,7 @@ public:
 	ObjectMgr &getObjMgr() { return m_objMgr; }
 	class GameClient *GetClientWithSessionId(uint32 sessionId);
 	vector<class GameClient*> GetClientsWithCharacterId(uint64 charId);
-	void Broadcast(const ByteBuffer &message);
+	void Broadcast(const ByteBuffer &message, bool command);
 	void AnnounceStateUpdate(class GameClient* clFrom,msgBaseClassPtr theMsg, bool immediateOnly=false);
 	void AnnounceCommand(class GameClient* clFrom,msgBaseClassPtr theCmd);
 	float GetSimTime()

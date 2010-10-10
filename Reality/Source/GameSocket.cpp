@@ -171,9 +171,12 @@ void GameSocket::CheckAndResend()
 	}
 }
 
-void GameSocket::Broadcast( const ByteBuffer &message )
+void GameSocket::Broadcast( const ByteBuffer &message, bool command )
 {
-	return AnnounceStateUpdate(NULL,make_shared<StaticMsg>(message),true);
+	if (command)
+		return AnnounceCommand(NULL,make_shared<StaticMsg>(message));
+	else
+		return AnnounceStateUpdate(NULL,make_shared<StaticMsg>(message),true);
 }
 
 void GameSocket::AnnounceStateUpdate( GameClient* clFrom, msgBaseClassPtr theMsg, bool immediateOnly, GameClient::packetAckFunc callFunc )
